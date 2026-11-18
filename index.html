@@ -2,386 +2,608 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Liar Lounge · 강아지 탈을 쓴 여우</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0B0E14">
+<title>라이어 라운지 · 강아지 탈을 쓴 여우</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<!-- ===== Fonts: 본문 Pretendard / 헤더 Black Han Sans / 숫자 JetBrains Mono ===== -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
 <style>
-  :root{ --gold:#D4AF37; --neon:#38BDF8; --bg:#0B0F19; }
-  html,body{ height:100%; }
-  body{ font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:#E2E8F0; overflow-x:hidden; }
-  .font-display{ font-family:'Playfair Display',serif; }
-  .font-mono{ font-family:'JetBrains Mono',monospace; }
+/* =====================================================================
+   DESIGN SYSTEM — Dark Mystery & Neon Accent
+   ===================================================================== */
+:root{
+  /* 배경: 깊은 밤 네이비 → 차콜 */
+  --bg-0:#0B0E14; --bg-1:#10141F; --bg-2:#151B28;
+  /* 포인트 3색 */
+  --crimson:#E11D48; --crimson-hi:#FB7185; --crimson-lo:#9F1239;     /* 여우 · 위기 · 투표 */
+  --blue:#3B82F6;    --blue-hi:#60A5FA;    --silver:#CBD5E1;         /* 강아지 · 정보 · 추리 */
+  --amber:#F59E0B;   --amber-hi:#FCD34D;   --amber-lo:#B45309;       /* 중요 알림 · 메인 액션 */
+  /* 글래스 */
+  --glass-bg:linear-gradient(160deg, rgba(36,46,70,.55), rgba(16,21,34,.62));
+  --glass-line:rgba(203,213,225,.13);
+  --glass-line-hi:rgba(203,213,225,.24);
+  --inner-glow:inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px rgba(255,255,255,.025), inset 0 -18px 30px -24px rgba(96,165,250,.35);
+  --float:0 22px 44px -18px rgba(0,0,0,.75), 0 6px 14px -8px rgba(0,0,0,.5);
+  /* 모서리 */
+  --r-xl:28px; --r-lg:22px; --r-md:18px; --r-sm:14px;
+  /* 폰트 */
+  --font-body:'Pretendard Variable', Pretendard, 'Noto Sans KR', system-ui, sans-serif;
+  --font-head:'Black Han Sans', 'Pretendard Variable', 'Noto Sans KR', sans-serif;
+  --font-num:'JetBrains Mono', ui-monospace, monospace;
+  --ease-out:cubic-bezier(.2,.9,.2,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{ -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; }
+body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B; overflow:hidden; -webkit-font-smoothing:antialiased; letter-spacing:-.01em; }
+.tnum{ font-variant-numeric:tabular-nums; }
+.font-display{ font-family:var(--font-head) !important; font-style:normal !important; font-weight:400 !important; letter-spacing:.01em; }
+.font-mono{ font-family:var(--font-num); font-variant-numeric:tabular-nums; }
+.gold-text{ background:linear-gradient(180deg,#FFF7D6 0%,#FCD34D 40%,#F59E0B 75%,#B45309 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 2px 10px rgba(245,158,11,.35)); }
+.crimson-text{ background:linear-gradient(180deg,#FFE4E6,#FB7185 45%,#E11D48); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 2px 12px rgba(225,29,72,.45)); }
 
-  /* ===== Background ===== */
-  .bg-lounge{ position:fixed; inset:0; z-index:0; pointer-events:none;
+/* ===== 무대(데스크톱 배경) + 앱 셸(최대 430px) ===== */
+.backdrop{ position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(1100px 700px at 50% -15%, rgba(59,130,246,.18), transparent 60%),
+    radial-gradient(900px 600px at 50% 115%, rgba(225,29,72,.16), transparent 60%),
+    linear-gradient(180deg,#07090E,#0B0E14); }
+.app-shell{ position:relative; z-index:1; width:100%; max-width:430px; height:100dvh; margin:0 auto; overflow:hidden; isolation:isolate;
+  background:
+    radial-gradient(360px 260px at 8% -4%, rgba(59,130,246,.20), transparent 62%),
+    radial-gradient(340px 280px at 104% 104%, rgba(225,29,72,.17), transparent 62%),
+    radial-gradient(260px 200px at 80% 30%, rgba(245,158,11,.06), transparent 70%),
+    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-2) 100%); }
+.app-shell::before{ content:''; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.55;
+  background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size:18px 18px;
+  mask-image:linear-gradient(180deg, rgba(0,0,0,.8), transparent 70%); }
+@media (min-width:520px){
+  .app-shell{ height:min(calc(100dvh - 32px), 932px); margin-top:16px; border-radius:40px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.07), 0 0 0 10px rgba(12,15,22,.9), 0 0 0 11px rgba(255,255,255,.05), 0 50px 120px rgba(0,0,0,.8); }
+}
+.screen{ position:relative; z-index:1; height:100%; }
+
+/* ===== Glass / 카드 ===== */
+.glass{ background:var(--glass-bg); -webkit-backdrop-filter:blur(12px) saturate(140%); backdrop-filter:blur(12px) saturate(140%);
+  border:1px solid var(--glass-line); box-shadow:var(--inner-glow), var(--float); border-radius:var(--r-lg); }
+.glass-solid{ background:linear-gradient(170deg, rgba(34,43,66,.97), rgba(13,17,28,.98)); border:1px solid var(--glass-line-hi); box-shadow:var(--inner-glow), 0 -20px 50px -10px rgba(0,0,0,.7); }
+.glass-flat{ background:linear-gradient(160deg, rgba(36,46,70,.45), rgba(16,21,34,.5)); border:1px solid var(--glass-line); box-shadow:var(--inner-glow); border-radius:var(--r-md); }
+.panel-title{ font-family:var(--font-head); font-size:13px; letter-spacing:.08em; color:var(--amber-hi); }
+.label{ font-size:12px; font-weight:600; color:#94A3B8; margin-bottom:.45rem; }
+
+/* ===== 버튼 (베벨 + 눌림) ===== */
+.btn{ position:relative; border-radius:var(--r-md); font-weight:800; letter-spacing:-.01em; transition:transform .12s var(--ease-out), box-shadow .15s, filter .15s, background .2s, border-color .2s; user-select:none; }
+.btn:not(:disabled):hover{ filter:brightness(1.08); }
+.btn:active:not(:disabled){ transform:translateY(2px) scale(.95); }
+.btn:disabled{ opacity:.42; cursor:not-allowed; filter:grayscale(.5); }
+.btn-gold{ background:linear-gradient(180deg,#FDE68A 0%,#F59E0B 55%,#D97706 100%); color:#231400;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), inset 0 -4px 0 rgba(146,64,14,.65), 0 12px 26px -10px rgba(245,158,11,.7); }
+.btn-gold:active:not(:disabled){ box-shadow:inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(146,64,14,.6), 0 4px 10px -6px rgba(245,158,11,.6); }
+.btn-crimson{ background:linear-gradient(180deg,#FDA4AF 0%,#E11D48 55%,#BE123C 100%); color:#fff; text-shadow:0 1px 0 rgba(0,0,0,.25);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -4px 0 rgba(136,19,55,.7), 0 12px 26px -10px rgba(225,29,72,.75); }
+.btn-crimson:active:not(:disabled){ box-shadow:inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(136,19,55,.7), 0 4px 10px -6px rgba(225,29,72,.6); }
+.btn-neon{ background:linear-gradient(180deg, rgba(96,165,250,.26), rgba(59,130,246,.12)); border:1px solid rgba(96,165,250,.55); color:#DBEAFE;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14), inset 0 -3px 0 rgba(30,58,138,.55), 0 10px 24px -12px rgba(59,130,246,.75); }
+.btn-ghost{ background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border:1px solid var(--glass-line); color:#CBD5E1;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), inset 0 -3px 0 rgba(0,0,0,.3); }
+.icon-btn{ width:38px; height:38px; display:grid; place-items:center; border-radius:14px; flex-shrink:0; }
+.inp{ background:rgba(6,9,15,.65); border:1px solid var(--glass-line); border-radius:var(--r-md); padding:.8rem 1rem; outline:none; color:#F1F5F9;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.35); transition:border-color .2s, box-shadow .2s; }
+.inp:focus{ border-color:rgba(96,165,250,.7); box-shadow:inset 0 2px 6px rgba(0,0,0,.35), 0 0 0 4px rgba(59,130,246,.18); }
+::-webkit-scrollbar{ width:4px; height:4px; } ::-webkit-scrollbar-thumb{ background:rgba(203,213,225,.18); border-radius:4px; }
+.no-scrollbar::-webkit-scrollbar{ display:none; } .no-scrollbar{ scrollbar-width:none; }
+
+/* ===== 상단 바 ===== */
+.topbar{ position:relative; z-index:5; margin:10px 10px 0; padding:10px 12px; }
+.phase-pill{ font-family:var(--font-head); font-size:15px; letter-spacing:.02em; padding:5px 12px; border-radius:999px; border:1px solid; white-space:nowrap; }
+.phase-pill.tone-blue{ color:#DBEAFE; border-color:rgba(96,165,250,.5); background:rgba(59,130,246,.16); box-shadow:0 0 18px -4px rgba(59,130,246,.6); }
+.phase-pill.tone-red{ color:#FFE4E6; border-color:rgba(251,113,133,.6); background:rgba(225,29,72,.2); box-shadow:0 0 18px -4px rgba(225,29,72,.7); }
+.phase-pill.tone-amber{ color:#FEF3C7; border-color:rgba(252,211,77,.5); background:rgba(245,158,11,.14); box-shadow:0 0 18px -6px rgba(245,158,11,.6); }
+.timer{ font-family:var(--font-num); font-weight:800; font-size:26px; line-height:1; font-variant-numeric:tabular-nums; color:#F8FAFC; transition:color .3s; }
+.timer.urgent{ will-change:transform; color:var(--crimson-hi); text-shadow:0 0 16px rgba(225,29,72,.8); animation:heartbeat 1s ease-in-out infinite; }
+.timer-bar{ height:4px; border-radius:4px; background:rgba(255,255,255,.07); overflow:hidden; }
+.timer-bar > div{ height:100%; border-radius:4px; background:linear-gradient(90deg,var(--blue),var(--blue-hi)); transition:width .2s linear, background .3s; }
+.timer-bar.urgent > div{ background:linear-gradient(90deg,var(--crimson-lo),var(--crimson-hi)); box-shadow:0 0 10px var(--crimson); }
+.room-chip{ display:flex; align-items:center; gap:6px; padding:4px 6px 4px 10px; border-radius:14px; background:rgba(6,9,15,.55); border:1px solid rgba(252,211,77,.25); }
+
+/* ===== 아바타 스트립 ===== */
+.strip{ display:flex; gap:8px; overflow-x:auto; padding:10px 14px 4px; position:relative; z-index:4; }
+.ava{ width:50px; flex-shrink:0; text-align:center; cursor:pointer; transition:transform .2s var(--ease-spring); }
+.ava:hover{ transform:translateY(-2px) scale(1.06); }
+.ava .ring{ position:relative; width:46px; height:46px; margin:0 auto; border-radius:50%; padding:2px; background:linear-gradient(160deg, rgba(203,213,225,.35), rgba(203,213,225,.08)); box-shadow:0 6px 14px -6px rgba(0,0,0,.7); }
+.ava .face{ width:100%; height:100%; border-radius:50%; overflow:hidden; background:radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--pc) 40%, #475569), color-mix(in srgb, var(--pc) 15%, #1E293B) 70%); }
+.ava .nm{ font-size:10px; font-weight:700; color:#CBD5E1; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ava.me .nm{ color:var(--amber-hi); }
+.ava.turn .ring, .ava.turn .face{ will-change:transform; }
+.ava.turn .ring{ background:conic-gradient(from 0deg, var(--blue-hi), var(--blue), #A5B4FC, var(--blue-hi)); animation:spin 2.4s linear infinite; box-shadow:0 0 18px rgba(59,130,246,.75); }
+.ava.turn .face{ animation:counterspin 2.4s linear infinite; }
+.ava.cand .ring{ background:linear-gradient(160deg,var(--crimson-hi),var(--crimson)); box-shadow:0 0 16px rgba(225,29,72,.7); }
+.ava.foxr .ring{ background:linear-gradient(160deg,#FDBA74,var(--crimson)); box-shadow:0 0 20px rgba(225,29,72,.8); }
+.ava.off{ opacity:.45; filter:grayscale(1); }
+.ava .tick{ position:absolute; right:-3px; bottom:-3px; width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:10px; font-weight:900;
+  background:linear-gradient(180deg,#34D399,#059669); color:#fff; border:2px solid var(--bg-1); animation:popIn .35s var(--ease-spring); }
+.ava .susn{ position:absolute; left:-4px; top:-4px; min-width:18px; height:18px; padding:0 4px; border-radius:9px; font-size:10px; font-weight:900; display:grid; place-items:center;
+  background:var(--crimson); color:#fff; border:2px solid var(--bg-1); }
+
+/* ===== 탭 / 패널 ===== */
+.tab-pane{ position:absolute; inset:0; display:flex; flex-direction:column; animation:paneIn .28s var(--ease-out); }
+.tab-pane.hidden{ display:none !important; }
+.dock{ position:relative; z-index:6; padding:8px 12px calc(10px + env(safe-area-inset-bottom)); }
+.dock::before{ content:''; position:absolute; inset:-18px 0 0; z-index:-1; background:linear-gradient(180deg, rgba(11,14,20,0), rgba(11,14,20,.92) 40%); pointer-events:none; }
+.primary-btn{ width:100%; height:54px; font-family:var(--font-head); font-size:19px; letter-spacing:.02em; border-radius:20px; display:flex; align-items:center; justify-content:center; gap:8px; }
+.primary-btn .sub{ font-family:var(--font-body); font-size:12px; font-weight:700; opacity:.85; }
+.primary-idle{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border:1px dashed rgba(203,213,225,.22); color:#94A3B8; font-family:var(--font-body); font-size:14px; font-weight:700; box-shadow:none; }
+.tabbar{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; padding:5px; }
+.tab-btn{ position:relative; display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 0 5px; border-radius:16px; color:#7C8799; font-size:11px; font-weight:800; transition:all .2s var(--ease-out); }
+.tab-btn .ic{ font-size:18px; line-height:1; transition:transform .25s var(--ease-spring); filter:grayscale(.6); }
+.tab-btn.on{ color:#F8FAFC; background:linear-gradient(180deg, rgba(96,165,250,.22), rgba(59,130,246,.08)); box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 6px 16px -8px rgba(59,130,246,.8); }
+.tab-btn.on .ic{ transform:translateY(-1px) scale(1.12); filter:none; }
+.tab-btn .dot.hidden, #rx-picker.hidden{ display:none !important; }
+.tab-btn .dot{ position:absolute; top:3px; right:calc(50% - 24px); min-width:17px; height:17px; padding:0 4px; border-radius:9px; background:var(--crimson); color:#fff; font-size:10px; display:grid; place-items:center; box-shadow:0 0 10px rgba(225,29,72,.8); animation:popIn .3s var(--ease-spring); }
+
+/* ===== 플레이어 카드 ===== */
+#players-inner{ position:relative; padding-right:30px; }
+#sus-svg{ position:absolute; left:0; top:0; pointer-events:none; z-index:5; overflow:visible; }
+.player-card{ position:relative; display:flex; gap:.7rem; align-items:center; padding:.6rem .7rem; border-radius:var(--r-lg);
+  background:linear-gradient(160deg, rgba(36,46,70,.72), rgba(16,21,34,.8));
+  border:1px solid var(--glass-line); box-shadow:var(--inner-glow), 0 12px 24px -16px rgba(0,0,0,.8);
+  transition:transform .22s var(--ease-spring), border-color .25s, box-shadow .25s; }
+.player-card:hover{ transform:scale(1.025); border-color:rgba(96,165,250,.55); box-shadow:var(--inner-glow), 0 0 0 1px rgba(96,165,250,.25), 0 0 24px -6px rgba(59,130,246,.6), 0 14px 26px -14px rgba(0,0,0,.8); }
+.avatar-wrap{ width:56px; height:56px; flex-shrink:0; border-radius:18px; padding:3px;
+  background:radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--pc) 38%, #475569) 0%, color-mix(in srgb, var(--pc) 18%, #1E293B) 55%, #0F1420 100%);
+  border:1px solid color-mix(in srgb, var(--pc) 55%, transparent); box-shadow:inset 0 1px 0 rgba(255,255,255,.14), inset 0 0 12px rgba(255,255,255,.05); }
+.turn-focus{ border-color:var(--blue-hi) !important; animation:neonPulse 1.4s ease-in-out infinite; }
+@keyframes neonPulse{ 0%,100%{ box-shadow:var(--inner-glow), 0 0 0 1px rgba(96,165,250,.7), 0 0 16px rgba(59,130,246,.45);} 50%{ box-shadow:var(--inner-glow), 0 0 0 2px rgba(96,165,250,1), 0 0 30px rgba(59,130,246,.85);} }
+.fox-card{ border-color:rgba(251,113,133,.65) !important; background:linear-gradient(160deg, rgba(159,18,57,.45), rgba(16,21,34,.6)) !important; box-shadow:var(--inner-glow), 0 0 26px -4px rgba(225,29,72,.6) !important; }
+.runoff-card{ border-color:rgba(251,113,133,.7) !important; box-shadow:var(--inner-glow), 0 0 22px -4px rgba(225,29,72,.55) !important; }
+.badge{ font-size:10px; font-weight:800; padding:1px 7px; border-radius:999px; letter-spacing:.02em; }
+.sus-btn{ font-size:13px; width:34px; height:34px; border-radius:12px; display:grid; place-items:center; border:1px solid rgba(251,113,133,.35); background:rgba(225,29,72,.08);
+  box-shadow:inset 0 -2px 0 rgba(136,19,55,.4); transition:all .18s var(--ease-spring); flex-shrink:0; }
+.sus-btn:hover{ transform:scale(1.1); background:rgba(225,29,72,.2); box-shadow:0 0 14px rgba(225,29,72,.5); }
+.sus-btn:active{ transform:scale(.9); }
+.sus-btn.on{ background:linear-gradient(180deg,#FB7185,#E11D48); color:#fff; border-color:#FB7185; box-shadow:0 0 16px rgba(225,29,72,.8), inset 0 -2px 0 rgba(136,19,55,.6); }
+
+/* ===== 채팅 ===== */
+.msg-in{ }  /* 채팅은 메시지가 많아 등장 애니메이션 없이 즉시 표시 (프레임 유지) */
+.bubble{ padding:.55rem .85rem; border-radius:20px; font-size:14px; line-height:1.45; word-break:break-word; }
+.bubble-other{ background:linear-gradient(160deg, rgba(36,46,70,.85), rgba(22,28,44,.85)); border:1px solid rgba(203,213,225,.09); border-top-left-radius:6px; }
+.bubble-me{ background:linear-gradient(160deg, #3B82F6, #1D4ED8); border:1px solid rgba(147,197,253,.55); border-top-right-radius:6px; color:#fff; }
+.sys-line{ font-size:11.5px; font-weight:600; padding:.32rem .85rem; border-radius:999px; background:rgba(6,9,15,.55); border:1px solid rgba(203,213,225,.08); text-align:center; max-width:94%; }
+.hint-bubble{ position:relative; border-radius:22px; border:1px solid rgba(252,211,77,.5);
+  background:linear-gradient(160deg, rgba(245,158,11,.2), rgba(17,22,35,.7) 60%); }
+.hint-bubble::before{ content:''; position:absolute; left:0; top:14px; bottom:14px; width:3px; border-radius:3px; background:linear-gradient(var(--amber-hi),var(--amber)); }
+.clue-tag{ font-family:var(--font-head); font-size:11px; letter-spacing:.06em; color:#231400; background:linear-gradient(180deg,#FDE68A,#F59E0B); padding:2px 9px; border-radius:8px; box-shadow:inset 0 -2px 0 rgba(146,64,14,.5); }
+.hint-chip{ display:flex; align-items:center; gap:.4rem; font-size:12px; padding:.28rem .65rem; border-radius:12px; background:rgba(245,158,11,.08); border:1px solid rgba(252,211,77,.22); }
+.hint-chip .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+#chat-form{ padding:8px 12px 6px; }
+#chat-form .inp{ border-radius:18px; padding:.7rem 1rem; }
+#chat-form.clue-mode .inp{ border-color:rgba(252,211,77,.8); box-shadow:inset 0 2px 6px rgba(0,0,0,.35), 0 0 0 4px rgba(245,158,11,.18), 0 0 26px rgba(245,158,11,.25); }
+.clue-badge{ font-family:var(--font-head); font-size:11px; letter-spacing:.06em; color:#231400; background:linear-gradient(180deg,#FDE68A,#F59E0B); padding:5px 9px; border-radius:10px; animation:pulseGold 1.2s infinite; }
+.msg-wrap{ position:relative; }
+.rx-add{ opacity:0; font-size:12px; padding:2px 8px; border-radius:999px; background:rgba(22,28,44,.95); border:1px solid rgba(203,213,225,.18); color:#CBD5E1; transition:opacity .15s, transform .15s; }
+.msg-wrap:hover .rx-add{ opacity:1; } .rx-add:hover{ transform:scale(1.1); }
+@media (hover:none){ .rx-add{ opacity:.6; } }
+.rx{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; } .rx:empty{ display:none; }
+.rx-pill{ font-size:12px; padding:2px 8px; border-radius:999px; background:rgba(22,28,44,.9); border:1px solid rgba(203,213,225,.14); cursor:pointer; transition:transform .15s var(--ease-spring); font-variant-numeric:tabular-nums; }
+.rx-pill:hover{ transform:scale(1.08); }
+.rx-pill.mine{ border-color:rgba(96,165,250,.7); background:rgba(59,130,246,.2); }
+.rx-pill.pop{ animation:rxPop .35s var(--ease-spring); }
+#rx-picker{ position:fixed; z-index:120; display:flex; gap:2px; padding:6px; border-radius:20px; }
+#rx-picker button{ font-size:21px; width:38px; height:38px; border-radius:12px; transition:transform .15s var(--ease-spring), background .12s; }
+#rx-picker button:hover{ transform:scale(1.3) translateY(-2px); background:rgba(255,255,255,.08); }
+
+/* ===== 액션/정보 패널 요소 ===== */
+.cat-btn{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:.6rem .3rem; border-radius:16px; font-size:12px; font-weight:800; color:#CBD5E1;
+  border:1px solid var(--glass-line); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.28);
+  transition:transform .18s var(--ease-spring), border-color .2s, box-shadow .2s; }
+.cat-btn:not(:disabled):hover{ transform:scale(1.04); border-color:rgba(252,211,77,.5); }
+.cat-btn:not(:disabled):active{ transform:scale(.94); }
+.cat-btn.cat-on{ border-color:var(--amber-hi); color:#FEF3C7; background:linear-gradient(180deg, rgba(245,158,11,.28), rgba(245,158,11,.1)); box-shadow:inset 0 1px 0 rgba(255,255,255,.12), inset 0 -3px 0 rgba(146,64,14,.45), 0 0 18px -4px rgba(245,158,11,.55); }
+.cat-btn:disabled{ cursor:default; }
+.secret-card{ position:relative; padding:1rem; border-radius:var(--r-xl); overflow:hidden;
+  background:radial-gradient(260px 160px at 100% 0%, rgba(59,130,246,.28), transparent 70%), linear-gradient(160deg, rgba(30,41,70,.75), rgba(12,16,28,.85));
+  border:1px solid rgba(96,165,250,.4); box-shadow:var(--inner-glow), 0 0 30px -8px rgba(59,130,246,.45), var(--float); }
+.secret-card.secret-fox{ background:radial-gradient(260px 160px at 100% 0%, rgba(225,29,72,.35), transparent 70%), linear-gradient(160deg, rgba(76,18,34,.8), rgba(12,16,28,.88)); border-color:rgba(251,113,133,.55); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 30px -6px rgba(225,29,72,.55), var(--float); }
+.secret-word{ font-family:var(--font-head); font-size:2rem; color:#F8FAFC; letter-spacing:.02em; text-shadow:0 0 22px rgba(96,165,250,.45); word-break:keep-all; line-height:1.15; }
+.vote-btn{ width:100%; display:flex; align-items:center; gap:.7rem; padding:.5rem .75rem; border-radius:20px; text-align:left;
+  border:1px solid var(--glass-line); background:linear-gradient(160deg, rgba(36,46,70,.5), rgba(16,21,34,.55)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.25);
+  transition:transform .2s var(--ease-spring), border-color .2s, box-shadow .2s, background .2s; }
+.vote-btn:hover:not(:disabled){ transform:scale(1.025); border-color:rgba(251,113,133,.65); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 0 22px -4px rgba(225,29,72,.6); }
+.vote-btn:active:not(:disabled){ transform:scale(.97); }
+.vote-btn.vote-on{ border-color:var(--crimson-hi); background:linear-gradient(160deg, rgba(225,29,72,.35), rgba(76,18,34,.5)); box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 26px -4px rgba(225,29,72,.8); }
+.turn-row{ display:flex; align-items:center; gap:.5rem; font-size:13px; padding:.4rem .6rem; border-radius:14px; }
+.turn-row.now{ background:rgba(59,130,246,.14); border:1px solid rgba(96,165,250,.5); color:#E0F2FE; box-shadow:0 0 16px -6px rgba(59,130,246,.8); }
+
+/* ===== 투표 바텀시트 ===== */
+.sheet-wrap{ position:absolute; inset:0; z-index:58; pointer-events:none; }
+.sheet-wrap .dim{ position:absolute; inset:0; background:rgba(4,6,10,.6); opacity:0; transition:opacity .3s; }
+.sheet-wrap.open{ pointer-events:auto; } .sheet-wrap.open .dim{ opacity:1; }
+.sheet{ position:absolute; left:0; right:0; bottom:0; max-height:80%; overflow-y:auto; padding:10px 14px calc(16px + env(safe-area-inset-bottom)); border-radius:30px 30px 0 0;
+  transform:translateY(105%); transition:transform .38s var(--ease-out); }
+.sheet-wrap.open .sheet{ transform:none; }
+.sheet .grab{ width:44px; height:5px; border-radius:3px; background:rgba(203,213,225,.3); margin:0 auto 10px; }
+
+/* ===== 페이즈 스플래시 ===== */
+.splash{ position:absolute; inset:0; z-index:57; display:grid; place-items:center; pointer-events:none; }
+.splash .band{ width:100%; padding:22px 0; text-align:center; animation:splashBand 1.6s var(--ease-out) forwards; }
+.splash .t{ font-family:var(--font-head); font-size:44px; line-height:1; animation:splashText 1.6s var(--ease-out) forwards; }
+.splash .s{ font-size:13px; font-weight:700; color:#CBD5E1; margin-top:8px; animation:splashText 1.6s var(--ease-out) forwards; }
+.splash.tone-blue .band{ background:linear-gradient(90deg, transparent, rgba(59,130,246,.3), transparent), linear-gradient(90deg, rgba(8,11,17,0), rgba(8,11,17,.88) 18%, rgba(8,11,17,.88) 82%, rgba(8,11,17,0)); box-shadow:0 0 0 1px rgba(96,165,250,.25); }
+.splash.tone-red .band{ background:linear-gradient(90deg, transparent, rgba(225,29,72,.38), transparent), linear-gradient(90deg, rgba(8,11,17,0), rgba(8,11,17,.88) 18%, rgba(8,11,17,.88) 82%, rgba(8,11,17,0)); box-shadow:0 0 0 1px rgba(251,113,133,.3); }
+.splash.tone-amber .band{ background:linear-gradient(90deg, transparent, rgba(245,158,11,.3), transparent), linear-gradient(90deg, rgba(8,11,17,0), rgba(8,11,17,.88) 18%, rgba(8,11,17,.88) 82%, rgba(8,11,17,0)); box-shadow:0 0 0 1px rgba(252,211,77,.25); }
+
+/* ===== 마스크 / 캐릭터 ===== */
+.mask-stack{ position:relative; perspective:600px; }
+.mask-stack > .layer{ position:absolute; inset:0; }
+.mask-stack .dog-layer{ transform-origin:50% 0%; z-index:2; }
+.mask-stack .fox-layer{ z-index:1; opacity:0; transform:scale(.9); transition:opacity .9s ease .35s, transform .9s ease .35s; }
+.mask-stack.unmask .dog-layer{ animation:peel 1.8s cubic-bezier(.6,0,.25,1) forwards; }
+.mask-stack.unmask .fox-layer, .mask-stack.fox-shown .fox-layer{ opacity:1; transform:scale(1); }
+.mask-stack.fox-shown .dog-layer{ display:none; }
+.hero-mask .dog-layer{ animation:heroPeel 6s cubic-bezier(.6,0,.25,1) infinite; }
+.hero-mask .fox-layer{ animation:heroFox 6s ease infinite; transition:none; }
+.eye-glow{ animation:eyeGlow 1.1s ease-in-out infinite alternate; }
+.tear{ transform-box:fill-box; transform-origin:center; animation:tear 1.6s ease-in infinite; } .tear.t2{ animation-delay:.7s; }
+
+/* ===== 오버레이 (앱 셸 안에 고정) ===== */
+.overlay{ position:absolute; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; }
+.overlay.hidden{ display:none !important; }
+.overlay-dim{ position:absolute; inset:0; background:rgba(4,6,10,.88); animation:fadeIn .3s ease; }
+.modal{ position:relative; width:calc(100% - 24px); max-width:406px; max-height:92%; overflow-y:auto; padding:22px; border-radius:var(--r-xl); animation:modalIn .4s var(--ease-spring); }
+/* 역할 카드 3D 플립 */
+.card3d{ perspective:1400px; }
+.card3d-inner{ position:relative; width:100%; height:100%; transition:transform 1.1s var(--ease-out); transform-style:preserve-3d; }
+.card3d-inner.flipped{ transform:rotateY(180deg); }
+.card3d-inner.wobble{ animation:cardWobble .9s ease-in-out; }
+.face{ position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:30px; overflow:hidden; }
+.face.back{ transform:rotateY(180deg); }
+.card-front{ background:
+    radial-gradient(circle at 50% 45%, rgba(245,158,11,.22), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(252,211,77,.08) 0 2px, transparent 2px 14px),
+    repeating-linear-gradient(-45deg, rgba(252,211,77,.08) 0 2px, transparent 2px 14px),
+    linear-gradient(160deg,#1A2132,#0C1019);
+  border:2px solid rgba(252,211,77,.6); box-shadow:0 30px 80px rgba(0,0,0,.65), inset 0 0 40px rgba(245,158,11,.18), inset 0 1px 0 rgba(255,255,255,.15); }
+.card-back{ background:radial-gradient(300px 200px at 50% 0%, rgba(59,130,246,.3), transparent 70%), linear-gradient(170deg,#18213A,#0B0E14 75%); border:2px solid rgba(96,165,250,.6); box-shadow:0 30px 80px rgba(0,0,0,.65), 0 0 44px rgba(59,130,246,.3), inset 0 1px 0 rgba(255,255,255,.12); }
+.fox-mode .card-back{ background:radial-gradient(300px 200px at 50% 0%, rgba(225,29,72,.4), transparent 70%), linear-gradient(170deg,#2A1020,#0B0E14 75%); border-color:rgba(251,113,133,.85); box-shadow:0 30px 80px rgba(0,0,0,.65), 0 0 60px rgba(225,29,72,.5); }
+.reveal-vignette{ position:absolute; inset:0; pointer-events:none; transition:box-shadow 1s; }
+.fox-mode .reveal-vignette{ box-shadow:inset 0 0 200px rgba(225,29,72,.6); animation:vigPulse 1.6s ease-in-out infinite; }
+/* 처형 */
+.exec-dark{ position:absolute; inset:0; background:#000; opacity:0; transition:opacity .9s; }
+#exec-overlay.on .exec-dark{ opacity:.94; }
+.spot{ position:absolute; inset:0; opacity:0; transition:opacity .7s; background:radial-gradient(ellipse 220px 300px at 50% 46%, rgba(255,244,214,.22), rgba(255,244,214,.05) 55%, transparent 72%); }
+.spot-cone{ position:absolute; left:50%; top:-12%; width:520px; height:80%; transform:translateX(-50%); background:linear-gradient(to bottom, rgba(255,240,200,.32), rgba(255,240,200,.03)); clip-path:polygon(44% 0,56% 0,100% 100%,0 100%); opacity:0; transition:opacity .7s; -webkit-mask-image:linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent); mask-image:linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent); }
+#exec-overlay.lit .spot, #exec-overlay.lit .spot-cone{ opacity:1; }
+.exec-stage{ position:relative; z-index:3; text-align:center; opacity:0; transform:scale(.88); transition:all .7s var(--ease-out); }
+#exec-overlay.lit .exec-stage{ opacity:1; transform:scale(1); }
+.exec-card{ position:relative; width:250px; height:250px; margin:0 auto; border-radius:32px; background:radial-gradient(circle at 50% 38%, #1F2937, #0B0E14 75%); border:1.5px solid rgba(252,211,77,.45); box-shadow:0 0 50px rgba(255,240,200,.12), inset 0 1px 0 rgba(255,255,255,.1); }
+.exec-card .under, .exec-card .half{ position:absolute; inset:16px; }
+.exec-card .half{ z-index:2; }
+.exec-card .under{ opacity:0; visibility:hidden; transform:scale(.85); transition:opacity .35s ease, transform .5s var(--ease-spring); }
+.exec-card.split .under{ opacity:1; visibility:visible; transform:scale(1); }
+.half-l{ clip-path:polygon(0 0, 52% 0, 46% 20%, 55% 35%, 47% 55%, 54% 75%, 49% 100%, 0 100%); }
+.half-r{ clip-path:polygon(52% 0, 100% 0, 100% 100%, 49% 100%, 54% 75%, 47% 55%, 55% 35%, 46% 20%); }
+.beat{ animation:beat .38s ease-out; }
+.crack{ position:absolute; inset:16px; width:calc(100% - 32px); height:calc(100% - 32px); z-index:4; pointer-events:none; }
+.crack path{ fill:none; stroke:#fff; stroke-width:3.2; stroke-linejoin:round; filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 12px #FCD34D); stroke-dasharray:340; stroke-dashoffset:340; }
+.cracking .crack path{ animation:draw .65s ease-out forwards; }
+.cracking:not(.split){ animation:tremble .12s linear infinite; }
+.split .crack{ opacity:0; transition:opacity .25s; }
+.split .half-l{ animation:fallL 1.7s cubic-bezier(.5,0,.85,.4) forwards; }
+.split .half-r{ animation:fallR 1.7s cubic-bezier(.5,0,.85,.4) forwards; }
+.exec-flash{ position:absolute; inset:0; z-index:2; pointer-events:none; opacity:0; background:radial-gradient(circle at 50% 47%, rgba(225,29,72,.65), rgba(127,29,29,.15) 45%, transparent 75%); }
+#exec-overlay.fox-hit .exec-flash{ animation:redFlash 1.4s forwards; }
+#exec-overlay.fox-hit .exec-card{ border-color:var(--crimson); box-shadow:0 0 70px rgba(225,29,72,.7), inset 0 0 40px rgba(225,29,72,.25); }
+#exec-overlay.innocent .exec-card{ border-color:#64748B; box-shadow:0 0 50px rgba(96,165,250,.2); }
+.warn-band{ position:absolute; left:-5%; right:-5%; height:42px; z-index:2; opacity:0; display:flex; align-items:center; overflow:hidden;
+  background:repeating-linear-gradient(45deg,#E11D48 0 20px,#0B0E14 20px 40px); color:#fff; font-family:var(--font-head); letter-spacing:.2em; font-size:14px; }
+.warn-band span{ background:#0B0E14; padding:4px 12px; margin:0 auto; border:1px solid #E11D48; white-space:nowrap; }
+.warn-band.top{ top:8%; transform:rotate(-4deg); } .warn-band.bot{ bottom:8%; transform:rotate(3deg); }
+#exec-overlay.fox-hit .warn-band{ animation:warnIn .5s ease-out forwards; }
+.exec-verdict{ font-family:var(--font-head); font-size:2.4rem; margin-top:1rem; opacity:0; transform:translateY(12px); transition:all .6s var(--ease-out); }
+.exec-verdict.show{ opacity:1; transform:none; }
+.shake{ animation:shake .65s; }
+.spark{ position:absolute; left:50%; top:47%; width:7px; height:7px; border-radius:50%; background:#FBBF24; box-shadow:0 0 12px #F97316, 0 0 4px #fff; z-index:4; animation:spark 1.3s ease-out forwards; }
+.drop{ position:absolute; top:-30px; width:2px; height:18px; z-index:2; background:linear-gradient(transparent,#93C5FD); opacity:.6; animation:drop linear forwards; }
+.confetti{ position:absolute; top:-20px; width:8px; height:14px; z-index:1; animation:confetti linear forwards; }
+/* 결과 연출 */
+.throne-wrap{ position:relative; width:200px; height:200px; margin:0 auto; }
+.throne-wrap .fox-on{ position:absolute; left:38px; top:46px; width:124px; height:124px; animation:riseUp 1s var(--ease-spring) both .3s; }
+.throne-wrap .crown-drop{ position:absolute; left:76px; top:-10px; width:48px; height:48px; animation:crownDrop 1.1s cubic-bezier(.5,0,.4,1.4) both 1.2s; z-index:3; }
+.minion{ position:relative; width:48px; height:48px; } .minion .l{ position:absolute; inset:0; }
+.minion .hyp{ opacity:0; animation:hypnoIn .7s ease forwards; }
+.minion.tainted{ animation:taint .7s ease forwards; }
+.cage-wrap{ position:relative; width:160px; height:160px; margin:0 auto; }
+.cage-bars{ position:absolute; inset:-6px; animation:cageDrop .7s cubic-bezier(.6,0,.4,1.3) both .8s; }
+.cheer{ animation:cheer .6s ease-in-out infinite alternate; }
+/* 옷장 */
+.wd-tab{ padding:.45rem .85rem; border-radius:12px; font-size:13px; font-weight:800; color:#94A3B8; border:1px solid transparent; white-space:nowrap; transition:all .2s; }
+.wd-tab.on{ color:#FEF3C7; border-color:rgba(252,211,77,.5); background:rgba(245,158,11,.14); box-shadow:0 0 14px -4px rgba(245,158,11,.6); }
+.wd-tile{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:.35rem .2rem; border-radius:16px; border:1px solid var(--glass-line); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); font-size:10.5px; font-weight:800; color:#CBD5E1;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.25); transition:transform .18s var(--ease-spring), border-color .2s, box-shadow .2s; }
+.wd-tile:hover:not(:disabled){ transform:translateY(-2px) scale(1.04); border-color:rgba(252,211,77,.5); }
+.wd-tile:active:not(:disabled){ transform:scale(.94); }
+.wd-tile.on{ border-color:var(--amber-hi); background:rgba(245,158,11,.16); color:#FEF3C7; box-shadow:0 0 16px -4px rgba(245,158,11,.6), inset 0 -3px 0 rgba(146,64,14,.4); }
+.wd-tile:disabled{ opacity:.3; cursor:not-allowed; }
+/* 기타 */
+.toast{ animation:toastIn .35s var(--ease-spring); }
+.swatch{ width:100%; aspect-ratio:1; border-radius:16px; border:2px solid transparent; transition:transform .2s var(--ease-spring), box-shadow .2s; box-shadow:inset 0 -3px 0 rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.3); }
+.swatch:hover{ transform:scale(1.08); }
+.swatch.on{ border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.15), 0 0 18px var(--sc); transform:scale(1.1); }
+#net-banner{ position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:110; white-space:nowrap; }
+
+/* ===== KEYFRAMES ===== */
+@keyframes heartbeat{ 0%{ transform:scale(1);} 14%{ transform:scale(1.2);} 28%{ transform:scale(1);} 42%{ transform:scale(1.12);} 70%,100%{ transform:scale(1);} }
+@keyframes spin{ to{ transform:rotate(360deg);} } @keyframes counterspin{ to{ transform:rotate(-360deg);} }
+@keyframes popIn{ from{ transform:scale(0); opacity:0;} to{ transform:scale(1); opacity:1;} }
+@keyframes paneIn{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:none;} }
+@keyframes msgIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
+@keyframes pulseGold{ 50%{ box-shadow:0 0 16px rgba(245,158,11,.75);} }
+@keyframes rxPop{ 40%{ transform:scale(1.35);} }
+@keyframes fadeIn{ from{ opacity:0;} to{ opacity:1;} }
+@keyframes modalIn{ from{ opacity:0; transform:translateY(24px) scale(.94);} to{ opacity:1; transform:none;} }
+@keyframes toastIn{ from{ opacity:0; transform:translateY(-12px) scale(.9);} to{ opacity:1; transform:none;} }
+@keyframes splashBand{ 0%{ opacity:0; transform:scaleY(0);} 15%{ opacity:1; transform:scaleY(1);} 80%{ opacity:1;} 100%{ opacity:0; transform:scaleY(.6);} }
+@keyframes splashText{ 0%{ opacity:0; transform:scale(1.6); filter:blur(8px); letter-spacing:.4em;} 18%{ opacity:1; transform:scale(1); filter:blur(0); letter-spacing:.04em;} 80%{ opacity:1; transform:scale(1);} 100%{ opacity:0; transform:scale(.92);} }
+@keyframes cardWobble{ 0%,100%{ transform:rotateY(0) rotateZ(0);} 25%{ transform:rotateY(-12deg) rotateZ(-2deg);} 50%{ transform:rotateY(10deg) rotateZ(2deg);} 75%{ transform:rotateY(-6deg);} }
+@keyframes peel{ 0%{ transform:translateY(0) rotateX(0); clip-path:inset(0 0 0 0); opacity:1;} 18%{ transform:translateY(3%) rotate(1.5deg); clip-path:inset(0 0 0 0);} 55%{ transform:translateY(-55%) rotateX(40deg) rotate(-6deg); clip-path:inset(0 0 22% 0); opacity:.9;} 100%{ transform:translateY(-125%) rotateX(75deg) rotate(-12deg); clip-path:inset(0 0 60% 0); opacity:0;} }
+@keyframes heroPeel{ 0%,32%{ transform:none; opacity:1; clip-path:inset(0 0 0 0);} 50%,82%{ transform:translateY(-120%) rotateX(70deg) rotate(-10deg); opacity:0; clip-path:inset(0 0 55% 0);} 100%{ transform:none; opacity:1; clip-path:inset(0 0 0 0);} }
+@keyframes heroFox{ 0%,34%{ opacity:0; transform:scale(.9);} 50%,80%{ opacity:1; transform:scale(1);} 94%,100%{ opacity:0; transform:scale(.9);} }
+@keyframes eyeGlow{ from{ opacity:.35;} to{ opacity:1;} }
+@keyframes tear{ 0%{ transform:translateY(0); opacity:0;} 20%{ opacity:1;} 100%{ transform:translateY(20px); opacity:0;} }
+@keyframes vigPulse{ 50%{ box-shadow:inset 0 0 300px rgba(225,29,72,.85);} }
+@keyframes beat{ 0%{ transform:scale(1);} 30%{ transform:scale(1.08);} 100%{ transform:scale(1);} }
+@keyframes tremble{ 50%{ transform:translate(1px,-1px) rotate(.3deg);} }
+@keyframes draw{ to{ stroke-dashoffset:0;} }
+@keyframes fallL{ 0%{ transform:none;} 14%{ transform:translate(-12px,-6px) rotate(-5deg);} 100%{ transform:translate(-180px,440px) rotate(-42deg); opacity:0;} }
+@keyframes fallR{ 0%{ transform:none;} 14%{ transform:translate(12px,-6px) rotate(5deg);} 100%{ transform:translate(180px,440px) rotate(42deg); opacity:0;} }
+@keyframes redFlash{ 0%{ opacity:0;} 8%{ opacity:1;} 30%{ opacity:.55;} 45%{ opacity:.9;} 100%{ opacity:.4;} }
+@keyframes warnIn{ from{ opacity:0; letter-spacing:1em;} to{ opacity:.94;} }
+@keyframes shake{ 10%,90%{ transform:translate(-2px,1px);} 20%,80%{ transform:translate(4px,-2px);} 30%,50%,70%{ transform:translate(-7px,3px);} 40%,60%{ transform:translate(7px,-3px);} }
+@keyframes spark{ to{ transform:translate(var(--dx),var(--dy)) scale(.15); opacity:0;} }
+@keyframes drop{ to{ transform:translateY(115vh);} }
+@keyframes confetti{ to{ transform:translateY(110vh) rotate(720deg);} }
+@keyframes riseUp{ from{ transform:translateY(40px); opacity:0;} to{ transform:none; opacity:1;} }
+@keyframes crownDrop{ 0%{ transform:translateY(-140px) rotate(-30deg); opacity:0;} 60%{ opacity:1;} 100%{ transform:translateY(38px) rotate(-8deg); opacity:1;} }
+@keyframes hypnoIn{ to{ opacity:1;} }
+@keyframes taint{ to{ filter:drop-shadow(0 0 8px rgba(225,29,72,.95));} }
+@keyframes cageDrop{ from{ transform:translateY(-220px);} to{ transform:none;} }
+@keyframes cheer{ to{ transform:translateY(-6px) rotate(3deg);} }
+
+/* =====================================================================
+   PC LAYOUT (1024px 이상) — 2560x1600 / 1600x2560 / 1920x1080 대응
+   ===================================================================== */
+@media (min-width:1024px){
+  html{ font-size:16px; }
+  .app-shell{ max-width:none; height:100vh; margin:0; border-radius:0; box-shadow:none;
     background:
-      radial-gradient(900px 520px at 12% 8%, rgba(56,189,248,.09), transparent 60%),
-      radial-gradient(760px 520px at 88% 92%, rgba(212,175,55,.09), transparent 60%),
-      radial-gradient(620px 420px at 62% 28%, rgba(180,35,74,.06), transparent 60%),
-      #0B0F19; }
-  .bg-lounge::after{ content:''; position:absolute; inset:0; opacity:.5;
-    background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.012) 0 2px, transparent 2px 9px); }
-  .fog{ position:fixed; width:60vw; height:60vw; border-radius:50%; opacity:.10; z-index:0; pointer-events:none; }
-  .fog{ background:radial-gradient(circle, var(--fc) 0%, transparent 70%) !important; opacity:.16; }
-  @keyframes fogMove{ from{ transform:translate(-5%,-3%) scale(1);} to{ transform:translate(6%,5%) scale(1.15);} }
+      radial-gradient(900px 600px at 6% -8%, rgba(59,130,246,.18), transparent 60%),
+      radial-gradient(900px 700px at 100% 108%, rgba(225,29,72,.15), transparent 60%),
+      radial-gradient(700px 500px at 55% 40%, rgba(245,158,11,.05), transparent 70%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-2) 100%); }
+  /* 첫 화면: 좌 히어로 / 우 입력 */
+  #screen-entry:not(.hidden){ display:flex; align-items:center; justify-content:center; padding:2rem; }
+  .entry-grid{ width:100%; max-width:68rem; display:grid; grid-template-columns:minmax(0,1fr) 27rem; gap:3rem; align-items:center; }
+  .entry-hero h1{ font-size:4.5rem !important; }
+  .entry-hero #hero-mask{ width:20rem !important; height:20rem !important; }
+  .entry-hero .relative > div:first-child{ width:26rem !important; height:26rem !important; left:50%; transform:translateX(-50%); }
+  /* 게임 화면: 상단바 / 플레이어 | 채팅 | 정보 + 메인 버튼 */
+  #screen-game:not(.hidden){ display:grid !important; height:100%; max-width:110rem; margin:0 auto; padding:1rem 1.25rem 1.25rem; gap:1rem;
+    grid-template-columns:minmax(19rem,23rem) minmax(0,1fr) minmax(21rem,26rem);
+    grid-template-rows:auto minmax(0,1fr) auto;
+    grid-template-areas:"top top top" "players chat info" "players chat dock"; }
+  .topbar{ grid-area:top; margin:0; padding:.85rem 1.1rem; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; column-gap:1rem; }
+  .tb-status{ display:contents; }
+  .tb-phase{ order:1; display:flex; align-items:center; gap:.75rem; }
+  .tb-phase #hdr-cat{ margin-top:0 !important; font-size:.85rem; }
+  .tb-phase .phase-pill{ font-size:1.15rem; padding:.4rem 1rem; }
+  .tb-spacer{ display:none; }
+  .tb-timer{ order:2; text-align:center; }
+  .tb-timer .timer{ font-size:2.6rem; }
+  .tb-actions{ order:3; justify-content:flex-end; }
+  .tb-actions .flex-1{ display:none; }
+  #hdr-bar-wrap{ order:4; grid-column:1 / -1; margin-top:.6rem; }
+  #strip{ display:none; }
+  #panes, footer.dock{ display:contents; }
+  footer.dock::before{ display:none; }
+  .tabbar{ display:none !important; }
+  .tab-pane, .tab-pane.hidden{ position:relative; inset:auto; display:flex !important; min-height:0; animation:none;
+    background:linear-gradient(160deg, rgba(30,38,58,.5), rgba(14,18,30,.55)); border:1px solid var(--glass-line); border-radius:var(--r-xl); box-shadow:var(--inner-glow), var(--float); overflow:hidden; }
+  #tab-chat{ grid-area:chat; } #tab-players{ grid-area:players; padding-top:.9rem; } #tab-info{ grid-area:info; padding-top:.9rem; }
+  #primary-action{ grid-area:dock; }
+  .primary-btn{ height:3.75rem; font-size:1.3rem; border-radius:1.4rem; }
+  #chat{ padding:1rem 1.25rem; }
+  #chat .max-w-\[78\%\]{ max-width:62%; }
+  #chat-form{ padding:.75rem 1rem 1rem; }
+  #hintbar{ margin:.9rem 1rem .25rem !important; }
+  .bubble{ font-size:15px; }
+  /* 오버레이 · 모달 크게 */
+  .modal{ max-width:30rem; padding:1.75rem; }
+  #wardrobe .modal{ max-width:44rem; }
+  #wardrobe #wd-grid{ grid-template-columns:repeat(6, minmax(0,1fr)); }
+  #reveal-overlay .card3d{ width:20rem !important; height:29rem !important; }
+  #reveal-overlay #rv-mask{ width:13rem !important; height:13rem !important; }
+  .exec-card{ width:20rem; height:20rem; }
+  .exec-verdict{ font-size:3rem; }
+  .splash .t{ font-size:4.5rem; } .splash .s{ font-size:1rem; }
+  .throne-wrap{ transform:scale(1.15); margin:1rem auto; }
+  #toasts{ top:6.5rem !important; }
+  .sheet-wrap{ display:none; }
+  .vote-flash{ animation:voteFlash 1.2s ease; }
+}
+/* 아주 큰 화면(2560px 이상, 배율 100%)에서는 전체를 비례 확대 */
+@media (min-width:2200px){ html{ font-size:19px; } .player-card .avatar-wrap{ width:66px; height:66px; } }
+@media (min-width:1024px) and (min-height:1800px){ html{ font-size:18px; } }
+@keyframes voteFlash{ 0%,100%{ box-shadow:var(--inner-glow), var(--float); } 30%{ box-shadow:0 0 0 2px var(--crimson-hi), 0 0 40px rgba(225,29,72,.6); } }
 
-  /* ===== Glass / Buttons ===== */
-  .glass{ background:linear-gradient(160deg, rgba(22,30,50,.92), rgba(12,17,30,.94));
-    border:1px solid rgba(203,213,225,.12); box-shadow:0 12px 44px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05); }
-  .gold-text{ background:linear-gradient(120deg,#FFF3C4 0%,#E9C766 35%,#D4AF37 55%,#A67C1B 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .btn{ transition:all .18s ease; border-radius:14px; font-weight:700; }
-  .btn:active{ transform:scale(.97); }
-  .btn:disabled{ opacity:.4; cursor:not-allowed; filter:grayscale(.4); }
-  .btn-gold{ background:linear-gradient(135deg,#F7E7B4,#D4AF37 48%,#A67C1B); color:#1A1205; box-shadow:0 6px 26px rgba(212,175,55,.28); }
-  .btn-gold:not(:disabled):hover{ filter:brightness(1.08); box-shadow:0 8px 34px rgba(212,175,55,.42); }
-  .btn-neon{ border:1px solid rgba(56,189,248,.55); color:#BAE6FD; background:rgba(56,189,248,.08); box-shadow:inset 0 0 18px rgba(56,189,248,.12); }
-  .btn-neon:not(:disabled):hover{ background:rgba(56,189,248,.16); box-shadow:0 0 22px rgba(56,189,248,.35), inset 0 0 18px rgba(56,189,248,.2); }
-  .btn-ghost{ border:1px solid rgba(203,213,225,.18); background:rgba(255,255,255,.03); color:#CBD5E1; }
-  .btn-ghost:not(:disabled):hover{ background:rgba(255,255,255,.08); }
-  .inp{ background:rgba(2,6,23,.6); border:1px solid rgba(203,213,225,.16); border-radius:14px; padding:.75rem 1rem; outline:none; color:#F1F5F9; transition:all .2s; }
-  .inp:focus{ border-color:rgba(212,175,55,.7); box-shadow:0 0 0 3px rgba(212,175,55,.14); }
-  .panel-title{ font-size:11px; letter-spacing:.32em; color:rgba(253,230,138,.72); font-weight:700; }
-  .label{ font-size:12px; color:#94A3B8; margin-bottom:.4rem; }
-  ::-webkit-scrollbar{ width:6px; } ::-webkit-scrollbar-thumb{ background:rgba(203,213,225,.16); border-radius:6px; }
-
-  /* ===== Player cards ===== */
-  #players-inner{ position:relative; padding-right:34px; }
-  #sus-svg{ position:absolute; left:0; top:0; pointer-events:none; z-index:5; overflow:visible; }
-  .player-card{ position:relative; display:flex; gap:.7rem; align-items:center; padding:.55rem .65rem; border-radius:16px;
-    background:linear-gradient(135deg, rgba(30,41,59,.55), rgba(15,23,42,.55)); border:1px solid rgba(203,213,225,.10); transition:border-color .3s, box-shadow .3s; }
-  .avatar-wrap{ width:58px; height:58px; flex-shrink:0; border-radius:14px; padding:3px;
-    background:radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--pc) 28%, #1E293B), #0B0F19 75%);
-    border:1px solid color-mix(in srgb, var(--pc) 45%, transparent); }
-  .turn-focus{ border-color:#38BDF8 !important; animation:neonPulse 1.3s ease-in-out infinite; }
-  @keyframes neonPulse{ 0%,100%{ box-shadow:0 0 0 1px rgba(56,189,248,.8), 0 0 14px rgba(56,189,248,.4);} 50%{ box-shadow:0 0 0 2px rgba(56,189,248,1), 0 0 34px rgba(56,189,248,.75);} }
-  .fox-card{ border-color:rgba(239,68,68,.6) !important; box-shadow:0 0 24px rgba(239,68,68,.35); background:linear-gradient(135deg, rgba(127,29,29,.45), rgba(15,23,42,.6)); }
-  .runoff-card{ border-color:rgba(244,63,94,.7) !important; box-shadow:0 0 22px rgba(244,63,94,.35); }
-  .badge{ font-size:10px; font-weight:800; padding:1px 6px; border-radius:999px; letter-spacing:.04em; }
-  .sus-btn{ font-size:12px; padding:2px 7px; border-radius:9px; border:1px solid rgba(244,63,94,.35); color:#FDA4AF; background:rgba(244,63,94,.06); transition:all .15s; }
-  .sus-btn:hover{ background:rgba(244,63,94,.18); }
-  .sus-btn.on{ background:#F43F5E; color:#fff; border-color:#F43F5E; box-shadow:0 0 12px rgba(244,63,94,.6); }
-
-  /* ===== Chat ===== */
-  .msg-in{ animation:msgIn .28s ease-out; }
-  @keyframes msgIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
-  .bubble{ padding:.5rem .8rem; border-radius:16px; font-size:14px; line-height:1.45; word-break:break-word; }
-  .bubble-other{ background:rgba(30,41,59,.85); border:1px solid rgba(203,213,225,.08); border-top-left-radius:4px; }
-  .bubble-me{ background:linear-gradient(135deg, rgba(56,189,248,.28), rgba(30,64,175,.35)); border:1px solid rgba(56,189,248,.3); border-top-right-radius:4px; }
-  .sys-line{ font-size:12px; padding:.3rem .9rem; border-radius:999px; background:rgba(2,6,23,.55); border:1px solid rgba(203,213,225,.08); text-align:center; max-width:92%; }
-  .hint-bubble{ position:relative; border:1px solid rgba(212,175,55,.55);
-    background:linear-gradient(135deg, rgba(212,175,55,.16), rgba(17,24,39,.65)); box-shadow:0 0 26px rgba(212,175,55,.14), inset 0 0 20px rgba(212,175,55,.06); }
-  .hint-bubble::before{ content:''; position:absolute; left:0; top:12px; bottom:12px; width:3px; border-radius:3px; background:linear-gradient(#FFF3C4,#D4AF37); }
-  .clue-tag{ font-size:10px; font-weight:900; letter-spacing:.18em; color:#1A1205; background:linear-gradient(135deg,#F7E7B4,#D4AF37); padding:2px 8px; border-radius:6px; }
-  .hint-chip{ display:flex; align-items:center; gap:.4rem; font-size:12px; padding:.25rem .6rem; border-radius:10px; background:rgba(212,175,55,.08); border:1px solid rgba(212,175,55,.25); }
-  .hint-chip .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  #chat-form.clue-mode{ background:linear-gradient(90deg, rgba(212,175,55,.12), transparent); }
-  #chat-form.clue-mode .inp{ border-color:rgba(212,175,55,.8); box-shadow:0 0 0 3px rgba(212,175,55,.18), 0 0 24px rgba(212,175,55,.2); }
-  .clue-badge{ font-size:10px; font-weight:900; letter-spacing:.16em; color:#1A1205; background:linear-gradient(135deg,#F7E7B4,#D4AF37); padding:4px 8px; border-radius:8px; animation:pulseGold 1.2s infinite; }
-  @keyframes pulseGold{ 50%{ box-shadow:0 0 16px rgba(212,175,55,.7);} }
-  .msg-wrap{ position:relative; }
-  .rx-add{ opacity:0; font-size:12px; padding:1px 7px; border-radius:999px; background:rgba(30,41,59,.95); border:1px solid rgba(203,213,225,.18); color:#CBD5E1; transition:opacity .15s; }
-  .msg-wrap:hover .rx-add{ opacity:1; }
-  @media (hover:none){ .rx-add{ opacity:.65; } }
-  .rx{ display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
-  .rx:empty{ display:none; }
-  .rx-pill{ font-size:12px; padding:1px 7px; border-radius:999px; background:rgba(30,41,59,.9); border:1px solid rgba(203,213,225,.14); cursor:pointer; transition:all .15s; }
-  .rx-pill.mine{ border-color:rgba(212,175,55,.7); background:rgba(212,175,55,.16); }
-  .rx-pill.pop{ animation:rxPop .35s ease-out; }
-  @keyframes rxPop{ 40%{ transform:scale(1.3);} }
-  #rx-picker{ position:fixed; z-index:120; display:flex; gap:2px; padding:5px; border-radius:16px; }
-  #rx-picker button{ font-size:20px; width:36px; height:36px; border-radius:10px; transition:transform .12s, background .12s; }
-  #rx-picker button:hover{ transform:scale(1.25); background:rgba(255,255,255,.08); }
-
-  /* ===== Action panel ===== */
-  .cat-btn{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:.6rem .3rem; border-radius:12px; font-size:12px; font-weight:700;
-    border:1px solid rgba(203,213,225,.14); background:rgba(255,255,255,.03); transition:all .2s; }
-  .cat-btn:not(:disabled):hover{ border-color:rgba(212,175,55,.5); }
-  .cat-btn.cat-on{ border-color:#D4AF37; background:rgba(212,175,55,.14); color:#FDE68A; box-shadow:0 0 18px rgba(212,175,55,.25); }
-  .cat-btn:disabled{ cursor:default; }
-  .secret-card{ position:relative; padding:1rem; border-radius:18px; overflow:hidden;
-    background:linear-gradient(145deg, rgba(56,189,248,.10), rgba(15,23,42,.8) 55%); border:1px solid rgba(56,189,248,.35); box-shadow:0 0 30px rgba(56,189,248,.12); }
-  .secret-card.secret-fox{ background:linear-gradient(145deg, rgba(239,68,68,.16), rgba(15,23,42,.85) 55%); border-color:rgba(239,68,68,.5); box-shadow:0 0 30px rgba(239,68,68,.22); }
-  .secret-word{ font-size:1.6rem; font-weight:900; color:#F8FAFC; letter-spacing:.02em; text-shadow:0 0 18px rgba(56,189,248,.35); word-break:keep-all; }
-  .vote-btn{ width:100%; display:flex; align-items:center; gap:.7rem; padding:.45rem .7rem; border-radius:14px; border:1px solid rgba(203,213,225,.12); background:rgba(255,255,255,.03); transition:all .2s; text-align:left; }
-  .vote-btn:hover{ border-color:rgba(244,63,94,.6); background:rgba(244,63,94,.07); }
-  .vote-btn.vote-on{ border-color:#F43F5E; background:rgba(244,63,94,.16); box-shadow:0 0 22px rgba(244,63,94,.3); }
-  .turn-row{ display:flex; align-items:center; gap:.5rem; font-size:13px; padding:.35rem .55rem; border-radius:10px; }
-  .turn-row.now{ background:rgba(56,189,248,.12); border:1px solid rgba(56,189,248,.45); color:#E0F2FE; }
-
-  /* ===== Mask stack ===== */
-  .mask-stack{ position:relative; perspective:600px; }
-  .mask-stack > .layer{ position:absolute; inset:0; }
-  .mask-stack .dog-layer{ transform-origin:50% 0%; z-index:2; }
-  .mask-stack .fox-layer{ z-index:1; opacity:0; transform:scale(.9); transition:opacity .9s ease .35s, transform .9s ease .35s; }
-  .mask-stack.unmask .dog-layer{ animation:peel 1.8s cubic-bezier(.6,0,.25,1) forwards; }
-  .mask-stack.unmask .fox-layer, .mask-stack.fox-shown .fox-layer{ opacity:1; transform:scale(1); }
-  .mask-stack.fox-shown .dog-layer{ display:none; }
-  @keyframes peel{
-    0%{ transform:translateY(0) rotateX(0); clip-path:inset(0 0 0 0); opacity:1; }
-    18%{ transform:translateY(3%) rotate(1.5deg); clip-path:inset(0 0 0 0); }
-    55%{ transform:translateY(-55%) rotateX(40deg) rotate(-6deg); clip-path:inset(0 0 22% 0); opacity:.9; }
-    100%{ transform:translateY(-125%) rotateX(75deg) rotate(-12deg); clip-path:inset(0 0 60% 0); opacity:0; }
-  }
-  .hero-mask .dog-layer{ animation:heroPeel 6s cubic-bezier(.6,0,.25,1) infinite; }
-  .hero-mask .fox-layer{ animation:heroFox 6s ease infinite; transition:none; }
-  @keyframes heroPeel{
-    0%,32%{ transform:none; opacity:1; clip-path:inset(0 0 0 0); }
-    50%,82%{ transform:translateY(-120%) rotateX(70deg) rotate(-10deg); opacity:0; clip-path:inset(0 0 55% 0); }
-    100%{ transform:none; opacity:1; clip-path:inset(0 0 0 0); }
-  }
-  @keyframes heroFox{ 0%,34%{ opacity:0; transform:scale(.9);} 50%,80%{ opacity:1; transform:scale(1);} 94%,100%{ opacity:0; transform:scale(.9);} }
-  .eye-glow{ animation:eyeGlow 1.1s ease-in-out infinite alternate; }
-  @keyframes eyeGlow{ from{ opacity:.35;} to{ opacity:1;} }
-  .tear{ transform-box:fill-box; transform-origin:center; animation:tear 1.6s ease-in infinite; }
-  .tear.t2{ animation-delay:.7s; }
-  @keyframes tear{ 0%{ transform:translateY(0); opacity:0;} 20%{ opacity:1;} 100%{ transform:translateY(20px); opacity:0;} }
-
-  /* ===== Overlays ===== */
-  .overlay{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; }
-  .overlay.hidden{ display:none !important; }
-  .card3d{ perspective:1400px; }
-  .card3d-inner{ position:relative; width:100%; height:100%; transition:transform 1.05s cubic-bezier(.3,.9,.3,1); transform-style:preserve-3d; }
-  .card3d-inner.flipped{ transform:rotateY(180deg); }
-  .face{ position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:24px; overflow:hidden; }
-  .face.back{ transform:rotateY(180deg); }
-  .card-front{ background:
-      radial-gradient(circle at 50% 50%, rgba(212,175,55,.18), transparent 55%),
-      repeating-linear-gradient(45deg, rgba(212,175,55,.09) 0 2px, transparent 2px 14px),
-      repeating-linear-gradient(-45deg, rgba(212,175,55,.09) 0 2px, transparent 2px 14px),
-      #0F1424; border:2px solid rgba(212,175,55,.6); box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 0 40px rgba(212,175,55,.15); }
-  .card-back{ background:linear-gradient(160deg,#141B2E,#0B0F19 70%); border:2px solid rgba(56,189,248,.55); box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 40px rgba(56,189,248,.2); }
-  .fox-mode .card-back{ border-color:rgba(239,68,68,.8); box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(239,68,68,.45); }
-  .reveal-vignette{ position:absolute; inset:0; pointer-events:none; transition:box-shadow 1s; }
-  .fox-mode .reveal-vignette{ box-shadow:inset 0 0 220px rgba(220,38,38,.65); animation:vigPulse 1.6s ease-in-out infinite; }
-  @keyframes vigPulse{ 50%{ box-shadow:inset 0 0 300px rgba(220,38,38,.85);} }
-
-  /* Execution */
-  .exec-dark{ position:absolute; inset:0; background:#000; opacity:0; transition:opacity .9s; }
-  #exec-overlay.on .exec-dark{ opacity:.93; }
-  .spot{ position:absolute; inset:0; opacity:0; transition:opacity .7s; background:radial-gradient(ellipse 300px 380px at 50% 47%, rgba(255,244,214,.20), rgba(255,244,214,.05) 55%, transparent 72%); }
-  .spot-cone{ position:absolute; left:50%; top:-12%; width:620px; height:82%; transform:translateX(-50%);
-    background:linear-gradient(to bottom, rgba(255,240,200,.30), rgba(255,240,200,.03)); clip-path:polygon(44% 0,56% 0,100% 100%,0 100%); opacity:0; transition:opacity .7s; filter:blur(8px); }
-  #exec-overlay.lit .spot, #exec-overlay.lit .spot-cone{ opacity:1; }
-  .exec-stage{ position:relative; z-index:3; text-align:center; opacity:0; transform:scale(.88); transition:all .7s cubic-bezier(.3,.9,.3,1); }
-  #exec-overlay.lit .exec-stage{ opacity:1; transform:scale(1); }
-  .exec-card{ position:relative; width:270px; height:270px; margin:0 auto; border-radius:28px;
-    background:radial-gradient(circle at 50% 38%, #1F2937, #0B0F19 75%); border:1.5px solid rgba(212,175,55,.45); box-shadow:0 0 50px rgba(255,240,200,.12); }
-  .exec-card .under, .exec-card .half{ position:absolute; inset:16px; }
-  .exec-card .half{ z-index:2; }
-  .exec-card .under{ opacity:0; visibility:hidden; transform:scale(.85); transition:opacity .35s ease, transform .5s cubic-bezier(.3,1.4,.5,1); }
-  .exec-card.split .under{ opacity:1; visibility:visible; transform:scale(1); }
-  .half-l{ clip-path:polygon(0 0, 52% 0, 46% 20%, 55% 35%, 47% 55%, 54% 75%, 49% 100%, 0 100%); }
-  .half-r{ clip-path:polygon(52% 0, 100% 0, 100% 100%, 49% 100%, 54% 75%, 47% 55%, 55% 35%, 46% 20%); }
-  .beat{ animation:beat .38s ease-out; }
-  @keyframes beat{ 0%{ transform:scale(1);} 30%{ transform:scale(1.07);} 100%{ transform:scale(1);} }
-  .crack{ position:absolute; inset:16px; width:calc(100% - 32px); height:calc(100% - 32px); z-index:4; pointer-events:none; }
-  .crack path{ fill:none; stroke:#fff; stroke-width:3.2; stroke-linejoin:round; filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 12px #fde68a); stroke-dasharray:340; stroke-dashoffset:340; }
-  .cracking .crack path{ animation:draw .65s ease-out forwards; }
-  .cracking:not(.split){ animation:tremble .12s linear infinite; }
-  @keyframes tremble{ 50%{ transform:translate(1px,-1px) rotate(.3deg);} }
-  @keyframes draw{ to{ stroke-dashoffset:0; } }
-  .split .crack{ opacity:0; transition:opacity .25s; }
-  .split .half-l{ animation:fallL 1.7s cubic-bezier(.5,0,.85,.4) forwards; }
-  .split .half-r{ animation:fallR 1.7s cubic-bezier(.5,0,.85,.4) forwards; }
-  @keyframes fallL{ 0%{ transform:none;} 14%{ transform:translate(-12px,-6px) rotate(-5deg);} 100%{ transform:translate(-190px,460px) rotate(-42deg); opacity:0;} }
-  @keyframes fallR{ 0%{ transform:none;} 14%{ transform:translate(12px,-6px) rotate(5deg);} 100%{ transform:translate(190px,460px) rotate(42deg); opacity:0;} }
-  .exec-flash{ position:absolute; inset:0; z-index:2; pointer-events:none; opacity:0; background:radial-gradient(circle at 50% 47%, rgba(239,68,68,.6), rgba(127,29,29,.15) 45%, transparent 75%); }
-  #exec-overlay.fox-hit .exec-flash{ animation:redFlash 1.4s forwards; }
-  @keyframes redFlash{ 0%{ opacity:0;} 8%{ opacity:1;} 30%{ opacity:.55;} 45%{ opacity:.9;} 100%{ opacity:.4;} }
-  #exec-overlay.fox-hit .exec-card{ border-color:#EF4444; box-shadow:0 0 70px rgba(239,68,68,.65), inset 0 0 40px rgba(239,68,68,.25); }
-  #exec-overlay.innocent .exec-card{ border-color:#64748B; box-shadow:0 0 50px rgba(125,211,252,.18); }
-  .warn-band{ position:absolute; left:-5%; right:-5%; height:46px; z-index:2; opacity:0; display:flex; align-items:center; overflow:hidden;
-    background:repeating-linear-gradient(45deg,#DC2626 0 22px,#111 22px 44px); color:#fff; font-weight:900; letter-spacing:.4em; font-size:14px; }
-  .warn-band span{ background:#0B0F19; padding:4px 14px; margin:0 auto; border:1px solid #DC2626; }
-  .warn-band.top{ top:9%; transform:rotate(-3deg); } .warn-band.bot{ bottom:9%; transform:rotate(2deg); }
-  #exec-overlay.fox-hit .warn-band{ animation:warnIn .5s ease-out forwards; }
-  @keyframes warnIn{ from{ opacity:0; letter-spacing:1em;} to{ opacity:.92; } }
-  .shake{ animation:shake .65s; }
-  @keyframes shake{ 10%,90%{ transform:translate(-2px,1px);} 20%,80%{ transform:translate(4px,-2px);} 30%,50%,70%{ transform:translate(-7px,3px);} 40%,60%{ transform:translate(7px,-3px);} }
-  .spark{ position:absolute; left:50%; top:47%; width:7px; height:7px; border-radius:50%; background:#FBBF24; box-shadow:0 0 12px #F97316, 0 0 4px #fff; z-index:4; animation:spark 1.3s ease-out forwards; }
-  @keyframes spark{ to{ transform:translate(var(--dx),var(--dy)) scale(.15); opacity:0; } }
-  .drop{ position:absolute; top:-30px; width:2px; height:18px; z-index:2; background:linear-gradient(transparent,#7DD3FC); opacity:.6; animation:drop linear forwards; }
-  @keyframes drop{ to{ transform:translateY(115vh); } }
-  .exec-verdict{ font-family:'Playfair Display',serif; font-size:2.3rem; font-weight:900; margin-top:1.1rem; opacity:0; transform:translateY(12px); transition:all .6s; }
-  .exec-verdict.show{ opacity:1; transform:none; }
-  .confetti{ position:absolute; top:-20px; width:8px; height:14px; z-index:1; animation:confetti linear forwards; }
-  @keyframes confetti{ to{ transform:translateY(110vh) rotate(720deg); } }
-
-  /* Result scenes */
-  .throne-wrap{ position:relative; width:220px; height:220px; margin:0 auto; }
-  .throne-wrap .fox-on{ position:absolute; left:42px; top:50px; width:136px; height:136px; animation:riseUp 1s cubic-bezier(.3,1.3,.5,1) both .3s; }
-  .throne-wrap .crown-drop{ position:absolute; left:84px; top:-10px; width:52px; height:52px; animation:crownDrop 1.1s cubic-bezier(.5,0,.4,1.4) both 1.2s; z-index:3; }
-  @keyframes riseUp{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
-  @keyframes crownDrop{ 0%{ transform:translateY(-140px) rotate(-30deg); opacity:0; } 60%{ opacity:1; } 100%{ transform:translateY(40px) rotate(-8deg); opacity:1; } }
-  .minion{ position:relative; width:52px; height:52px; }
-  .minion .l{ position:absolute; inset:0; }
-  .minion .hyp{ opacity:0; animation:hypnoIn .7s ease forwards; }
-  .minion.tainted{ animation:taint .7s ease forwards; }
-  @keyframes hypnoIn{ to{ opacity:1; } }
-  @keyframes taint{ to{ filter:drop-shadow(0 0 8px rgba(239,68,68,.9)); } }
-  .cage-wrap{ position:relative; width:170px; height:170px; margin:0 auto; }
-  .cage-bars{ position:absolute; inset:-6px; animation:cageDrop .7s cubic-bezier(.6,0,.4,1.3) both .8s; }
-  @keyframes cageDrop{ from{ transform:translateY(-220px); } to{ transform:none; } }
-  .cheer{ animation:cheer .6s ease-in-out infinite alternate; }
-  @keyframes cheer{ to{ transform:translateY(-6px) rotate(3deg); } }
-
-  /* Wardrobe */
-  .wd-tab{ padding:.4rem .8rem; border-radius:10px; font-size:13px; font-weight:700; color:#94A3B8; border:1px solid transparent; white-space:nowrap; }
-  .wd-tab.on{ color:#FDE68A; border-color:rgba(212,175,55,.5); background:rgba(212,175,55,.1); }
-  .wd-tile{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:.4rem; border-radius:14px; border:1px solid rgba(203,213,225,.12); background:rgba(255,255,255,.03); font-size:11px; font-weight:700; color:#CBD5E1; transition:all .15s; }
-  .wd-tile:hover:not(:disabled){ border-color:rgba(212,175,55,.5); transform:translateY(-2px); }
-  .wd-tile.on{ border-color:#D4AF37; background:rgba(212,175,55,.14); color:#FDE68A; box-shadow:0 0 16px rgba(212,175,55,.25); }
-  .wd-tile:disabled{ opacity:.3; cursor:not-allowed; }
-
-  .toast{ animation:toastIn .3s ease-out; }
-  @keyframes toastIn{ from{ opacity:0; transform:translateY(-10px);} to{ opacity:1; transform:none;} }
-  .timer-bar{ height:3px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
-  .timer-bar > div{ height:100%; background:linear-gradient(90deg,#38BDF8,#D4AF37); transition:width .2s linear; }
-  .swatch{ width:100%; aspect-ratio:1; border-radius:12px; border:2px solid transparent; transition:all .2s; position:relative; }
-  .swatch.on{ border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.15), 0 0 18px var(--sc); transform:scale(1.06); }
-  #net-banner{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:110; }
+@media (prefers-reduced-motion:reduce){ *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
 </style>
 </head>
 <body>
-<div class="bg-lounge"></div>
-<div class="fog" style="--fc:#38BDF8;left:-20vw;top:-20vw"></div>
-<div class="fog" style="--fc:#D4AF37;right:-25vw;bottom:-25vw"></div>
+<div class="backdrop"></div>
+<div id="app" class="app-shell">
 
 <!-- ================= ENTRY ================= -->
-<section id="screen-entry" class="relative z-10 min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-5xl grid md:grid-cols-2 gap-6">
-    <div class="glass rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden min-h-[520px]">
-      <div>
-        <div class="text-[11px] tracking-[.5em] text-amber-200/70 font-bold">NOIR MYSTERY LOUNGE</div>
-        <h1 class="font-display text-5xl md:text-6xl mt-3 gold-text font-black italic">Liar Lounge</h1>
-        <p class="text-slate-300 mt-3">오늘 밤 라운지의 강아지 중 하나는 <span class="text-rose-300 font-bold">탈을 쓴 여우</span>입니다.</p>
-      </div>
-      <div class="relative my-6">
-        <div class="absolute inset-0 mx-auto w-72 h-72 rounded-full" style="background:radial-gradient(circle, rgba(255,240,200,.14), transparent 65%)"></div>
-        <div id="hero-mask" class="mask-stack hero-mask w-56 h-56 mx-auto"></div>
-      </div>
-      <ul class="text-sm text-slate-400 space-y-1.5">
-        <li><span class="text-sky-300">◆</span> 강아지들은 비밀 제시어를 받고, 여우는 카테고리만 압니다.</li>
-        <li><span class="text-sky-300">◆</span> 한 줄 단서 → 자유 토론 → 투표로 여우를 지목하세요.</li>
-        <li><span class="text-rose-300">◆</span> 정체가 들킨 여우는 15초 안에 제시어를 맞히면 역전승!</li>
-      </ul>
-    </div>
+<section id="screen-entry" class="screen overflow-y-auto no-scrollbar px-5 pt-8 pb-8">
+  <div class="entry-grid">
+  <div class="entry-hero">
+  <div class="text-center">
+    <div class="text-[11px] tracking-[.45em] text-slate-400 font-bold">NOIR MYSTERY LOUNGE</div>
+    <h1 class="font-display text-[44px] leading-none mt-2 gold-text">라이어 라운지</h1>
+    <p class="text-slate-300 text-sm mt-2">강아지들 사이에 <b class="crimson-text font-display text-base">탈을 쓴 여우</b>가 숨어 있다</p>
+  </div>
+  <div class="relative my-5">
+    <div class="absolute inset-0 mx-auto w-56 h-56 rounded-full" style="background:radial-gradient(circle, rgba(245,158,11,.18), transparent 65%)"></div>
+    <div id="hero-mask" class="mask-stack hero-mask w-44 h-44 mx-auto"></div>
+  </div>
 
-    <div class="glass rounded-3xl p-8 flex flex-col gap-5">
-      <div id="resume-box" class="hidden rounded-2xl p-4 border border-sky-400/40 bg-sky-400/10">
-        <div class="text-sky-200 font-bold">🔄 이전 라운지에 다시 접속할 수 있어요</div>
-        <div id="resume-desc" class="text-xs text-slate-400 mt-1"></div>
-        <div class="flex gap-2 mt-3">
-          <button class="btn btn-neon flex-1 py-2" onclick="resumeSession()">재접속</button>
-          <button class="btn btn-ghost px-3 py-2 text-sm" onclick="discardSession()">새로 시작</button>
-        </div>
-      </div>
-      <div>
-        <div class="label">닉네임</div>
-        <input id="in-name" class="inp w-full" maxlength="12" placeholder="라운지에서 쓸 이름 (최대 12자)">
-      </div>
-      <div>
-        <div class="label">대표 컬러 <span class="text-slate-500">(입장 후 옷장에서 털색·모자·안경·옷을 꾸밀 수 있어요)</span></div>
-        <div id="swatches" class="grid grid-cols-5 gap-2"></div>
-      </div>
-      <div class="flex items-center gap-4 p-3 rounded-2xl bg-black/20 border border-white/5">
-        <div id="preview" class="w-24 h-24 shrink-0"></div>
-        <div>
-          <div class="text-[10px] tracking-[.3em] text-slate-500">PREVIEW</div>
-          <div id="preview-name" class="text-xl font-black text-white">이름 없음</div>
-          <div id="preview-color" class="text-sm text-slate-400"></div>
-        </div>
-      </div>
-      <button id="btn-create" class="btn btn-gold w-full py-3.5 text-lg" onclick="createRoom()">🥂 방 만들기 (Host)</button>
-      <div class="flex items-center gap-3 text-xs text-slate-500"><div class="flex-1 h-px bg-white/10"></div>또는 초대받은 방으로<div class="flex-1 h-px bg-white/10"></div></div>
-      <div class="flex gap-2">
-        <input id="in-code" class="inp flex-1 uppercase font-mono tracking-[.3em] text-center" maxlength="5" placeholder="방 코드">
-        <button id="btn-join" class="btn btn-neon px-5" onclick="joinRoom()">입장 (Guest)</button>
-      </div>
-      <div id="entry-status" class="text-sm text-amber-200/80 min-h-[20px] text-center"></div>
+  </div>
+  <div class="entry-form">
+  <div id="resume-box" class="hidden glass p-4 mb-4" style="border-color:rgba(96,165,250,.45)">
+    <div class="text-blue-200 font-bold">🔄 이전 라운지에 다시 접속할 수 있어요</div>
+    <div id="resume-desc" class="text-xs text-slate-400 mt-1"></div>
+    <div class="flex gap-2 mt-3">
+      <button class="btn btn-neon flex-1 py-2.5" onclick="resumeSession()">재접속</button>
+      <button class="btn btn-ghost px-4 py-2.5 text-sm" onclick="discardSession()">새로 시작</button>
     </div>
+  </div>
+
+  <div class="glass p-5 space-y-4">
+    <div>
+      <div class="label">닉네임</div>
+      <input id="in-name" class="inp w-full" maxlength="12" placeholder="라운지에서 쓸 이름 (최대 12자)">
+    </div>
+    <div>
+      <div class="label">대표 컬러 <span class="text-slate-500 font-medium">· 입장 후 옷장에서 꾸밀 수 있어요</span></div>
+      <div id="swatches" class="grid grid-cols-5 gap-2"></div>
+    </div>
+    <div class="flex items-center gap-3 p-3 glass-flat">
+      <div id="preview" class="w-16 h-16 shrink-0"></div>
+      <div class="min-w-0">
+        <div class="text-[10px] tracking-[.3em] text-slate-500 font-bold">PREVIEW</div>
+        <div id="preview-name" class="text-lg font-black text-white truncate">이름 없음</div>
+        <div id="preview-color" class="text-xs text-slate-400"></div>
+      </div>
+    </div>
+    <button id="btn-create" class="btn btn-gold w-full h-14 font-display text-xl" onclick="createRoom()">🥂 방 만들기</button>
+    <div class="flex items-center gap-3 text-[11px] text-slate-500 font-semibold"><div class="flex-1 h-px bg-white/10"></div>초대받은 방으로<div class="flex-1 h-px bg-white/10"></div></div>
+    <div class="flex gap-2">
+      <input id="in-code" class="inp flex-1 min-w-0 uppercase font-mono tracking-[.35em] text-center text-lg" maxlength="5" placeholder="CODE">
+      <button id="btn-join" class="btn btn-neon px-5 font-display text-lg" onclick="joinRoom()">입장</button>
+    </div>
+    <div id="entry-status" class="text-sm text-amber-200/90 min-h-[20px] text-center font-semibold"></div>
+  </div>
+  <div class="text-center text-[11px] text-slate-500 mt-5">3~10명 · 서버 없이 브라우저끼리 연결돼요</div>
+  </div>
   </div>
 </section>
 
 <!-- ================= GAME ================= -->
-<section id="screen-game" class="hidden relative z-10 min-h-screen lg:h-screen flex flex-col p-3 gap-3">
-  <header class="glass rounded-2xl px-4 py-2.5 flex items-center gap-3 flex-wrap">
-    <div class="font-display text-2xl gold-text font-black italic mr-1">Liar Lounge</div>
-    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/30 border border-amber-300/25">
-      <span class="text-[10px] tracking-[.3em] text-amber-200/70">ROOM</span>
-      <span id="hdr-code" class="font-mono font-bold text-amber-100 tracking-[.25em]">-----</span>
-      <button class="btn btn-ghost text-xs px-2 py-1" onclick="copyCode()">코드 복사</button>
-      <button class="btn btn-gold text-xs px-2 py-1" onclick="copyInvite()">🔗 초대 링크</button>
+<section id="screen-game" class="screen hidden flex flex-col">
+  <header class="topbar glass">
+    <div class="tb-actions flex items-center gap-2">
+      <div class="room-chip">
+        <span class="text-[9px] tracking-[.25em] text-amber-200/70 font-bold">ROOM</span>
+        <span id="hdr-code" class="font-mono font-extrabold text-amber-100 tracking-[.2em] text-sm">-----</span>
+        <button class="btn btn-ghost text-[11px] px-2 py-1 rounded-xl" onclick="copyCode()">복사</button>
+        <button class="btn btn-gold text-[11px] px-2 py-1 rounded-xl" onclick="copyInvite()">🔗 초대</button>
+      </div>
+      <div class="flex-1"></div>
+      <div id="hdr-net" class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34D399]" title="연결됨"></div>
+      <button id="btn-mute" class="btn btn-ghost icon-btn" onclick="toggleMute()" title="음소거"></button>
+      <button class="btn btn-ghost icon-btn text-sm" onclick="leave()" title="나가기">⎋</button>
     </div>
-    <div id="hdr-cat" class="text-sm text-slate-300 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10"></div>
-    <div id="hdr-net" class="text-xs px-2 py-1 rounded-lg bg-emerald-400/10 text-emerald-300 border border-emerald-400/20">● 연결됨</div>
-    <div class="flex-1"></div>
-    <div id="hdr-phase" class="text-sm font-bold px-3 py-1.5 rounded-xl border border-sky-400/40 text-sky-200 bg-sky-400/10">대기실</div>
-    <div class="w-28">
-      <div id="hdr-timer" class="font-mono text-2xl font-bold text-center leading-none">--:--</div>
-      <div class="timer-bar mt-1"><div id="hdr-bar" style="width:0%"></div></div>
+    <div class="tb-status flex items-end gap-3 mt-2.5">
+      <div class="tb-phase min-w-0">
+        <div id="hdr-phase" class="phase-pill tone-amber inline-block">대기실</div>
+        <div id="hdr-cat" class="text-[11px] text-slate-400 font-semibold mt-1.5 truncate"></div>
+      </div>
+      <div class="tb-spacer flex-1"></div>
+      <div class="tb-timer text-right">
+        <div id="hdr-timer" class="timer">--:--</div>
+        <div class="text-[10px] text-slate-500 font-bold mt-1 tnum"><span id="player-count"></span></div>
+      </div>
     </div>
-    <button id="btn-mute" class="btn btn-ghost px-3 py-2" onclick="toggleMute()" title="음소거"></button>
-    <button class="btn btn-ghost px-3 py-2 text-sm" onclick="leave()">나가기</button>
+    <div id="hdr-bar-wrap" class="timer-bar mt-2"><div id="hdr-bar" style="width:0%"></div></div>
   </header>
 
-  <main class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_340px] gap-3">
-    <aside class="glass rounded-2xl p-3 flex flex-col min-h-[300px] lg:min-h-0">
-      <div class="flex items-center justify-between mb-2 px-1">
-        <div class="panel-title">PLAYER STAGE</div>
-        <div id="player-count" class="text-xs text-slate-400 font-mono"></div>
+  <div id="strip" class="strip no-scrollbar"></div>
+
+  <main id="panes" class="relative flex-1 min-h-0 z-[3]">
+    <!-- 채팅 -->
+    <div id="tab-chat" class="tab-pane">
+      <div id="hintbar" class="hidden mx-3 mt-1 mb-1 px-3 py-2 glass-flat" style="border-color:rgba(252,211,77,.25)">
+        <button class="w-full flex items-center justify-between text-xs font-bold text-amber-200" onclick="toggleHints()">
+          <span>📜 공식 단서 요약 <span class="tnum">(<span id="hintbar-count">0</span>)</span></span><span id="hint-caret">접기 ▴</span>
+        </button>
+        <div id="hintbar-list" class="flex flex-wrap gap-1.5 mt-2 max-h-24 overflow-y-auto"></div>
       </div>
-      <div id="players" class="flex-1 overflow-y-auto overflow-x-hidden">
+      <div id="chat" class="flex-1 overflow-y-auto px-3 py-2 no-scrollbar"></div>
+      <form id="chat-form" onsubmit="event.preventDefault();sendChat()" class="flex gap-2 items-center">
+        <span id="input-mode" class="hidden clue-badge">단서</span>
+        <input id="chat-input" autocomplete="off" class="inp flex-1 min-w-0" maxlength="140" placeholder="메시지를 입력하세요...">
+        <button type="submit" class="btn btn-neon icon-btn !w-11 !h-11 !rounded-2xl text-lg" title="전송">➤</button>
+      </form>
+    </div>
+    <!-- 플레이어 -->
+    <div id="tab-players" class="tab-pane hidden">
+      <div class="flex items-center justify-between px-4 pt-1 pb-2">
+        <div class="panel-title">PLAYER STAGE</div>
+        <div id="sus-legend" class="hidden text-[11px] text-rose-200/80 font-semibold">🎯 버튼으로 의심 지목 → 화살표로 공개</div>
+      </div>
+      <div id="players" class="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 no-scrollbar">
         <div id="players-inner"><div id="players-list" class="space-y-2"></div><svg id="sus-svg"></svg></div>
       </div>
-      <div id="sus-legend" class="hidden text-[11px] text-rose-200/70 px-1 pt-2">🎯 카드의 버튼으로 의심 대상을 지목하면 화살표로 표시됩니다</div>
-    </aside>
-
-    <section class="glass rounded-2xl flex flex-col min-h-[460px] lg:min-h-0">
-      <div class="px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
-        <div class="panel-title">LOUNGE CHAT</div>
-        <div class="text-[11px] text-slate-500">메시지에 마우스를 올리면 <span class="text-amber-300">리액션</span>을 달 수 있어요</div>
-      </div>
-      <div id="hintbar" class="hidden px-4 py-2 border-b border-amber-300/15 bg-amber-300/[.03]">
-        <button class="w-full flex items-center justify-between text-xs font-bold text-amber-200" onclick="toggleHints()">
-          <span>📜 공식 단서 요약 (<span id="hintbar-count">0</span>)</span><span id="hint-caret">접기 ▴</span>
-        </button>
-        <div id="hintbar-list" class="flex flex-wrap gap-1.5 mt-2 max-h-28 overflow-y-auto"></div>
-      </div>
-      <div id="chat" class="flex-1 overflow-y-auto px-3 py-2"></div>
-      <form id="chat-form" onsubmit="event.preventDefault();sendChat()" class="p-3 border-t border-white/10 flex gap-2 items-center rounded-b-2xl">
-        <span id="input-mode" class="hidden clue-badge">CLUE</span>
-        <input id="chat-input" autocomplete="off" class="inp flex-1 py-2.5" maxlength="140" placeholder="메시지를 입력하세요...">
-        <button type="submit" class="btn btn-gold px-5 py-2.5">전송</button>
-      </form>
-    </section>
-
-    <aside id="action" class="glass rounded-2xl p-4 overflow-y-auto min-h-[300px] lg:min-h-0"></aside>
+    </div>
+    <!-- 내 카드 / 방 설정 -->
+    <div id="tab-info" class="tab-pane hidden">
+      <aside id="action" class="flex-1 overflow-y-auto px-3 pb-3 pt-1 no-scrollbar"></aside>
+    </div>
   </main>
+
+  <footer class="dock">
+    <div id="primary-action"></div>
+    <nav class="tabbar glass">
+      <button class="tab-btn on" data-tab="chat" onclick="setTab('chat')"><span class="ic">💬</span>채팅<span id="badge-chat" class="dot hidden"></span></button>
+      <button class="tab-btn" data-tab="players" onclick="setTab('players')"><span class="ic">🐾</span>플레이어<span id="badge-players" class="dot hidden"></span></button>
+      <button class="tab-btn" data-tab="info" onclick="setTab('info')"><span class="ic" id="tab-info-ic">🃏</span><span id="tab-info-label">내 카드</span><span id="badge-info" class="dot hidden"></span></button>
+    </nav>
+  </footer>
 </section>
 
-<!-- ================= OVERLAYS ================= -->
+<!-- ================= LAYERS / OVERLAYS (앱 셸 내부) ================= -->
+<div id="splash" class="splash hidden"></div>
+
+<div id="vote-sheet" class="sheet-wrap">
+  <div class="dim" onclick="closeVoteSheet()"></div>
+  <div class="sheet glass-solid" style="border-bottom:none">
+    <div class="grab"></div>
+    <div id="vote-sheet-body"></div>
+  </div>
+</div>
+
 <div id="reveal-overlay" class="overlay hidden"></div>
 <div id="exec-overlay" class="overlay hidden"></div>
 
 <div id="fox-modal" class="overlay hidden" style="z-index:70">
-  <div class="absolute inset-0 bg-black/90"></div>
-  <div class="absolute inset-0 pointer-events-none" style="box-shadow:inset 0 0 220px rgba(220,38,38,.55)"></div>
-  <div class="relative glass rounded-3xl p-7 w-[min(92vw,460px)] text-center" style="border-color:rgba(244,63,94,.5);box-shadow:0 0 60px rgba(239,68,68,.35)">
-    <div id="fox-modal-avatar" class="w-28 h-28 mx-auto"></div>
-    <div class="text-xs tracking-[.45em] text-rose-300 font-bold mt-2">LAST CHANCE</div>
-    <h2 class="font-display text-4xl text-rose-100 font-black italic mt-1">최후의 발악</h2>
-    <p class="text-slate-300 text-sm mt-2">정체가 들켰습니다. 하지만 <b class="text-amber-200">비밀 제시어</b>를 맞히면 여우의 역전승!</p>
+  <div class="overlay-dim"></div>
+  <div class="absolute inset-0 pointer-events-none" style="box-shadow:inset 0 0 200px rgba(225,29,72,.55)"></div>
+  <div class="modal glass text-center" style="border-color:rgba(251,113,133,.55);box-shadow:var(--inner-glow),0 0 60px rgba(225,29,72,.4)">
+    <div id="fox-modal-avatar" class="w-24 h-24 mx-auto"></div>
+    <div class="text-[11px] tracking-[.45em] text-rose-300 font-bold mt-1">LAST CHANCE</div>
+    <h2 class="font-display text-4xl crimson-text mt-1">최후의 발악</h2>
+    <p class="text-slate-300 text-sm mt-2">정체가 들켰다. 하지만 <b class="text-amber-200">비밀 제시어</b>를 맞히면 역전승!</p>
     <div id="fox-modal-cat" class="mt-3 text-amber-100 font-bold"></div>
-    <div id="fox-timer" class="font-mono text-5xl font-bold text-rose-300 mt-3">15</div>
-    <div class="timer-bar mt-2"><div id="fox-bar" style="width:100%;background:linear-gradient(90deg,#F43F5E,#F59E0B)"></div></div>
+    <div id="fox-timer" class="timer !text-5xl text-rose-300 mt-3">15</div>
+    <div class="timer-bar urgent mt-2"><div id="fox-bar" style="width:100%"></div></div>
     <input id="fox-input" class="inp w-full mt-4 text-center text-lg" maxlength="30" placeholder="제시어를 입력하세요" onkeydown="if(event.key==='Enter'){event.preventDefault();submitFoxGuess();}">
-    <button id="fox-submit" class="btn btn-gold w-full py-3 mt-3 text-lg" onclick="submitFoxGuess()">🦊 최종 답변 제출</button>
+    <button id="fox-submit" class="btn btn-crimson w-full h-14 mt-3 font-display text-xl" onclick="submitFoxGuess()">🦊 최종 답변 제출</button>
     <div class="text-left mt-4">
-      <div class="text-[10px] tracking-[.3em] text-slate-500 mb-1">강아지들이 남긴 단서</div>
+      <div class="text-[10px] tracking-[.3em] text-slate-500 font-bold mb-1">강아지들이 남긴 단서</div>
       <div id="fox-hints" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto"></div>
     </div>
   </div>
@@ -391,67 +613,63 @@
 
 <!-- Wardrobe -->
 <div id="wardrobe" class="overlay hidden" style="z-index:80">
-  <div class="absolute inset-0 bg-black/85" onclick="closeWardrobe()"></div>
-  <div class="relative glass rounded-[28px] p-5 w-[min(96vw,860px)] max-h-[92vh] overflow-y-auto">
-    <div class="flex items-center justify-between mb-3">
-      <div><div class="panel-title">WARDROBE</div><div class="font-display text-3xl gold-text font-black italic">옷장</div></div>
-      <button class="btn btn-ghost px-3 py-1.5" onclick="closeWardrobe()">✕</button>
+  <div class="overlay-dim" onclick="closeWardrobe()"></div>
+  <div class="modal glass !p-4">
+    <div class="flex items-center justify-between mb-2">
+      <div><div class="text-[10px] tracking-[.35em] text-slate-400 font-bold">WARDROBE</div><div class="font-display text-3xl gold-text">옷장</div></div>
+      <button class="btn btn-ghost icon-btn" onclick="closeWardrobe()">✕</button>
     </div>
-    <div class="grid md:grid-cols-[250px_1fr] gap-5">
-      <div class="flex flex-col items-center">
-        <div class="w-56 h-56 rounded-3xl p-2" style="background:radial-gradient(circle at 50% 38%, rgba(255,240,200,.14), rgba(11,15,25,.6) 70%);border:1px solid rgba(212,175,55,.3)">
-          <div id="wd-preview" class="w-full h-full"></div>
-        </div>
-        <div id="wd-summary" class="text-xs text-slate-400 mt-3 text-center leading-relaxed"></div>
-        <div class="flex gap-2 mt-3 w-full">
-          <button class="btn btn-ghost flex-1 py-2 text-sm" onclick="wdRandom()">🎲 랜덤</button>
-          <button class="btn btn-ghost flex-1 py-2 text-sm" onclick="wdReset()">↺ 기본값</button>
-        </div>
+    <div class="flex flex-col items-center">
+      <div class="w-36 h-36 rounded-[28px] p-2" style="background:radial-gradient(circle at 50% 38%, rgba(245,158,11,.18), rgba(11,14,20,.6) 70%);border:1px solid rgba(252,211,77,.3);box-shadow:var(--inner-glow)">
+        <div id="wd-preview" class="w-full h-full"></div>
       </div>
-      <div class="min-w-0">
-        <div id="wd-tabs" class="flex gap-1 overflow-x-auto pb-2"></div>
-        <div id="wd-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2"></div>
+      <div id="wd-summary" class="text-[11px] text-slate-400 mt-2 text-center leading-relaxed"></div>
+      <div class="flex gap-2 mt-2 w-full">
+        <button class="btn btn-ghost flex-1 py-2 text-sm" onclick="wdRandom()">🎲 랜덤</button>
+        <button class="btn btn-ghost flex-1 py-2 text-sm" onclick="wdReset()">↺ 기본값</button>
       </div>
     </div>
-    <div class="flex gap-2 mt-5">
+    <div id="wd-tabs" class="flex gap-1 overflow-x-auto no-scrollbar mt-3 pb-1"></div>
+    <div id="wd-grid" class="grid grid-cols-4 gap-1.5 mt-2"></div>
+    <div class="flex gap-2 mt-4">
       <button class="btn btn-ghost flex-1 py-3" onclick="closeWardrobe()">취소</button>
-      <button class="btn btn-gold flex-[2] py-3" onclick="saveWardrobe()">✨ 이대로 입기</button>
+      <button class="btn btn-gold flex-[2] py-3 font-display text-lg" onclick="saveWardrobe()">✨ 이대로 입기</button>
     </div>
   </div>
 </div>
 
 <!-- Custom words -->
 <div id="custom-modal" class="overlay hidden" style="z-index:80">
-  <div class="absolute inset-0 bg-black/85" onclick="closeCustom()"></div>
-  <div class="relative glass rounded-[28px] p-6 w-[min(94vw,560px)]">
-    <div class="panel-title">CUSTOM WORDS</div>
-    <div class="font-display text-3xl gold-text font-black italic">커스텀 제시어</div>
+  <div class="overlay-dim" onclick="closeCustom()"></div>
+  <div class="modal glass">
+    <div class="text-[10px] tracking-[.35em] text-slate-400 font-bold">CUSTOM WORDS</div>
+    <div class="font-display text-3xl gold-text">커스텀 제시어</div>
     <div class="label mt-4">카테고리 이름</div>
     <input id="cu-name" class="inp w-full" maxlength="10" placeholder="예: 우리 회사, 포켓몬, 동아리">
-    <div class="label mt-3">제시어 목록 (한 줄에 하나, 3~40개) — <span class="text-amber-200">단어: 단서1, 단서2</span> 형식으로 단서를 붙이면 AI 봇이 더 똑똑해져요</div>
-    <textarea id="cu-text" class="inp w-full h-48 font-mono text-sm" placeholder="피카츄: 노란색, 전기, 볼이 빨개요&#10;꼬부기: 등껍질, 물대포&#10;잠만보"></textarea>
-    <div id="cu-info" class="text-xs text-slate-400 mt-1"></div>
+    <div class="label mt-3">제시어 목록 (한 줄에 하나, 3~40개) — <span class="text-amber-200">단어: 단서1, 단서2</span> 형식이면 AI 봇이 더 똑똑해져요</div>
+    <textarea id="cu-text" class="inp w-full h-44 font-mono text-sm" placeholder="피카츄: 노란색, 전기, 볼이 빨개요&#10;꼬부기: 등껍질, 물대포&#10;잠만보"></textarea>
+    <div id="cu-info" class="text-xs text-slate-400 mt-1 tnum"></div>
     <div class="flex gap-2 mt-4">
       <button class="btn btn-ghost flex-1 py-3" onclick="closeCustom()">취소</button>
-      <button class="btn btn-gold flex-[2] py-3" onclick="saveCustom()">저장하고 이 카테고리 사용</button>
+      <button class="btn btn-gold flex-[2] py-3 font-display text-lg" onclick="saveCustom()">저장하고 사용</button>
     </div>
   </div>
 </div>
 
 <div id="lost-overlay" class="overlay hidden" style="z-index:90">
-  <div class="absolute inset-0 bg-black/90"></div>
-  <div class="relative glass rounded-3xl p-8 text-center w-[min(92vw,420px)]">
-    <div class="text-4xl">🔌</div>
-    <h3 id="lost-title" class="text-xl font-black mt-3">방장과의 연결이 끊어졌습니다</h3>
+  <div class="overlay-dim"></div>
+  <div class="modal glass text-center">
+    <div class="text-5xl">🔌</div>
+    <h3 id="lost-title" class="font-display text-2xl mt-3">방장과의 연결이 끊어졌습니다</h3>
     <p id="lost-desc" class="text-slate-400 text-sm mt-2">방장이 나갔거나 네트워크가 불안정합니다.</p>
-    <button class="btn btn-gold w-full py-3 mt-5" onclick="hardReset()">첫 화면으로</button>
+    <button class="btn btn-gold w-full h-12 mt-5 font-display text-lg" onclick="hardReset()">첫 화면으로</button>
   </div>
 </div>
 
+<div id="net-banner" class="hidden glass rounded-2xl px-4 py-2 text-sm font-bold text-amber-100" style="border-color:rgba(252,211,77,.4)"></div>
+<div id="toasts" class="absolute top-[120px] left-0 right-0 z-[100] flex flex-col items-center gap-2 pointer-events-none px-4"></div>
+</div><!-- /app-shell -->
 <div id="rx-picker" class="glass hidden"></div>
-<div id="net-banner" class="hidden glass rounded-xl px-4 py-2 text-sm font-bold text-amber-100 border-amber-300/40"></div>
-<div id="toasts" class="fixed top-14 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none"></div>
-
 <script>
 'use strict';
 /* =========================================================
@@ -542,7 +760,8 @@ const CATS = {
 };
 const CUSTOM_FOX = ['다들 아는 그거예요','생각보다 자주 접해요','이름만 들어도 바로 떠올라요','호불호가 좀 갈려요','설명하기 은근 애매하네요'];
 
-const PHASE_LABEL = { lobby:'🥂 대기실', reveal:'🃏 역할 확인', hint:'ROUND 1 · 한 줄 단서', discuss:'ROUND 2 · 자유 토론', vote:'🗳️ 최후의 투표', runoff:'⚖️ 결선 투표', execution:'🔦 정체 공개', foxguess:'🦊 최후의 발악', result:'🏆 결과' };
+const PHASE_LABEL = { lobby:'대기실', reveal:'역할 확인', hint:'ROUND 1 · 단서', discuss:'ROUND 2 · 토론', vote:'최후의 투표', runoff:'결선 투표', execution:'처형', foxguess:'여우의 반격', result:'결과 발표' };
+const PHASE_TONE = { lobby:'amber', reveal:'amber', hint:'blue', discuss:'blue', vote:'red', runoff:'red', execution:'red', foxguess:'red', result:'amber' };
 const REASON = {
   innocent:'무고한 강아지가 지목되었습니다. 여우는 무리 속에 섞여 살아남았습니다.',
   novote:'아무도 지목되지 않았습니다. 여우가 유유히 라운지를 빠져나갑니다.',
@@ -555,6 +774,7 @@ const REASON = {
    UTILS
    ========================================================= */
 const $ = s => document.querySelector(s);
+const isDesktop = () => window.matchMedia('(min-width:1024px)').matches;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rand = (a,b) => a + Math.random()*(b-a);
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
@@ -1248,8 +1468,8 @@ function showNetBanner(t){ const b = $('#net-banner'); b.textContent = t; b.clas
 function hideNetBanner(){ $('#net-banner').classList.add('hidden'); setNetStatus(true); }
 function setNetStatus(ok){
   const el = $('#hdr-net'); if(!el) return;
-  el.textContent = ok ? '● 연결됨' : '● 재연결 중';
-  el.className = 'text-xs px-2 py-1 rounded-lg border ' + (ok ? 'bg-emerald-400/10 text-emerald-300 border-emerald-400/20' : 'bg-amber-400/10 text-amber-300 border-amber-400/30 animate-pulse');
+  el.title = ok ? '연결됨' : '재연결 중';
+  el.className = 'w-2.5 h-2.5 rounded-full ' + (ok ? 'bg-emerald-400 shadow-[0_0_10px_#34D399]' : 'bg-amber-400 shadow-[0_0_10px_#F59E0B] animate-pulse');
 }
 
 /* ---------- ACT (unified send) ---------- */
@@ -1864,46 +2084,154 @@ function onState(s){
   if(s.phase === 'execution') execOnState(s);
   if(s.phase === 'foxguess' && s.you.role === 'fox' && $('#fox-modal').classList.contains('hidden') && !foxSubmitted) openFoxModal(s);
 }
-function renderAll(s){ renderHeader(s); renderPlayers(s); renderChat(s); renderReactions(s); renderHintBar(s); renderAction(s); renderInputMode(s); }
+function renderAll(s){ renderHeader(s); renderStrip(s); renderPlayers(s); renderChat(s); renderReactions(s); renderHintBar(s); renderAction(s); renderInputMode(s); renderDock(s); renderVoteSheet(s); renderBadges(); }
 
 function onPhaseEnter(s){
   switch(s.phase){
-    case 'lobby': closeReveal(); hideExec(); closeFoxModal(); $('#result-overlay').classList.add('hidden'); break;
-    case 'reveal': $('#result-overlay').classList.add('hidden'); closeWardrobe(); showReveal(s); break;
-    case 'hint': closeReveal(); Snd.chime(); onTurnChange(s); break;
-    case 'discuss': closeReveal(); Snd.chime(); toast('💬 자유 토론 시작! 🎯로 의심 대상을 찍어보세요', 'gold'); break;
-    case 'vote': Snd.heart(); setTimeout(() => Snd.heart(), 750); toast('🗳️ 투표를 시작합니다', 'danger'); break;
-    case 'runoff': Snd.heart(); setTimeout(() => Snd.heart(), 600); setTimeout(() => Snd.heart(), 1100); toast('⚖️ 동률! 결선 투표', 'danger'); break;
-    case 'execution': showExecution(s); break;
-    case 'foxguess': hideExec(); foxSubmitted = false; if(s.you.role !== 'fox') toast('🦊 여우가 최후의 추리 중...', 'danger'); break;
-    case 'result': hideExec(); closeFoxModal(); setTimeout(() => showResult(S), 450); break;
+    case 'lobby': closeReveal(); hideExec(); closeFoxModal(); closeVoteSheet(); $('#result-overlay').classList.add('hidden'); setTab('info', true); break;
+    case 'reveal': $('#result-overlay').classList.add('hidden'); closeWardrobe(); infoDot = true; showReveal(s); break;
+    case 'hint': closeReveal(); Snd.chime(); setTab('chat', true); showSplash('단서 라운드', '순서대로 제시어를 한 줄로 설명하세요', 'blue'); onTurnChange(s); break;
+    case 'discuss': closeReveal(); Snd.chime(); setTab('chat', true); showSplash('자유 토론', `${(s.settings||{}).discuss||90}초 · 🎯로 의심 대상을 지목하세요`, 'blue'); break;
+    case 'vote': Snd.heart(); setTimeout(() => Snd.heart(), 750); showSplash('최후의 투표', '여우라고 생각하는 사람을 지목하세요', 'red'); setTimeout(openVoteSheet, 1500); break;
+    case 'runoff': Snd.heart(); setTimeout(() => Snd.heart(), 600); setTimeout(() => Snd.heart(), 1100); showSplash('결선 투표', '동률 후보 중 한 명을 다시 고르세요', 'red'); setTimeout(openVoteSheet, 1500); break;
+    case 'execution': closeVoteSheet(); showExecution(s); break;
+    case 'foxguess': hideExec(); foxSubmitted = false; if(s.you.role !== 'fox') showSplash('여우의 반격', '여우가 제시어를 맞히면 역전승!', 'red'); break;
+    case 'result': hideExec(); closeFoxModal(); closeVoteSheet(); setTimeout(() => showResult(S), 450); break;
   }
 }
 function onTurnChange(s){
   if(s.currentTurn === myId){
     Snd.chime(); toast('🎙️ 당신의 차례! 채팅창에 공식 단서를 입력하세요', 'gold');
-    setTimeout(() => $('#chat-input').focus(), 100);
+    setTab('chat', true); setTimeout(() => $('#chat-input').focus(), 120);
   } else Snd.tone(660, .25, { type:'triangle', v:.07 });
 }
 
 /* ---------- header / timer ---------- */
 function renderHeader(s){
-  $('#hdr-phase').textContent = PHASE_LABEL[s.phase] || s.phase;
+  const pill = $('#hdr-phase');
+  pill.textContent = PHASE_LABEL[s.phase] || s.phase;
+  pill.className = 'phase-pill inline-block tone-' + (PHASE_TONE[s.phase] || 'amber');
   $('#hdr-code').textContent = s.roomCode;
-  $('#hdr-cat').textContent = `${s.catInfo.icon} ${s.catInfo.name}`;
+  $('#hdr-cat').textContent = `${s.catInfo.icon} ${s.catInfo.name}` + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
+  $('#tab-info-label').textContent = s.phase === 'lobby' ? '방 설정' : '내 카드';
+  $('#tab-info-ic').textContent = s.phase === 'lobby' ? '⚙️' : '🃏';
+}
+/* ---------- 탭 / 배지 ---------- */
+let curTab = 'chat', unreadChat = 0, infoDot = false;
+function setTab(t, silent){
+  if(!['chat','players','info'].includes(t)) return;
+  const changedTab = curTab !== t; curTab = t;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  ['chat','players','info'].forEach(k => $('#tab-' + k).classList.toggle('hidden', k !== t));
+  if(t === 'chat'){ unreadChat = 0; const c = $('#chat'); c.scrollTop = c.scrollHeight; }
+  if(t === 'players') requestAnimationFrame(() => S && drawArrows(S));
+  if(t === 'info') infoDot = false;
+  if(isDesktop() && !silent && t !== 'chat'){ const pane = $('#tab-' + t); pane.classList.remove('vote-flash'); void pane.offsetWidth; pane.classList.add('vote-flash'); }
+  if(isDesktop() && !silent && t === 'chat') $('#chat-input').focus();
+  renderBadges();
+  if(changedTab && !silent) Snd.click();
+}
+function renderBadges(){
+  const b = $('#badge-chat'); b.textContent = unreadChat > 99 ? '99+' : unreadChat;
+  b.classList.toggle('hidden', !unreadChat || curTab === 'chat');
+  const bi = $('#badge-info'); bi.textContent = '!'; bi.classList.toggle('hidden', !infoDot || curTab === 'info');
+  const bp = $('#badge-players'); const myTurnElse = false; bp.classList.add('hidden');
+}
+function focusClue(){ setTab('chat'); setTimeout(() => $('#chat-input').focus(), 80); }
+/* ---------- 페이즈 스플래시 ---------- */
+function showSplash(t, sub, tone){
+  const el = $('#splash');
+  el.className = 'splash tone-' + tone;
+  el.innerHTML = `<div class="band"><div class="t ${tone === 'red' ? 'crimson-text' : tone === 'amber' ? 'gold-text' : 'text-blue-100'}" style="${tone === 'blue' ? 'text-shadow:0 0 24px rgba(59,130,246,.9)' : ''}">${t}</div>${sub ? `<div class="s">${sub}</div>` : ''}</div>`;
+  clearTimeout(showSplash._t); showSplash._t = setTimeout(() => el.classList.add('hidden'), 1650);
+}
+/* ---------- 상단 아바타 스트립 ---------- */
+function renderStrip(s){
+  const reveal = ['execution','foxguess','result'].includes(s.phase);
+  const susPhase = ['discuss','vote','runoff'].includes(s.phase);
+  const susCount = {}; Object.values(s.suspect || {}).forEach(t => susCount[t] = (susCount[t] || 0) + 1);
+  if(!changed('strip', [s.players, s.currentTurn, s.phase, s.runoff, s.suspect, s.result && s.result.foxId, s.execution && s.execution.wasFox, myId])) return;
+  $('#strip').innerHTML = s.players.map(p => {
+    const foxR = (s.phase === 'result' && s.result && s.result.foxId === p.id) || (reveal && s.execution && s.execution.targetId === p.id && s.execution.wasFox === true && s.phase !== 'execution');
+    const cls = ['ava', p.id === myId ? 'me' : '', s.currentTurn === p.id ? 'turn' : '', s.phase === 'runoff' && s.runoff && s.runoff.includes(p.id) ? 'cand' : '', foxR ? 'foxr' : '', !p.connected ? 'off' : ''].join(' ');
+    const tick = p.voted || (s.phase === 'lobby' && !p.isHost && !p.isBot && p.ready);
+    return `<div class="${cls}" style="--pc:${p.color}" onclick="setTab('players')" title="${esc(p.name)}">
+      <div class="ring"><div class="face">${foxR ? foxC() : dogC(p.color, 'normal', p.outfit)}</div>${tick ? '<span class="tick">✓</span>' : ''}${susPhase && susCount[p.id] ? `<span class="susn tnum">${susCount[p.id]}</span>` : ''}</div>
+      <div class="nm">${p.id === myId ? '나' : esc(p.name)}</div></div>`;
+  }).join('');
+  const cur = $('#strip .ava.turn'); if(cur) cur.scrollIntoView({ inline:'center', block:'nearest', behavior:'smooth' });
+}
+/* ---------- 하단 고정 메인 액션 ---------- */
+const nameOf = id => ((S && S.players.find(p => p.id === id)) || {}).name || '';
+function renderDock(s){
+  const myTurn = s.phase === 'hint' && s.currentTurn === myId;
+  const me = s.players.find(p => p.id === myId) || {};
+  const idle = txt => `<button class="btn primary-btn primary-idle" disabled>${txt}</button>`;
+  let h = '';
+  switch(s.phase){
+    case 'lobby':
+      if(isHost){ const err = startError(s.players, s.category !== 'custom' || s.hasCustom);
+        h = `<button class="btn btn-gold primary-btn" ${err ? 'disabled' : ''} onclick="act({type:'START'})">🎬 게임 시작${err ? `<span class="sub">· ${esc(err)}</span>` : ''}</button>`; }
+      else h = `<button class="btn ${me.ready ? 'btn-neon' : 'btn-gold'} primary-btn" onclick="act({type:'READY'})">${me.ready ? '✓ 준비 완료<span class="sub">· 누르면 취소</span>' : '🙋 준비하기'}</button>`;
+      break;
+    case 'reveal': h = `<button class="btn btn-neon primary-btn" onclick="setTab('info')">🃏 내 카드 다시 보기</button>`; break;
+    case 'hint': h = myTurn ? `<button class="btn btn-gold primary-btn" onclick="focusClue()">🎙️ 내 차례! 단서 입력</button>` : idle(`🎙️ ${esc(nameOf(s.currentTurn))}님이 단서를 쓰는 중...`); break;
+    case 'discuss': h = isHost ? `<button class="btn btn-crimson primary-btn" onclick="act({type:'SKIP_DISCUSS'})">⏩ 토론 끝내고 투표</button>` : `<button class="btn btn-neon primary-btn" onclick="setTab('players')">🎯 의심 대상 지목하기</button>`; break;
+    case 'vote': case 'runoff':
+      h = `<button class="btn ${myVote ? 'btn-neon' : 'btn-crimson'} primary-btn" onclick="openVoteSheet()">${s.phase === 'runoff' ? '⚖️ 결선 ' : '🗳️ '}${myVote ? `투표 완료<span class="sub">· ${esc(nameOf(myVote))} 지목 · 변경</span>` : '투표하기'}</button>`; break;
+    case 'execution': h = idle('🔦 가면을 벗기는 중...'); break;
+    case 'foxguess': h = s.you.role === 'fox' && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히기</button>` : idle('🦊 여우가 최후의 추리 중...'); break;
+    case 'result': h = isHost ? `<button class="btn btn-gold primary-btn" onclick="act({type:'RESTART'})">🥂 한 판 더 · 대기실로</button>` : `<button class="btn btn-neon primary-btn" onclick="showResult(S)">🏆 결과 다시 보기</button>`; break;
+  }
+  if(changed('dock', h)) $('#primary-action').innerHTML = h;
+}
+/* ---------- 투표 바텀시트 ---------- */
+let sheetOpen = false;
+function voteListHTML(s){
+  const ro = s.phase === 'runoff';
+  const cands = s.players.filter(p => p.id !== myId && (!ro || (s.runoff || []).includes(p.id)));
+  const iAmCand = ro && (s.runoff || []).includes(myId);
+  return `<div class="flex items-center justify-between mb-2"><div class="text-rose-200 font-black text-sm">${ro ? '⚖️ 동률 후보 중 선택' : '🗳️ 여우를 지목하세요'}</div>
+      <div class="text-xs font-mono text-slate-400 tnum">${s.voteCount}/${s.eligible} 완료</div></div>
+    ${ro ? `<div class="text-xs rounded-2xl p-2.5 mb-2 ${iAmCand ? 'bg-rose-500/15 text-rose-100 border border-rose-400/40' : 'bg-white/5 text-slate-300'}">${iAmCand ? '🎤 당신은 결선 후보예요! 채팅으로 변론하세요.' : '동률 후보 중 한 명을 다시 고르세요.'}</div>` : ''}
+    <div class="space-y-2">` + cands.map(p =>
+      `<button class="vote-btn ${myVote === p.id ? 'vote-on' : ''}" onclick="castVote('${p.id}')" ${!p.connected ? 'disabled' : ''}>
+        <div class="w-11 h-11 shrink-0 rounded-2xl overflow-hidden" style="background:radial-gradient(circle at 50% 35%, color-mix(in srgb, ${p.color} 30%, #1E293B), #0B0F19 78%)">${dogC(p.color, 'normal', p.outfit)}</div>
+        <span class="font-bold text-sm">${esc(p.name)}</span>
+        <span class="ml-auto text-xs">${myVote === p.id ? '<span class="font-display text-rose-200 text-base">🎯 지목</span>' : ''} ${p.voted ? '<span class="text-emerald-300">✓</span>' : ''}</span>
+      </button>`).join('') + `</div>
+    <div class="text-[11px] text-slate-500 mt-3 text-center">누가 누구를 찍었는지는 공개되지 않아요 · 모두 투표하기 전까지 변경 가능</div>`;
+}
+function openVoteSheet(){
+  if(!S || (S.phase !== 'vote' && S.phase !== 'runoff')) return;
+  if(isDesktop()){   // PC: 오른쪽 패널의 투표 목록을 강조
+    const a = $('#tab-info'); a.classList.remove('vote-flash'); void a.offsetWidth; a.classList.add('vote-flash');
+    const list = $('#action .vote-btn'); if(list) list.scrollIntoView({ block:'center', behavior:'smooth' });
+    return;
+  }
+  sheetOpen = true; memo.sheet = null; renderVoteSheet(S); $('#vote-sheet').classList.add('open'); Snd.click();
+}
+function closeVoteSheet(){ sheetOpen = false; $('#vote-sheet').classList.remove('open'); }
+function renderVoteSheet(s){
+  if(!sheetOpen) return;
+  if(s.phase !== 'vote' && s.phase !== 'runoff'){ closeVoteSheet(); return; }
+  const h = `<div class="flex items-center justify-between mb-1"><div class="font-display text-[28px] crimson-text">${s.phase === 'runoff' ? '결선 투표' : '최후의 투표'}</div><button class="btn btn-ghost icon-btn" onclick="closeVoteSheet()">✕</button></div>` + voteListHTML(s);
+  if(changed('sheet', [h, myVote])) $('#vote-sheet-body').innerHTML = h;
 }
 setInterval(() => {
   if(!S) return;
   const el = $('#hdr-timer'), bar = $('#hdr-bar');
-  if(!localTimerEnd){ el.textContent = '--:--'; bar.style.width = '0%'; el.classList.remove('text-rose-400'); return; }
+  const wrap = $('#hdr-bar-wrap');
+  if(!localTimerEnd){ el.textContent = '--:--'; bar.style.width = '0%'; el.classList.remove('urgent'); wrap.classList.remove('urgent'); return; }
   const rem = Math.max(0, localTimerEnd - Date.now()), sec = Math.ceil(rem / 1000);
   el.textContent = fmt(sec);
   bar.style.width = (localTimerTotal ? rem / localTimerTotal * 100 : 0) + '%';
-  el.classList.toggle('text-rose-400', sec <= 5);
+  const urgent = sec > 0 && sec < 10 && ['hint','discuss','vote','runoff','foxguess'].includes(S.phase);
+  el.classList.toggle('urgent', urgent); wrap.classList.toggle('urgent', urgent);
   const tickable = S.phase === 'vote' || S.phase === 'runoff' || S.phase === 'foxguess' || (S.phase === 'hint' && S.currentTurn === myId);
   if(tickable && sec <= 5 && sec > 0 && sec !== lastTickSec){ lastTickSec = sec; Snd.tick(); }
   if(S.phase === 'foxguess' && !$('#fox-modal').classList.contains('hidden')){
-    $('#fox-timer').textContent = sec; $('#fox-bar').style.width = (rem / T.GUESS * 100) + '%';
+    $('#fox-timer').textContent = sec; $('#fox-bar').style.width = (rem / T.GUESS * 100) + '%'; $('#fox-timer').classList.toggle('urgent', sec < 10);
   }
 }, 200);
 
@@ -1976,7 +2304,7 @@ function renderPlayers(s){
 }
 function drawArrows(s){
   const inner = $('#players-inner'), svg = $('#sus-svg');
-  if(!inner || !svg || !s) return;
+  if(!inner || !svg || !s || (!isDesktop() && curTab !== 'players')) return;
   const pairs = Object.entries(s.suspect || {});
   if(!['discuss','vote','runoff'].includes(s.phase) || !pairs.length){ svg.innerHTML = ''; return; }
   const base = inner.getBoundingClientRect();
@@ -1996,7 +2324,7 @@ function drawArrows(s){
   });
   svg.innerHTML = `<defs>${defs}</defs>${paths}`;
 }
-window.addEventListener('resize', () => S && drawArrows(S));
+window.addEventListener('resize', () => { if(!S) return; memo.players = null; renderPlayers(S); if(isDesktop()) closeVoteSheet(); });
 
 /* ---------- chat + reactions ---------- */
 function msgHTML(m){
@@ -2027,7 +2355,7 @@ function renderChat(s){
   for(const m of s.chat){
     if(m.id <= lastMsgId) continue;
     lastMsgId = m.id; added = true; html += msgHTML(m);
-    if(prevS){ if(m.kind === 'chat' && m.pid !== myId) ping = true; if(m.kind === 'hint') clue = true; }
+    if(prevS){ if(m.kind === 'chat' && m.pid !== myId) ping = true; if(m.kind === 'hint') clue = true; if(m.kind !== 'system' && m.pid !== myId && curTab !== 'chat') unreadChat++; }
   }
   if(html) box.insertAdjacentHTML('beforeend', html);
   while(box.children.length > 200) box.removeChild(box.firstChild);
@@ -2139,11 +2467,7 @@ function renderAction(s){
       <div class="flex justify-between text-sm mt-5 mb-2"><span class="text-slate-300">참여자 <b class="text-white">${s.players.length}</b>/${MAX_PLAYERS}</span>
         <span class="text-slate-300">준비 <b class="text-emerald-300">${humans.filter(p => p.ready).length}</b>/${humans.length}</span></div>
       ${isHost ? `<button class="btn btn-ghost w-full py-2.5" onclick="act({type:'ADD_BOT'})" ${s.players.length >= MAX_PLAYERS ? 'disabled' : ''}>🤖 + AI 봇 추가 (혼자 테스트용)</button>` : ''}
-      ${isHost
-        ? `<button class="btn btn-gold w-full py-3.5 mt-3 text-lg" onclick="act({type:'START'})" ${err ? 'disabled' : ''}>🎬 게임 시작</button>
-           <div class="text-xs text-center mt-2 ${err ? 'text-rose-300' : 'text-emerald-300'}">${err || '모든 준비 완료! 시작할 수 있습니다.'}</div>`
-        : `<button class="btn ${me.ready ? 'btn-gold' : 'btn-ghost'} w-full py-3.5 mt-3 text-lg" onclick="act({type:'READY'})">${me.ready ? '✓ 준비 완료' : '준비하기'}</button>
-           <div class="text-xs text-center mt-2 text-slate-400">방장이 게임을 시작하길 기다리는 중...</div>`}
+      <div class="text-xs text-center mt-3 font-semibold ${isHost ? (err ? 'text-rose-300' : 'text-emerald-300') : (me.ready ? 'text-emerald-300' : 'text-amber-200')}">${isHost ? (err || '모든 준비 완료! 아래 [게임 시작]을 누르세요') : (me.ready ? '✓ 준비 완료 — 방장이 시작하길 기다리는 중' : '아래 [준비하기]를 눌러주세요')}</div>
       <div class="mt-5 rounded-2xl bg-black/25 border border-white/5 p-3 text-xs text-slate-400 space-y-1.5">
         <div class="text-amber-200 font-bold mb-1">📖 게임 방법</div>
         <div>1. 강아지들은 같은 제시어를, 여우는 카테고리만 받습니다.</div>
@@ -2178,25 +2502,12 @@ function renderAction(s){
       case 'discuss':
         h += `<div class="rounded-2xl p-4 border border-amber-300/30 bg-amber-300/5">
             <div class="text-amber-200 font-black">💬 자유 토론</div>
-            <div class="text-sm text-slate-300 mt-1">왼쪽 카드의 <b class="text-rose-300">🎯</b>로 의심 대상을 지목하면 모두에게 화살표가 보여요. 메시지엔 리액션도 달 수 있어요.</div></div>
+            <div class="text-sm text-slate-300 mt-1"><b class="text-rose-300">플레이어 카드</b>의 🎯로 의심 대상을 지목하면 모두에게 화살표가 보여요. 메시지를 길게 보면 리액션도 달 수 있어요.</div></div>
           ${isHost ? `<button class="btn btn-ghost w-full py-2.5 mt-3" onclick="act({type:'SKIP_DISCUSS'})">⏩ 토론 종료 → 바로 투표</button>` : ''}`;
         break;
-      case 'vote': case 'runoff': {
-        const ro = s.phase === 'runoff';
-        const cands = s.players.filter(p => p.id !== myId && (!ro || s.runoff.includes(p.id)));
-        const iAmCand = ro && s.runoff.includes(myId);
-        h += `<div class="flex items-center justify-between mb-2"><div class="text-rose-200 font-black">${ro ? '⚖️ 결선 투표' : '🗳️ 여우를 지목하세요'}</div>
-            <div class="text-xs font-mono text-slate-400">${s.voteCount}/${s.eligible} 완료</div></div>
-          ${ro ? `<div class="text-xs rounded-xl p-2 mb-2 ${iAmCand ? 'bg-rose-500/15 text-rose-100 border border-rose-400/40' : 'bg-white/5 text-slate-300'}">${iAmCand ? '🎤 당신은 결선 후보입니다! 채팅으로 변론하세요.' : '동률 후보 중 한 명을 다시 고르세요.'}</div>` : ''}
-          <div class="space-y-1.5">` + cands.map(p =>
-            `<button class="vote-btn ${myVote === p.id ? 'vote-on' : ''}" onclick="castVote('${p.id}')" ${!p.connected ? 'disabled' : ''}>
-              <div class="w-10 h-10 shrink-0">${dogC(p.color, 'normal', p.outfit)}</div>
-              <span class="font-bold text-sm">${esc(p.name)}</span>
-              <span class="ml-auto text-xs">${myVote === p.id ? '<span class="text-rose-300 font-black">🎯 지목</span>' : ''} ${p.voted ? '<span class="text-emerald-300">✓</span>' : ''}</span>
-            </button>`).join('') + `</div>
-          <div class="text-[11px] text-slate-500 mt-2 text-center">누가 누구를 찍었는지는 공개되지 않습니다. 모두 투표하기 전까지 변경 가능.</div>`;
+      case 'vote': case 'runoff':
+        h += voteListHTML(s);
         break;
-      }
       case 'execution': h += `<div class="text-center text-rose-200 py-4 font-bold">🔦 가면을 벗기는 중...</div>` + tallyHTML(s); break;
       case 'foxguess':
         h += s.you.role === 'fox'
@@ -2236,7 +2547,13 @@ function kickPlayer(id){
   const p = S && S.players.find(x => x.id === id); if(!p) return;
   if(confirm(`${p.name}님을 강퇴할까요?\n강퇴된 사람은 이 방에 다시 들어올 수 없어요.`)) act({ type:'KICK', id });
 }
-function castVote(id){ if(!S || (S.phase !== 'vote' && S.phase !== 'runoff')) return; myVote = id; Snd.click(); Snd.heart(); act({ type:'VOTE', target:id }); memo.action = null; renderAction(S); }
+function castVote(id){
+  if(!S || (S.phase !== 'vote' && S.phase !== 'runoff')) return;
+  myVote = id; Snd.click(); Snd.heart(); act({ type:'VOTE', target:id });
+  memo.action = null; renderAction(S); renderVoteSheet(S); renderDock(S);
+  toast(`🎯 ${nameOf(id)}님을 지목했어요`, 'danger');
+  setTimeout(() => { if(myVote === id) closeVoteSheet(); }, 700);
+}
 
 /* ---------- ROLE REVEAL ---------- */
 function showReveal(s){
@@ -2250,7 +2567,7 @@ function showReveal(s){
     <div class="reveal-vignette"></div>
     <div class="relative flex flex-col items-center">
       <div id="rv-top" class="text-[11px] tracking-[.5em] text-amber-200/80 font-bold mb-5">SECRET IDENTITY</div>
-      <div class="card3d w-[270px] h-[400px]">
+      <div class="card3d w-[250px] h-[370px]">
         <div class="card3d-inner" id="rv-inner">
           <div class="face card-front flex flex-col items-center justify-center">
             <div class="font-display text-7xl gold-text font-black italic">?</div>
@@ -2259,7 +2576,7 @@ function showReveal(s){
           </div>
           <div class="face back card-back flex flex-col items-center p-5">
             <div class="text-[10px] tracking-[.4em] text-slate-400 mt-1">YOUR ROLE</div>
-            <div id="rv-mask" class="mask-stack w-44 h-44 mt-3">
+            <div id="rv-mask" class="mask-stack w-40 h-40 mt-3">
               ${fox ? `<div class="layer fox-layer">${foxSVG()}</div>` : ''}
               <div class="layer dog-layer">${dogSVG(me.color, 'normal', me.outfit)}</div>
             </div>
@@ -2272,7 +2589,8 @@ function showReveal(s){
       <div id="rv-msg" class="mt-6 text-sm text-slate-300 h-5 text-center">${fox ? '' : '여우가 모르게, 동료는 알아보게 설명하세요.'}</div>
       <button class="btn btn-ghost px-8 py-2 mt-4" onclick="closeReveal()">확인</button>
     </div>`;
-  revealTimers.push(setTimeout(() => { const el = $('#rv-inner'); if(el){ el.classList.add('flipped'); Snd.flip(); } }, 450));
+  revealTimers.push(setTimeout(() => { const el = $('#rv-inner'); if(el){ el.classList.add('wobble'); Snd.heart(); } }, 120));
+  revealTimers.push(setTimeout(() => { const el = $('#rv-inner'); if(el){ el.classList.remove('wobble'); el.classList.add('flipped'); Snd.flip(); } }, 1000));
   if(fox){
     revealTimers.push(setTimeout(() => {
       const m = $('#rv-mask'); if(!m) return;
@@ -2281,7 +2599,7 @@ function showReveal(s){
       $('#rv-word').innerHTML = '<span class="text-rose-200">???</span><div class="text-sm font-medium text-rose-300/80 mt-1">(당신은 여우입니다)</div>';
       $('#rv-top').innerHTML = '<span class="text-rose-300">THE MASK FALLS</span>';
       $('#rv-msg').innerHTML = '<span class="text-rose-200">강아지들의 단서로 제시어를 추리하고, 끝까지 들키지 마세요.</span>';
-    }, 450 + 1050 + 1500));
+    }, 1000 + 1100 + 1500));
   }
   revealTimers.push(setTimeout(closeReveal, Math.max(1500, (s.timerRemaining || T.REVEAL) - 300)));
 }
@@ -2411,11 +2729,11 @@ function showResult(s){
       <div class="text-xs text-sky-200/80 mt-2">여우는 철창 속으로! 라운지에 평화가 찾아왔습니다.</div>`;
   }
   ov.innerHTML = `
-    <div class="absolute inset-0 bg-black/90" onclick="$('#result-overlay').classList.add('hidden')"></div>
+    <div class="overlay-dim" onclick="$('#result-overlay').classList.add('hidden')"></div>
     <div id="rs-fx" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
-    <div class="relative glass rounded-[28px] p-6 w-[min(94vw,560px)] max-h-[94vh] overflow-y-auto text-center" style="border-color:${foxWin ? 'rgba(239,68,68,.5)' : 'rgba(56,189,248,.5)'};box-shadow:0 0 70px ${foxWin ? 'rgba(239,68,68,.3)' : 'rgba(56,189,248,.25)'}">
+    <div class="modal glass-solid text-center" style="border-radius:var(--r-xl);border-color:${foxWin ? 'rgba(251,113,133,.55)' : 'rgba(96,165,250,.55)'};box-shadow:var(--inner-glow),0 0 70px ${foxWin ? 'rgba(225,29,72,.35)' : 'rgba(59,130,246,.3)'}">
       <div class="text-[11px] tracking-[.5em] font-bold ${iWon ? 'text-amber-200' : 'text-slate-400'}">${iWon ? 'VICTORY' : 'DEFEAT'}</div>
-      <h2 class="font-display text-4xl md:text-5xl font-black italic mt-1 ${foxWin ? 'text-rose-300' : 'gold-text'}">${title}</h2>
+      <h2 class="font-display text-[40px] leading-tight mt-1 ${foxWin ? 'crimson-text' : 'gold-text'}">${title}</h2>
       <p class="text-sm text-slate-300 mt-2">${REASON[r.reason] || ''}</p>
       <div class="mt-4">${scene}</div>
       <div class="grid grid-cols-3 gap-2 mt-5 text-left">
