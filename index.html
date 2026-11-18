@@ -598,6 +598,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
     <div class="text-[11px] tracking-[.45em] text-rose-300 font-bold mt-1">LAST CHANCE</div>
     <h2 class="font-display text-4xl crimson-text mt-1">최후의 발악</h2>
     <p class="text-slate-300 text-sm mt-2">정체가 들켰다. 하지만 <b class="text-amber-200">비밀 제시어</b>를 맞히면 역전승!</p>
+    <div id="fox-modal-decoy" class="hidden mt-3 text-sm rounded-2xl p-2.5 bg-rose-500/15 border border-rose-400/40 text-rose-100"></div>
     <div id="fox-modal-cat" class="mt-3 text-amber-100 font-bold"></div>
     <div id="fox-timer" class="timer !text-5xl text-rose-300 mt-3">15</div>
     <div class="timer-bar urgent mt-2"><div id="fox-bar" style="width:100%"></div></div>
@@ -1505,7 +1506,7 @@ onTick(() => {
    ========================================================= */
 function newGame(){
   return { phase:'lobby', phaseId:1, category:'food', custom:null, players:[], chat:[], seq:0, hints:[], turnOrder:[], turnIdx:0,
-           votes:{}, accuse:{}, suspect:{}, banned:{}, settings:{ hint:30, discuss:90 }, reactions:{}, runoff:null, tally:null, timerEnd:0, timerTotal:0, foxId:null, word:null,
+           votes:{}, accuse:{}, suspect:{}, banned:{}, settings:{ hint:30, discuss:90, mode:'classic' }, recent:{}, decoy:null, reactions:{}, runoff:null, tally:null, timerEnd:0, timerTotal:0, foxId:null, word:null,
            execution:null, result:null, guess:null, tokens:{}, hostPid:null };
 }
 function mkPlayer(id, name, color, outfit, isBot, isHostP){
@@ -1564,7 +1565,7 @@ function buildStateFor(pid, maxChat=1000, maxRx=1000){
     turnOrder:G.turnOrder.slice(), turnIdx:G.turnIdx,
     currentTurn:G.phase === 'hint' ? G.turnOrder[G.turnIdx] : null,
     timerRemaining:G.timerEnd ? Math.max(0, G.timerEnd - Date.now()) : 0, timerTotal:G.timerTotal,
-    you:{ id:pid, role:G.foxId ? (pid === G.foxId ? 'fox' : 'dog') : null, word:(G.foxId && pid !== G.foxId) ? G.word : null, vote:G.votes[pid] || null },
+    you:youFor(pid),
     suspect:['discuss','vote','runoff'].includes(G.phase) ? { ...G.suspect } : {},
     runoff:G.runoff ? G.runoff.slice() : null,
     execution, tally:revealPhase ? G.tally : null,
@@ -1695,6 +1696,13 @@ function handleAction(pid, a){
       sys(`✏️ 커스텀 카테고리 [${c.name}] (${c.words.length}개 제시어)가 등록되었습니다.`, 'gold');
       break;
     }
+    case 'SET_MODE':
+      if(!fromHost || G.phase !== 'lobby' || !['classic','fool'].includes(a.mode)) return;
+      G.settings = G.settings || { hint:30, discuss:90 };
+      if(G.settings.mode === a.mode) return;
+      G.settings.mode = a.mode;
+      sys(a.mode === 'fool' ? '🤪 바보 모드로 변경! 여우도 비슷한 가짜 제시어를 받아요.' : '🦊 기본 모드로 변경! 여우는 제시어를 모르고 시작해요.', 'gold');
+      break;
     case 'SET_TIME': {
       if(!fromHost || G.phase !== 'lobby') return;
       const h = +a.hint, d = +a.discuss;
@@ -1746,19 +1754,64 @@ function handleAction(pid, a){
    - 강아지(제시어를 아는 사람)의 메시지만 검사하고, 걸리면 '전송 자체를 막고' 본인에게만 알림
    - 가려서(***) 보내면 그 사람이 제시어를 안다는 게 드러나고, 여우의 메시지를 막으면 여우가 정답을 알게 되므로
      여우의 메시지는 검사하지 않음 → 누구에게도 역할 정보가 새지 않음 */
+/* ===== 게임 모드 ===== */
+const isFool = () => !!(G && G.settings && G.settings.mode === 'fool');
+// 바보 모드에서 여우가 '자기가 여우'라는 걸 아는 시점: 처형으로 정체가 공개된 뒤부터
+function foxAware(){
+  if(!isFool()) return true;
+  return G.phase === 'foxguess' || G.phase === 'result' || (G.phase === 'execution' && G.execution && G.execution.revealed);
+}
+// 🔒 플레이어별로 보내는 역할/제시어 (바보 모드 여우는 '강아지 + 가짜 제시어'로 보임)
+function youFor(pid){
+  const y = { id:pid, role:null, word:null, decoy:null, vote:G.votes[pid] || null };
+  if(!G.foxId) return y;
+  if(pid !== G.foxId){ y.role = 'dog'; y.word = G.word; return y; }
+  if(foxAware()){ y.role = 'fox'; y.decoy = isFool() ? G.decoy : null; }
+  else { y.role = 'dog'; y.word = G.decoy; }
+  return y;
+}
+const catKey = () => G.category === 'custom' && G.custom ? 'custom:' + G.custom.name : G.category;
+// 비슷한 가짜 제시어 고르기: 단어+단서의 공통 음절이 많은 후보 중 상위 3개에서 무작위
+function pickDecoy(cat, word){
+  const corp = w => { const e = cat.words.find(x => x[0] === w); return e ? e[0] + ' ' + e[1].join(' ') : w; };
+  const base = new Set(stems(corp(word)));
+  const cands = cat.words.map(w => w[0]).filter(w => w !== word && !w.includes(word) && !word.includes(w));
+  if(!cands.length) return null;
+  const scored = cands.map(w => [w, stems(corp(w)).filter(x => base.has(x)).length + Math.random() * .9]).sort((a, b) => b[1] - a[1]);
+  return pick(scored.slice(0, 3))[0];
+}
 function leaksWord(p, text){
-  if(!G.word || p.isBot || p.id === G.foxId) return false;
+  if(!G.word || p.isBot) return false;
   if(G.phase === 'lobby' || G.phase === 'result') return false;
-  const w = norm(G.word); if(w.length < 1) return false;
+  let w;
+  if(p.id === G.foxId){
+    // 여우가 진짜 제시어를 말하면 막지 않음(막으면 정답이 새어 나감)
+    // 단, 바보 모드에서 아직 정체를 모르는 여우는 '자기가 받은 가짜 단어'를 강아지와 똑같이 막아야
+    // 차단 여부로 자기가 여우인지 눈치채지 못함
+    if(!isFool() || foxAware()) return false;
+    w = G.decoy;
+  } else w = G.word;
+  w = norm(w); if(!w) return false;
   return norm(text).includes(w);
 }
 function startGame(){
   const cat = hostCat();
-  G.word = pick(cat.words)[0];
+  // ♻️ 최근 제시어 중복 방지: 같은 카테고리에서 최근 나온 단어(최대 5개)는 제외
+  G.recent = G.recent || {};
+  const key = catKey(), rec = G.recent[key] || [];
+  let pool = cat.words.filter(w => !rec.includes(w[0]));
+  if(pool.length < (isFool() ? 2 : 1)) pool = cat.words;
+  G.word = pick(pool)[0];
+  const keep = Math.max(0, Math.min(5, cat.words.length - 3));
+  G.recent[key] = keep ? [...rec.filter(w => w !== G.word), G.word].slice(-keep) : [];
+  G.decoy = isFool() ? pickDecoy(cat, G.word) : null;
+  if(isFool() && !G.decoy){ G.settings.mode = 'classic'; sys('⚠️ 제시어가 부족해 이번 판은 기본 모드로 진행합니다.', 'danger'); }
   G.foxId = pick(G.players).id;
   G.turnOrder = shuffle(G.players.map(p => p.id)); G.turnIdx = 0;
   G.hints = []; G.votes = {}; G.accuse = {}; G.suspect = {}; G.runoff = null; G.tally = null; G.execution = null; G.result = null; G.guess = null;
-  sys(`🎬 게임 시작! 카테고리는 [${cat.icon} ${cat.name}]. 이 라운지 어딘가에 여우가 숨어 있습니다...`, 'gold');
+  sys(isFool()
+    ? `🤪 바보 모드 시작! 카테고리는 [${cat.icon} ${cat.name}]. 여우도 가짜 제시어를 받아서 자기가 여우인 줄 몰라요. 나일 수도...?`
+    : `🎬 게임 시작! 카테고리는 [${cat.icon} ${cat.name}]. 이 라운지 어딘가에 여우가 숨어 있습니다...`, 'gold');
   setPhase('reveal', T.REVEAL);
 }
 function startHint(){
@@ -1844,10 +1897,10 @@ function resolveGuess(text){
 }
 function finish(winner, reason){
   const fox = gp(G.foxId);
-  G.result = { winner, reason, foxId:G.foxId, foxName:fox ? fox.name : '???', foxColor:fox ? fox.color : '#888', foxOutfit:fox ? fox.outfit : null, word:G.word, guess:G.guess, votes:{ ...G.votes } };
+  G.result = { winner, reason, foxId:G.foxId, foxName:fox ? fox.name : '???', foxColor:fox ? fox.color : '#888', foxOutfit:fox ? fox.outfit : null, word:G.word, decoy:G.decoy, mode:isFool() ? 'fool' : 'classic', guess:G.guess, votes:{ ...G.votes } };
   setPhase('result', 0);
   sys(winner === 'fox' ? '🦊 여우 승리! 라운지는 여우의 손에 넘어갔습니다.' : '🐶 강아지 팀 승리! 라운지의 평화가 지켜졌습니다.', 'gold');
-  sys(`🔑 비밀 제시어는 [${G.word}]였습니다. 여우는 ${G.result.foxName}님!`, 'gold');
+  sys(`🔑 비밀 제시어는 [${G.word}]였습니다. 여우는 ${G.result.foxName}님!` + (G.decoy ? ` (여우가 받은 가짜 제시어: [${G.decoy}])` : ''), 'gold');
 }
 function backToLobby(){
   setPhase('lobby', 0);
@@ -1894,7 +1947,7 @@ function inferWord(excludePid, noise){
 }
 function suspicionMap(b, pool){
   const isFox = b.id === G.foxId, persona = b.persona || BOT_PERSONA[1];
-  const refWord = isFox ? inferWord(b.id, .05).best : G.word;
+  const refWord = isFox ? (isFool() && !foxAware() ? G.decoy : inferWord(b.id, .05).best) : G.word;
   const fox = hostCat().fox, sus = {};
   (pool || G.players.map(p => p.id)).forEach(id => {
     const p = gp(id); if(!p || p.id === b.id) return;
@@ -1969,6 +2022,11 @@ function botsOnPhase(){
 function botHint(b){
   const cat = hostCat(), used = G.hints.map(h => h.text);
   const fresh = pool => { const c = pool.filter(t => !used.includes(t)); return c.length ? c : pool; };
+  if(b.id === G.foxId && isFool()){   // 바보 여우: 가짜 단어를 진짜라고 믿고 설명
+    const d = cat.words.find(w => w[0] === G.decoy);
+    if(!d || !d[1].length || Math.random() < .1) return pick(fresh(cat.fox));
+    return pick(fresh(d[1]));
+  }
   if(b.id === G.foxId){
     const inf = inferWord(b.id, .1);
     const hasInfo = G.hints.some(h => !h.auto && h.pid !== b.id);
@@ -1989,7 +2047,7 @@ function botLine(b, sus){
   const safe = gp(lowOf(sus));
   const th = G.hints.find(h => h.pid === tId);
   const hq = th && !th.auto ? `“${th.text}”` : '침묵';
-  if(b.id === G.foxId){
+  if(b.id === G.foxId && !isFool()){
     const accused = G.players.filter(p => p.id !== b.id).sort((x, y) => (G.accuse[y.id] || 0) - (G.accuse[x.id] || 0))[0];
     const tgt = accused && (G.accuse[accused.id] || 0) > 0 ? accused : t;
     return pick([
@@ -2021,7 +2079,7 @@ function botVote(b){
   const pool = G.phase === 'runoff' ? G.runoff.filter(id => id !== b.id) : null;
   if(pool && !pool.length) return null;
   const sus = suspicionMap(b, pool);
-  if(b.id === G.foxId){
+  if(b.id === G.foxId && !isFool()){
     const crowd = {};
     Object.keys(sus).forEach(id => { crowd[id] = sus[id] + (G.accuse[id] || 0) * .4 + Object.values(G.votes).filter(v => v === id).length * .5; });
     return topOf(crowd)[0];
@@ -2032,8 +2090,10 @@ function botVote(b){
 }
 function botGuess(f){
   const inf = inferWord(f.id, .2);
+  let ranked = inf.ranked.filter(w => w !== G.decoy);     // 바보 여우는 자기 가짜 단어는 제외
+  const best = ranked[0];
   const p = Math.min(.5, .15 + inf.conf * .1);
-  return Math.random() < p ? inf.best : pick(inf.ranked.slice(1, 3).length ? inf.ranked.slice(1, 3) : inf.ranked);
+  return Math.random() < p ? best : pick(ranked.slice(1, 3).length ? ranked.slice(1, 3) : ranked);
 }
 function trackAccusation(pid, text){
   if(!['discuss','vote','runoff','hint'].includes(G.phase)) return;
@@ -2113,7 +2173,7 @@ function renderHeader(s){
   pill.textContent = PHASE_LABEL[s.phase] || s.phase;
   pill.className = 'phase-pill inline-block tone-' + (PHASE_TONE[s.phase] || 'amber');
   $('#hdr-code').textContent = s.roomCode;
-  $('#hdr-cat').textContent = `${s.catInfo.icon} ${s.catInfo.name}` + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
+  $('#hdr-cat').textContent = `${s.catInfo.icon} ${s.catInfo.name}` + (s.settings && s.settings.mode === 'fool' ? ' · 🤪 바보 모드' : '') + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
   $('#tab-info-label').textContent = s.phase === 'lobby' ? '방 설정' : '내 카드';
   $('#tab-info-ic').textContent = s.phase === 'lobby' ? '⚙️' : '🃏';
 }
@@ -2446,7 +2506,7 @@ function secretCard(s){
     <div class="secret-word">${fox ? '<span class="text-rose-200">???</span> <span class="text-sm font-medium text-rose-300/80">(당신은 여우입니다)</span>' : esc(s.you.word)}</div>
     <div class="text-xs mt-2 ${fox ? 'text-rose-200/70' : 'text-sky-200/60'}">${fox
       ? '다른 강아지들의 단서로 제시어를 추리하고, 들키지 않게 무리에 섞여드세요.'
-      : '여우는 모르게, 동료 강아지는 알아챌 수 있게 설명하세요.'}</div>
+      : (s.settings && s.settings.mode === 'fool' ? '🤪 바보 모드: 누군가는 비슷한 가짜 제시어를 받았어요. 나일 수도 있어요!' : '여우는 모르게, 동료 강아지는 알아챌 수 있게 설명하세요.')}</div>
   </div>`;
 }
 function renderAction(s){
@@ -2465,6 +2525,11 @@ function renderAction(s){
       <div class="label">카테고리 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
       <div class="grid grid-cols-3 gap-2">${cats}</div>
       ${s.category === 'custom' ? `<div class="text-xs text-amber-200/80 mt-2">✏️ 커스텀 제시어 ${s.catInfo.count}개 ${isHost ? '· <button class="underline" onclick="openCustom()">수정</button>' : ''}</div>` : ''}
+      <div class="label mt-4">🎮 게임 모드 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button class="cat-btn !items-start !text-left !px-3 ${s.settings.mode !== 'fool' ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_MODE',mode:'classic'})"` : 'disabled'}><span class="text-sm">🦊 기본 모드</span><span class="text-[10px] font-medium text-slate-400 leading-snug">여우는 제시어 없이 카테고리만 알아요</span></button>
+        <button class="cat-btn !items-start !text-left !px-3 ${s.settings.mode === 'fool' ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_MODE',mode:'fool'})"` : 'disabled'}><span class="text-sm">🤪 바보 모드</span><span class="text-[10px] font-medium text-slate-400 leading-snug">여우도 비슷한 가짜 제시어를 받아 자기가 여우인 줄 몰라요</span></button>
+      </div>
       <div class="label mt-4">⏱️ 시간 설정 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
       <div class="grid grid-cols-[52px_1fr] gap-x-2 gap-y-1.5 items-center text-xs">
         <span class="text-slate-400">단서</span><div class="grid grid-cols-3 gap-1">${[15,30,45].map(v => `<button class="cat-btn !py-1.5 ${s.settings.hint === v ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_TIME',hint:${v}})"` : 'disabled'}>${v}초</button>`).join('')}</div>
@@ -2476,7 +2541,8 @@ function renderAction(s){
       <div class="text-xs text-center mt-3 font-semibold ${isHost ? (err ? 'text-rose-300' : 'text-emerald-300') : (me.ready ? 'text-emerald-300' : 'text-amber-200')}">${isHost ? (err || '모든 준비 완료! 아래 [게임 시작]을 누르세요') : (me.ready ? '✓ 준비 완료 — 방장이 시작하길 기다리는 중' : '아래 [준비하기]를 눌러주세요')}</div>
       <div class="mt-5 rounded-2xl bg-black/25 border border-white/5 p-3 text-xs text-slate-400 space-y-1.5">
         <div class="text-amber-200 font-bold mb-1">📖 게임 방법</div>
-        <div>1. 강아지들은 같은 제시어를, 여우는 카테고리만 받습니다.</div>
+        <div>1. ${s.settings.mode === 'fool' ? '강아지들은 같은 제시어를, 여우는 비슷한 가짜 제시어를 받아요. 자기가 여우인지 아무도 몰라요!' : '강아지들은 같은 제시어를, 여우는 카테고리만 받습니다.'}</div>
+        <div>♻️ 같은 카테고리에서 최근 나온 제시어는 몇 판 동안 다시 나오지 않아요</div>
         <div>2. 순서대로 제시어를 한 줄로 설명 (각 ${s.settings.hint}초)</div>
         <div>3. ${s.settings.discuss}초 자유 토론 (🎯 의심 화살표, 리액션 사용 가능)</div>
         <div>※ 강아지가 제시어를 그대로 말하면 전송되지 않아요</div>
@@ -2592,7 +2658,7 @@ function showReveal(s){
           </div>
         </div>
       </div>
-      <div id="rv-msg" class="mt-6 text-sm text-slate-300 h-5 text-center">${fox ? '' : '여우가 모르게, 동료는 알아보게 설명하세요.'}</div>
+      <div id="rv-msg" class="mt-6 text-sm text-slate-300 h-5 text-center">${fox ? '' : (s.settings && s.settings.mode === 'fool' ? '🤪 바보 모드 — 이 제시어가 진짜인지는 아무도 몰라요!' : '여우가 모르게, 동료는 알아보게 설명하세요.')}</div>
       <button class="btn btn-ghost px-8 py-2 mt-4" onclick="closeReveal()">확인</button>
     </div>`;
   revealTimers.push(setTimeout(() => { const el = $('#rv-inner'); if(el){ el.classList.add('wobble'); Snd.heart(); } }, 120));
@@ -2661,7 +2727,8 @@ function maybeRevealExec(){
     ov.classList.add('fox-hit'); Snd.foxReveal();
     ov.querySelector('.exec-stage').classList.add('shake');
     sparks(36);
-    v.innerHTML = '<span class="text-rose-400" style="text-shadow:0 0 30px rgba(239,68,68,.8)">🦊 여우였다!</span><div class="text-base text-rose-200 font-sans font-bold mt-1">정체가 발각되었습니다</div>';
+    const fool = S && S.settings && S.settings.mode === 'fool';
+    v.innerHTML = '<span class="text-rose-400" style="text-shadow:0 0 30px rgba(239,68,68,.8)">🦊 여우였다!</span><div class="text-base text-rose-200 font-sans font-bold mt-1">' + (fool ? '본인도 몰랐던 바보 여우 발각!' : '정체가 발각되었습니다') + '</div>';
   } else {
     ov.classList.add('innocent'); Snd.sigh(); rain(60);
     v.innerHTML = '<span class="text-sky-200">무고한 강아지였습니다...</span><div class="text-base text-slate-400 font-sans font-bold mt-1">“멍... 억울해요” 여우는 아직 라운지에 있습니다</div>';
@@ -2696,6 +2763,9 @@ function openFoxModal(s){
   if(m.classList.contains('hidden')){
     $('#fox-modal-avatar').innerHTML = foxSVG();
     $('#fox-modal-cat').textContent = `카테고리: ${s.catInfo.icon} ${s.catInfo.name}`;
+    const dz = $('#fox-modal-decoy');
+    if(s.you.decoy){ dz.innerHTML = `🤪 당신은 <b>바보 여우</b>였어요! 받은 단어 <b>“${esc(s.you.decoy)}”</b>는 가짜였어요. 진짜는 뭘까요?`; dz.classList.remove('hidden'); }
+    else dz.classList.add('hidden');
     $('#fox-hints').innerHTML = s.hints.filter(h => h.pid !== myId).map(h =>
       `<div class="hint-chip"><span class="dot" style="background:${h.color}"></span><b class="text-amber-100">${esc(h.name)}</b><span class="text-slate-200">${esc(h.text)}</span></div>`).join('') || '<span class="text-xs text-slate-500">단서 없음</span>';
     $('#fox-input').value = ''; $('#fox-input').disabled = false; $('#fox-submit').disabled = false; $('#fox-submit').textContent = '🦊 최종 답변 제출';
@@ -2744,7 +2814,7 @@ function showResult(s){
       <div class="mt-4">${scene}</div>
       <div class="grid grid-cols-3 gap-2 mt-5 text-left">
         <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">FOX</div><div class="font-black text-rose-200 truncate">${esc(r.foxName)}</div></div>
-        <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">WORD</div><div class="font-black text-amber-100 truncate">${esc(r.word)}</div></div>
+        <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">WORD</div><div class="font-black text-amber-100 truncate">${esc(r.word)}</div>${r.decoy ? `<div class="text-[11px] text-rose-200/90 truncate mt-0.5">🤪 여우: ${esc(r.decoy)}</div>` : ''}</div>
         <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">FOX'S GUESS</div><div class="font-bold truncate ${r.reason === 'guess_correct' ? 'text-rose-300' : 'text-slate-400'}">${r.guess !== null && r.guess !== undefined ? esc(r.guess || '(공백)') : '-'}</div></div>
       </div>
       <div class="flex gap-2 mt-5">
