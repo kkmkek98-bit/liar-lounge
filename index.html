@@ -912,8 +912,8 @@ function saveProfile(){ lsSet(PROFILE_KEY, profile); }
    - 비워두면 기존처럼 직접 연결(STUN)만 사용
    - 직접 연결이 되는 사람은 그대로, 막힌 사람만 중계를 거침
    ========================================================= */
-const TURN_APP = '';   // 예: 'liarlounge'  → https://liarlounge.metered.live
-const TURN_KEY = '';   // Metered 대시보드의 TURN API Key
+const TURN_APP = 'liarlounge';   // 예: 'liarlounge'  → https://liarlounge.metered.live
+const TURN_KEY = '0ad32b6d597bf27652d99e43b99fc09b07c6';   // Metered 대시보드의 TURN API Key
 let ICE = null;
 const iceReady = (async () => {
   if(!TURN_APP || !TURN_KEY) return null;
