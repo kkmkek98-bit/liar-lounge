@@ -828,9 +828,9 @@ function starPath(cx, cy, R=15, r=6.5){
   let d = ''; for(let i=0;i<10;i++){ const a = -Math.PI/2 + i*Math.PI/5, rr = i%2 ? r : R; d += (i?'L':'M') + (cx + Math.cos(a)*rr).toFixed(1) + ' ' + (cy + Math.sin(a)*rr).toFixed(1) + ' '; }
   return d + 'Z';
 }
-function dogSVG(color, mood='normal', outfit){
+function dogSVG(color, mood='normal', outfit, fixedId){
   const o = normOutfit(outfit, color);
-  const id = uid(), F = FUR[o.fur] || FUR.cream, dk = shade(color,-.42), lt = shade(color,.35);
+  const id = fixedId || uid(), F = FUR[o.fur] || FUR.cream, dk = shade(color,-.42), lt = shade(color,.35);
   const G_ = `url(#gd${id})`;
   /* ---- clothes (body) ---- */
   const BODY = 'M28 200 Q34 164 100 157 Q166 164 172 200Z';
@@ -974,8 +974,8 @@ function dogSVG(color, mood='normal', outfit){
 </svg>`;
 }
 
-function foxSVG(){
-  const id = uid();
+function foxSVG(fixedId){
+  const id = fixedId || uid();
   return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full block">
   <defs>
     <linearGradient id="ff${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7843C"/><stop offset=".6" stop-color="#D9481C"/><stop offset="1" stop-color="#992A0E"/></linearGradient>
@@ -2156,7 +2156,7 @@ function renderStrip(s){
     const cls = ['ava', p.id === myId ? 'me' : '', s.currentTurn === p.id ? 'turn' : '', s.phase === 'runoff' && s.runoff && s.runoff.includes(p.id) ? 'cand' : '', foxR ? 'foxr' : '', !p.connected ? 'off' : ''].join(' ');
     const tick = p.voted || (s.phase === 'lobby' && !p.isHost && !p.isBot && p.ready);
     return `<div class="${cls}" style="--pc:${p.color}" onclick="setTab('players')" title="${esc(p.name)}">
-      <div class="ring"><div class="face">${foxR ? foxC() : dogC(p.color, 'normal', p.outfit)}</div>${tick ? '<span class="tick">✓</span>' : ''}${susPhase && susCount[p.id] ? `<span class="susn tnum">${susCount[p.id]}</span>` : ''}</div>
+      <div class="ring"><div class="face">${foxR ? foxC('st' + p.id) : dogC(p.color, 'normal', p.outfit, 'st' + p.id)}</div>${tick ? '<span class="tick">✓</span>' : ''}${susPhase && susCount[p.id] ? `<span class="susn tnum">${susCount[p.id]}</span>` : ''}</div>
       <div class="nm">${p.id === myId ? '나' : esc(p.name)}</div></div>`;
   }).join('');
   const cur = $('#strip .ava.turn'); if(cur) cur.scrollIntoView({ inline:'center', block:'nearest', behavior:'smooth' });
@@ -2187,7 +2187,8 @@ function renderDock(s){
 }
 /* ---------- 투표 바텀시트 ---------- */
 let sheetOpen = false;
-function voteListHTML(s){
+function voteListHTML(s, where){
+  where = where || 'va';
   const ro = s.phase === 'runoff';
   const cands = s.players.filter(p => p.id !== myId && (!ro || (s.runoff || []).includes(p.id)));
   const iAmCand = ro && (s.runoff || []).includes(myId);
@@ -2196,7 +2197,7 @@ function voteListHTML(s){
     ${ro ? `<div class="text-xs rounded-2xl p-2.5 mb-2 ${iAmCand ? 'bg-rose-500/15 text-rose-100 border border-rose-400/40' : 'bg-white/5 text-slate-300'}">${iAmCand ? '🎤 당신은 결선 후보예요! 채팅으로 변론하세요.' : '동률 후보 중 한 명을 다시 고르세요.'}</div>` : ''}
     <div class="space-y-2">` + cands.map(p =>
       `<button class="vote-btn ${myVote === p.id ? 'vote-on' : ''}" onclick="castVote('${p.id}')" ${!p.connected ? 'disabled' : ''}>
-        <div class="w-11 h-11 shrink-0 rounded-2xl overflow-hidden" style="background:radial-gradient(circle at 50% 35%, color-mix(in srgb, ${p.color} 30%, #1E293B), #0B0F19 78%)">${dogC(p.color, 'normal', p.outfit)}</div>
+        <div class="w-11 h-11 shrink-0 rounded-2xl overflow-hidden" style="background:radial-gradient(circle at 50% 35%, color-mix(in srgb, ${p.color} 30%, #1E293B), #0B0F19 78%)">${dogC(p.color, 'normal', p.outfit, where + p.id)}</div>
         <span class="font-bold text-sm">${esc(p.name)}</span>
         <span class="ml-auto text-xs">${myVote === p.id ? '<span class="font-display text-rose-200 text-base">🎯 지목</span>' : ''} ${p.voted ? '<span class="text-emerald-300">✓</span>' : ''}</span>
       </button>`).join('') + `</div>
@@ -2215,7 +2216,7 @@ function closeVoteSheet(){ sheetOpen = false; $('#vote-sheet').classList.remove(
 function renderVoteSheet(s){
   if(!sheetOpen) return;
   if(s.phase !== 'vote' && s.phase !== 'runoff'){ closeVoteSheet(); return; }
-  const h = `<div class="flex items-center justify-between mb-1"><div class="font-display text-[28px] crimson-text">${s.phase === 'runoff' ? '결선 투표' : '최후의 투표'}</div><button class="btn btn-ghost icon-btn" onclick="closeVoteSheet()">✕</button></div>` + voteListHTML(s);
+  const h = `<div class="flex items-center justify-between mb-1"><div class="font-display text-[28px] crimson-text">${s.phase === 'runoff' ? '결선 투표' : '최후의 투표'}</div><button class="btn btn-ghost icon-btn" onclick="closeVoteSheet()">✕</button></div>` + voteListHTML(s, 'vs');
   if(changed('sheet', [h, myVote])) $('#vote-sheet-body').innerHTML = h;
 }
 setInterval(() => {
@@ -2236,14 +2237,18 @@ setInterval(() => {
 }, 200);
 
 /* ---------- players + suspicion arrows ---------- */
+/* 그림 캐시: 모양은 재사용하되, SVG 안의 그라데이션 ID는 '화면 위치(slot)'마다 고유하게 부여
+   (같은 ID가 여러 개면 브라우저가 첫 번째 것만 참조 → 그게 숨겨진 영역에 있으면 색이 사라짐) */
 const svgCache = new Map();
-function dogC(color, mood, outfit){
+const slotId = slot => 'x' + String(slot).replace(/[^A-Za-z0-9_-]/g, '_');
+function dogC(color, mood, outfit, slot){
   const k = color + '|' + mood + '|' + JSON.stringify(outfit);
-  let v = svgCache.get(k);
-  if(!v){ if(svgCache.size > 400) svgCache.clear(); v = dogSVG(color, mood, outfit); svgCache.set(k, v); }
-  return v;
+  let tpl = svgCache.get(k);
+  if(!tpl){ if(svgCache.size > 400) svgCache.clear(); tpl = dogSVG(color, mood, outfit, '__UID__'); svgCache.set(k, tpl); }
+  return tpl.split('__UID__').join(slotId(slot || uid()) + mood[0]);
 }
-let foxCacheSVG = null; const foxC = () => foxCacheSVG || (foxCacheSVG = foxSVG());
+let foxTpl = null;
+const foxC = slot => (foxTpl || (foxTpl = foxSVG('__UID__'))).split('__UID__').join(slotId(slot || uid()) + 'f');
 let cardCache = { ids:'', html:[] };
 function renderPlayers(s){
   const key = [s.phase, s.players, s.currentTurn, s.hints, s.tally, s.execution, s.result && s.result.foxId, s.suspect, s.runoff, myId, s.you.role];
@@ -2258,7 +2263,7 @@ function renderPlayers(s){
     const ex = reveal && s.execution && s.execution.targetId === p.id;
     const foxRevealed = (s.phase === 'result' && s.result && s.result.foxId === p.id) || (ex && s.execution.wasFox === true && s.phase !== 'execution');
     const sad = ex && s.execution.wasFox === false && s.phase !== 'execution';
-    const av = foxRevealed ? foxC() : dogC(p.color, sad ? 'sad' : 'normal', p.outfit);
+    const av = foxRevealed ? foxC('pl' + p.id) : dogC(p.color, sad ? 'sad' : 'normal', p.outfit, 'pl' + p.id);
     const votes = s.tally && s.tally[p.id] ? s.tally[p.id] : 0;
     const hint = s.hints.find(h => h.pid === p.id);
     const inRunoff = s.phase === 'runoff' && s.runoff && s.runoff.includes(p.id);
