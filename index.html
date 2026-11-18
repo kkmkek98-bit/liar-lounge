@@ -24,11 +24,12 @@
       #0B0F19; }
   .bg-lounge::after{ content:''; position:absolute; inset:0; opacity:.5;
     background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.012) 0 2px, transparent 2px 9px); }
-  .fog{ position:fixed; width:60vw; height:60vw; border-radius:50%; filter:blur(90px); opacity:.10; z-index:0; pointer-events:none; animation:fogMove 26s ease-in-out infinite alternate; }
+  .fog{ position:fixed; width:60vw; height:60vw; border-radius:50%; opacity:.10; z-index:0; pointer-events:none; }
+  .fog{ background:radial-gradient(circle, var(--fc) 0%, transparent 70%) !important; opacity:.16; }
   @keyframes fogMove{ from{ transform:translate(-5%,-3%) scale(1);} to{ transform:translate(6%,5%) scale(1.15);} }
 
   /* ===== Glass / Buttons ===== */
-  .glass{ background:rgba(15,21,36,.58); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  .glass{ background:linear-gradient(160deg, rgba(22,30,50,.92), rgba(12,17,30,.94));
     border:1px solid rgba(203,213,225,.12); box-shadow:0 12px 44px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05); }
   .gold-text{ background:linear-gradient(120deg,#FFF3C4 0%,#E9C766 35%,#D4AF37 55%,#A67C1B 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .btn{ transition:all .18s ease; border-radius:14px; font-weight:700; }
@@ -241,13 +242,18 @@
   .timer-bar > div{ height:100%; background:linear-gradient(90deg,#38BDF8,#D4AF37); transition:width .2s linear; }
   .swatch{ width:100%; aspect-ratio:1; border-radius:12px; border:2px solid transparent; transition:all .2s; position:relative; }
   .swatch.on{ border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.15), 0 0 18px var(--sc); transform:scale(1.06); }
+  body.lite *{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+  body.lite .fog, body.lite .bg-lounge::after{ display:none !important; }
+  body.lite .turn-focus{ animation:none !important; box-shadow:0 0 0 2px #38BDF8 !important; }
+  body.lite .eye-glow{ animation:none !important; }
+  body.lite .animate-ping{ animation:none !important; }
   #net-banner{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:110; }
 </style>
 </head>
 <body>
 <div class="bg-lounge"></div>
-<div class="fog" style="background:#38BDF8;left:-20vw;top:-20vw"></div>
-<div class="fog" style="background:#D4AF37;right:-25vw;bottom:-25vw;animation-delay:-9s"></div>
+<div class="fog" style="--fc:#38BDF8;left:-20vw;top:-20vw"></div>
+<div class="fog" style="--fc:#D4AF37;right:-25vw;bottom:-25vw"></div>
 
 <!-- ================= ENTRY ================= -->
 <section id="screen-entry" class="relative z-10 min-h-screen flex items-center justify-center p-4">
@@ -322,6 +328,7 @@
       <div id="hdr-timer" class="font-mono text-2xl font-bold text-center leading-none">--:--</div>
       <div class="timer-bar mt-1"><div id="hdr-bar" style="width:0%"></div></div>
     </div>
+    <button id="btn-lite" class="btn btn-ghost px-3 py-2 text-xs" onclick="setLite(!document.body.classList.contains('lite'), true)" title="그래픽 효과 줄이기/늘리기">✨ 고화질</button>
     <button id="btn-mute" class="btn btn-ghost px-3 py-2" onclick="toggleMute()" title="음소거"></button>
     <button class="btn btn-ghost px-3 py-2 text-sm" onclick="leave()">나가기</button>
   </header>
@@ -366,7 +373,7 @@
 <div id="exec-overlay" class="overlay hidden"></div>
 
 <div id="fox-modal" class="overlay hidden" style="z-index:70">
-  <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 bg-black/90"></div>
   <div class="absolute inset-0 pointer-events-none" style="box-shadow:inset 0 0 220px rgba(220,38,38,.55)"></div>
   <div class="relative glass rounded-3xl p-7 w-[min(92vw,460px)] text-center" style="border-color:rgba(244,63,94,.5);box-shadow:0 0 60px rgba(239,68,68,.35)">
     <div id="fox-modal-avatar" class="w-28 h-28 mx-auto"></div>
@@ -389,7 +396,7 @@
 
 <!-- Wardrobe -->
 <div id="wardrobe" class="overlay hidden" style="z-index:80">
-  <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" onclick="closeWardrobe()"></div>
+  <div class="absolute inset-0 bg-black/85" onclick="closeWardrobe()"></div>
   <div class="relative glass rounded-[28px] p-5 w-[min(96vw,860px)] max-h-[92vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-3">
       <div><div class="panel-title">WARDROBE</div><div class="font-display text-3xl gold-text font-black italic">옷장</div></div>
@@ -420,7 +427,7 @@
 
 <!-- Custom words -->
 <div id="custom-modal" class="overlay hidden" style="z-index:80">
-  <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" onclick="closeCustom()"></div>
+  <div class="absolute inset-0 bg-black/85" onclick="closeCustom()"></div>
   <div class="relative glass rounded-[28px] p-6 w-[min(94vw,560px)]">
     <div class="panel-title">CUSTOM WORDS</div>
     <div class="font-display text-3xl gold-text font-black italic">커스텀 제시어</div>
@@ -437,7 +444,7 @@
 </div>
 
 <div id="lost-overlay" class="overlay hidden" style="z-index:90">
-  <div class="absolute inset-0 bg-black/85 backdrop-blur"></div>
+  <div class="absolute inset-0 bg-black/90"></div>
   <div class="relative glass rounded-3xl p-8 text-center w-[min(92vw,420px)]">
     <div class="text-4xl">🔌</div>
     <h3 id="lost-title" class="text-xl font-black mt-3">방장과의 연결이 끊어졌습니다</h3>
@@ -883,6 +890,17 @@ function renderMuteBtn(){
     ? `<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#94A3B8" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>`
     : `<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#FDE68A" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>`;
 }
+/* 저사양 자동 감지: 4초 평균 40fps 미만이면 효과를 줄임 (수동 토글 가능) */
+let liteForced = lsGet('liar_lounge_lite', null);
+function setLite(on, save){ document.body.classList.toggle('lite', !!on); if(save){ liteForced = !!on; lsSet('liar_lounge_lite', liteForced); } const b = $('#btn-lite'); if(b){ b.textContent = on ? '⚡ 가벼운 모드' : '✨ 고화질'; } }
+(function autoLite(){
+  if(liteForced !== null){ setLite(liteForced); return; }
+  let n = 0, t0 = performance.now(), slow = 0;
+  const f = now => { n++; if(now - t0 >= 4000){ const fps = n * 1000 / (now - t0); if(fps < 40) slow++; else slow = 0; n = 0; t0 = now;
+      if(slow >= 2 && !document.body.classList.contains('lite')){ setLite(true); toast('⚡ 기기 성능에 맞춰 가벼운 모드로 전환했어요'); } }
+    if(liteForced === null) requestAnimationFrame(f); };
+  requestAnimationFrame(f);
+})();
 function toggleMute(){ Snd.init(); Snd.muted = !Snd.muted; renderMuteBtn(); toast(Snd.muted ? '음소거 ON' : '사운드 ON'); }
 document.addEventListener('pointerdown', () => Snd.init());
 
@@ -2183,7 +2201,7 @@ function showReveal(s){
   const fox = s.you.role === 'fox';
   ov.className = 'overlay';
   ov.innerHTML = `
-    <div class="absolute inset-0 bg-[#05070C]/90 backdrop-blur-md"></div>
+    <div class="absolute inset-0 bg-[#05070C]/[.96]"></div>
     <div class="reveal-vignette"></div>
     <div class="relative flex flex-col items-center">
       <div id="rv-top" class="text-[11px] tracking-[.5em] text-amber-200/80 font-bold mb-5">SECRET IDENTITY</div>
@@ -2348,7 +2366,7 @@ function showResult(s){
       <div class="text-xs text-sky-200/80 mt-2">여우는 철창 속으로! 라운지에 평화가 찾아왔습니다.</div>`;
   }
   ov.innerHTML = `
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="$('#result-overlay').classList.add('hidden')"></div>
+    <div class="absolute inset-0 bg-black/90" onclick="$('#result-overlay').classList.add('hidden')"></div>
     <div id="rs-fx" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
     <div class="relative glass rounded-[28px] p-6 w-[min(94vw,560px)] max-h-[94vh] overflow-y-auto text-center" style="border-color:${foxWin ? 'rgba(239,68,68,.5)' : 'rgba(56,189,248,.5)'};box-shadow:0 0 70px ${foxWin ? 'rgba(239,68,68,.3)' : 'rgba(56,189,248,.25)'}">
       <div class="text-[11px] tracking-[.5em] font-bold ${iWon ? 'text-amber-200' : 'text-slate-400'}">${iWon ? 'VICTORY' : 'DEFEAT'}</div>
