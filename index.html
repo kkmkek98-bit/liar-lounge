@@ -242,11 +242,6 @@
   .timer-bar > div{ height:100%; background:linear-gradient(90deg,#38BDF8,#D4AF37); transition:width .2s linear; }
   .swatch{ width:100%; aspect-ratio:1; border-radius:12px; border:2px solid transparent; transition:all .2s; position:relative; }
   .swatch.on{ border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.15), 0 0 18px var(--sc); transform:scale(1.06); }
-  body.lite *{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
-  body.lite .fog, body.lite .bg-lounge::after{ display:none !important; }
-  body.lite .turn-focus{ animation:none !important; box-shadow:0 0 0 2px #38BDF8 !important; }
-  body.lite .eye-glow{ animation:none !important; }
-  body.lite .animate-ping{ animation:none !important; }
   #net-banner{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:110; }
 </style>
 </head>
@@ -328,7 +323,6 @@
       <div id="hdr-timer" class="font-mono text-2xl font-bold text-center leading-none">--:--</div>
       <div class="timer-bar mt-1"><div id="hdr-bar" style="width:0%"></div></div>
     </div>
-    <button id="btn-lite" class="btn btn-ghost px-3 py-2 text-xs" onclick="setLite(!document.body.classList.contains('lite'), true)" title="그래픽 효과 줄이기/늘리기">✨ 고화질</button>
     <button id="btn-mute" class="btn btn-ghost px-3 py-2" onclick="toggleMute()" title="음소거"></button>
     <button class="btn btn-ghost px-3 py-2 text-sm" onclick="leave()">나가기</button>
   </header>
@@ -890,17 +884,6 @@ function renderMuteBtn(){
     ? `<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#94A3B8" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>`
     : `<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#FDE68A" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>`;
 }
-/* 저사양 자동 감지: 4초 평균 40fps 미만이면 효과를 줄임 (수동 토글 가능) */
-let liteForced = lsGet('liar_lounge_lite', null);
-function setLite(on, save){ document.body.classList.toggle('lite', !!on); if(save){ liteForced = !!on; lsSet('liar_lounge_lite', liteForced); } const b = $('#btn-lite'); if(b){ b.textContent = on ? '⚡ 가벼운 모드' : '✨ 고화질'; } }
-(function autoLite(){
-  if(liteForced !== null){ setLite(liteForced); return; }
-  let n = 0, t0 = performance.now(), slow = 0;
-  const f = now => { n++; if(now - t0 >= 4000){ const fps = n * 1000 / (now - t0); if(fps < 40) slow++; else slow = 0; n = 0; t0 = now;
-      if(slow >= 2 && !document.body.classList.contains('lite')){ setLite(true); toast('⚡ 기기 성능에 맞춰 가벼운 모드로 전환했어요'); } }
-    if(liteForced === null) requestAnimationFrame(f); };
-  requestAnimationFrame(f);
-})();
 function toggleMute(){ Snd.init(); Snd.muted = !Snd.muted; renderMuteBtn(); toast(Snd.muted ? '음소거 ON' : '사운드 ON'); }
 document.addEventListener('pointerdown', () => Snd.init());
 
