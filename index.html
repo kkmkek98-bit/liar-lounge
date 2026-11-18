@@ -906,10 +906,31 @@ function onTick(fn){ tickers.push(fn); }
 let profile = lsGet(PROFILE_KEY, null) || { name:'', color:COLORS[0].c, outfit:defaultOutfit(COLORS[0].c) };
 profile.outfit = normOutfit(profile.outfit, profile.color);
 function saveProfile(){ lsSet(PROFILE_KEY, profile); }
+/* =========================================================
+   TURN 중계 서버 (Metered Open Relay, 월 20GB 무료)
+   - 아래 두 값을 Metered 대시보드 값으로 채우면 자동 활성화
+   - 비워두면 기존처럼 직접 연결(STUN)만 사용
+   - 직접 연결이 되는 사람은 그대로, 막힌 사람만 중계를 거침
+   ========================================================= */
+const TURN_APP = '';   // 예: 'liarlounge'  → https://liarlounge.metered.live
+const TURN_KEY = '';   // Metered 대시보드의 TURN API Key
+let ICE = null;
+const iceReady = (async () => {
+  if(!TURN_APP || !TURN_KEY) return null;
+  try{
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch(`https://${TURN_APP}.metered.live/api/v1/turn/credentials?apiKey=${encodeURIComponent(TURN_KEY)}`, { signal:ctl.signal });
+    clearTimeout(t);
+    const j = await r.json();
+    if(Array.isArray(j) && j.length) ICE = [{ urls:'stun:stun.l.google.com:19302' }, ...j];
+  }catch(e){ console.warn('TURN 정보를 받지 못해 직접 연결만 사용합니다', e); }
+  return ICE;
+})();
 function peerOpts(){
   const ps = new URLSearchParams(location.search).get('ps');
-  if(ps){ const [h, p] = ps.split(':'); return { host:h, port:+p || 9000, path:'/', secure:false, debug:1 }; }
-  return { debug:1 };
+  const o = ps ? (([h, p]) => ({ host:h, port:+p || 9000, path:'/', secure:false, debug:1 }))(ps.split(':')) : { debug:1 };
+  if(ICE) o.config = { iceServers:ICE };
+  return o;
 }
 
 /* =========================================================
@@ -964,9 +985,10 @@ function enterGame(){
 }
 function saveSession(role){ ssSet(SESS_KEY, { room:roomCode, token:myToken, role, name:profile.name, ts:Date.now() }); }
 function discardSession(){ ssDel(SESS_KEY); ssDel(SNAP_KEY); $('#resume-box').classList.add('hidden'); }
-function resumeSession(){
+async function resumeSession(){
   const sess = ssGet(SESS_KEY); if(!sess) return;
   if(peer) return;
+  await iceReady; if(peer) return;
   $('#resume-box').classList.add('hidden');
   profile.name = sess.name || profile.name;
   roomCode = sess.room; myToken = sess.token;
@@ -987,9 +1009,11 @@ function hardReset(){
 /* =========================================================
    HOST: CONNECTION
    ========================================================= */
-function createRoom(){
+async function createRoom(){
   Snd.init(); const n = readName(); if(!n) return;
-  if(typeof Peer === 'undefined'){ toast('PeerJS를 불러오지 못했습니다. 인터넷 연결을 확인하세요.', 'danger'); return; }
+  if(peer) return;
+  setEntryBusy(true, '연결 준비 중...'); await iceReady;
+  if(typeof Peer === 'undefined'){ setEntryBusy(false, ''); toast('PeerJS를 불러오지 못했습니다. 인터넷 연결을 확인하세요.', 'danger'); return; }
   setEntryBusy(true, '라운지를 개설하는 중...');
   myToken = rid(16);
   openHostPeer(genCode(), 0, () => {
@@ -1120,13 +1144,13 @@ onTick(() => {
 /* =========================================================
    GUEST: CONNECTION (자동 재접속 포함)
    ========================================================= */
-function joinRoom(){
+async function joinRoom(){
   Snd.init(); const n = readName(); if(!n) return;
   const code = clean($('#in-code').value, 5).toUpperCase();
   if(code.length < 5){ toast('5자리 방 코드를 입력해주세요', 'danger'); return; }
   if(typeof Peer === 'undefined'){ toast('PeerJS를 불러오지 못했습니다. 인터넷 연결을 확인하세요.', 'danger'); return; }
   roomCode = code; myToken = rid(16);
-  setEntryBusy(true, '라운지에 접속하는 중...');
+  setEntryBusy(true, '라운지에 접속하는 중...'); await iceReady;
   guestStart(false);
 }
 function guestStart(isResume){
@@ -2069,7 +2093,8 @@ function renderAction(s){
         <div>3. 90초 자유 토론 (🎯 의심 화살표, 리액션 사용 가능)</div>
         <div>4. 투표 동률이면 결선 투표, 여우가 지목되면 15초 역전 찬스!</div>
       </div>
-      <div class="mt-3 text-xs text-slate-500 text-center">방 코드 <b class="font-mono text-amber-200 tracking-widest">${esc(s.roomCode)}</b>를 친구에게 공유하세요</div>`;
+      <div class="mt-3 text-xs text-slate-500 text-center">방 코드 <b class="font-mono text-amber-200 tracking-widest">${esc(s.roomCode)}</b>를 친구에게 공유하세요</div>
+      <div class="mt-1 text-[11px] text-center ${ICE ? 'text-emerald-300/80' : 'text-slate-600'}">${ICE ? '🛰️ 중계 서버(TURN) 활성 — 막힌 네트워크에서도 접속 가능' : '🛰️ 직접 연결 모드'}</div>`;
   } else {
     h = `<div class="panel-title mb-3">ACTION PANEL</div>` + secretCard(s) + '<div class="mt-4">';
     switch(s.phase){
