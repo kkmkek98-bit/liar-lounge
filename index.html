@@ -208,7 +208,15 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
 .secret-card{ position:relative; padding:1rem; border-radius:var(--r-xl); overflow:hidden;
   background:radial-gradient(260px 160px at 100% 0%, rgba(59,130,246,.28), transparent 70%), linear-gradient(160deg, rgba(30,41,70,.75), rgba(12,16,28,.85));
   border:1px solid rgba(96,165,250,.4); box-shadow:var(--inner-glow), 0 0 30px -8px rgba(59,130,246,.45), var(--float); }
-.secret-card.secret-fox{ background:radial-gradient(260px 160px at 100% 0%, rgba(225,29,72,.35), transparent 70%), linear-gradient(160deg, rgba(76,18,34,.8), rgba(12,16,28,.88)); border-color:rgba(251,113,133,.55); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 30px -6px rgba(225,29,72,.55), var(--float); }
+.sec{ transition:opacity .1s; }
+body:not(.peek) .sec{ opacity:0 !important; pointer-events:none; }
+body:not(.peek) .sec-hide{ display:none !important; }
+.sec-ph{ display:none !important; }
+body:not(.peek) .sec-ph{ display:flex !important; }
+.peek-zone{ cursor:pointer; user-select:none; -webkit-user-select:none; }
+#rv-inner.peekcard{ transition:transform .3s var(--ease-out); }
+body.peek #rv-inner.peekcard{ transform:rotateY(180deg); }
+body.peek .secret-card.secret-fox{ background:radial-gradient(260px 160px at 100% 0%, rgba(225,29,72,.35), transparent 70%), linear-gradient(160deg, rgba(76,18,34,.8), rgba(12,16,28,.88)); border-color:rgba(251,113,133,.55); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 30px -6px rgba(225,29,72,.55), var(--float); }
 .secret-word{ font-family:var(--font-head); font-size:2rem; color:#F8FAFC; letter-spacing:.02em; text-shadow:0 0 22px rgba(96,165,250,.45); word-break:keep-all; line-height:1.15; }
 .vote-btn{ width:100%; display:flex; align-items:center; gap:.7rem; padding:.5rem .75rem; border-radius:20px; text-align:left;
   border:1px solid var(--glass-line); background:linear-gradient(160deg, rgba(36,46,70,.5), rgba(16,21,34,.55)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.25);
@@ -724,7 +732,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
    CONSTANTS & DATA
    ========================================================= */
 const MAX_PLAYERS = 12, MIN_PLAYERS = 3;
-const VER = 'v26';
+const VER = 'v27';
 const MAX_SPECS = 6;   // 관전석   // 방장과 참가자의 버전이 다르면 입장 차단
 const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000, INTERLUDE:20000, INTERMISSION:5000 };
 const MAX_TRIALS = 3;   // 재판(최후 변론→찬반) 최대 횟수. 모두 반대면 여우 승리
@@ -3067,10 +3075,10 @@ function renderPlayers(s){
       p.isHost ? '<span class="badge bg-amber-300/20 text-amber-200">HOST</span>' : '',
       p.isBot ? '<span class="badge bg-sky-400/15 text-sky-300">BOT</span>' : '',
       me ? '<span class="badge bg-white/15 text-white">나</span>' : '',
-      me && s.you.role === 'fox' && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="나만 볼 수 있음">🦊 비밀</span>' : '',
+      me && s.you.role === 'fox' && !foxRevealed ? '<span class="sec-hide badge bg-rose-500/25 text-rose-200" title="나만 볼 수 있음">🦊 비밀</span>' : '',
       foxRevealed ? '<span class="badge bg-rose-600 text-white">FOX</span>' : '',
       p.out && s.phase !== 'result' ? (p.outFox ? '<span class="badge bg-slate-500/30 text-slate-300">👻 관전</span>' : '<span class="badge bg-sky-400/15 text-sky-200">😢 처형됨</span>') : '',
-      mate && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="여우끼리만 보여요">🦊 동료</span>' : '',
+      mate && !foxRevealed ? '<span class="sec-hide badge bg-rose-500/25 text-rose-200" title="여우끼리만 보여요">🦊 동료</span>' : '',
       s.you.spec && (s.you.allFoxes || []).includes(p.id) && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="관전자에게만 보여요">🦊 여우</span>' : '',
       inRunoff ? '<span class="badge bg-rose-500/30 text-rose-100">결선</span>' : '',
       susPhase && susCount[p.id] ? `<span class="badge bg-rose-500/15 text-rose-300">🎯${susCount[p.id]}</span>` : ''
@@ -3322,30 +3330,45 @@ function specCard(s){
     <div class="text-xs mt-2 text-slate-400">관전석 채팅은 관전자끼리만 보여요. 스포일러는 마음껏!</div>
   </div>`;
 }
+let peekTimer = null;
+function setPeek(on){
+  document.body.classList.toggle('peek', !!on);
+  clearTimeout(peekTimer);
+  if(on) peekTimer = setTimeout(() => setPeek(false), 2500);   // 계속 누르고 있어도 2.5초 뒤 자동 숨김
+}
+['mouseup','touchend','touchcancel'].forEach(ev => document.addEventListener(ev, () => setPeek(false)));
+window.addEventListener('blur', () => setPeek(false));
 const roleName = o => (o && o.species === 'cat') ? '🐱 고양이 (시민)' : '🐶 강아지 (시민)';
 function secretCard(s){
   if(s.you.spec) return specCard(s);
   const me = s.players.find(p => p.id === myId) || { color:profile.color, outfit:profile.outfit };
   const fox = s.you.role === 'fox';
-  return `<div class="secret-card ${fox ? 'secret-fox' : ''}">
+  // 🔒 옆자리 화면에 보이지 않게: 평소엔 가려두고, 카드를 마우스로 누르고 있는 동안만 표시
+  return `<div class="secret-card peek-zone ${fox ? 'secret-fox' : ''}" onmousedown="setPeek(true)" ontouchstart="setPeek(true)" title="누르고 있는 동안만 보여요">
     <div class="flex items-center gap-3">
-      <div class="w-16 h-16 mask-stack ${fox ? 'fox-shown' : ''}">
-        ${fox ? `<div class="layer fox-layer">${foxSVG()}</div>` : ''}
-        <div class="layer dog-layer">${dogSVG(me.color, 'normal', me.outfit)}</div>
+      <div class="w-16 h-16 relative">
+        <div class="sec absolute inset-0 mask-stack ${fox ? 'fox-shown' : ''}">
+          ${fox ? `<div class="layer fox-layer">${foxSVG()}</div>` : ''}
+          <div class="layer dog-layer">${dogSVG(me.color, 'normal', me.outfit)}</div>
+        </div>
+        <div class="sec-ph absolute inset-0 rounded-2xl bg-white/5 border border-white/10 items-center justify-center text-2xl">❔</div>
       </div>
-      <div>
+      <div class="relative flex-1">
         <div class="text-[10px] tracking-[.3em] text-slate-400">YOUR SECRET ROLE</div>
-        <div class="font-black text-lg ${fox ? 'text-rose-300' : 'text-sky-300'}">${fox ? '🦊 여우 (라이어)' : roleName(me.outfit)}</div>
+        <div class="relative"><div class="sec font-black text-lg ${fox ? 'text-rose-300' : 'text-sky-300'}">${fox ? '🦊 여우 (라이어)' : roleName(me.outfit)}</div>
+          <div class="sec-ph absolute inset-0 items-center text-amber-200 font-bold text-sm">🔒 꾹 누르고 있으면 보여요</div></div>
       </div>
     </div>
     <div class="grid grid-cols-2 gap-2 mt-3">
       <div class="rounded-xl bg-black/25 p-2"><div class="text-[10px] text-slate-500">카테고리</div><div class="font-bold text-amber-100 truncate">${s.catInfo.icon} ${esc(s.catInfo.name)}</div></div>
       <div class="rounded-xl bg-black/25 p-2"><div class="text-[10px] text-slate-500">단서 진행 · 여우</div><div class="font-bold text-slate-200">${s.hints.length} / ${s.turnOrder.length} · <span class="text-rose-200">🦊×${s.foxCount || 1}</span></div></div>
     </div>
-    ${fox && s.you.mates && s.you.mates.length ? `<div class="mt-2 rounded-xl bg-rose-500/15 border border-rose-400/30 p-2 text-xs text-rose-100">🦊 동료 여우: <b>${s.you.mates.map(id => esc(nameOf(id))).join(', ')}</b> <span class="text-rose-200/70">(서로 감싸주세요)</span></div>` : ''}
+    ${fox && s.you.mates && s.you.mates.length ? `<div class="sec-hide mt-2 rounded-xl bg-rose-500/15 border border-rose-400/30 p-2 text-xs text-rose-100">🦊 동료 여우: <b>${s.you.mates.map(id => esc(nameOf(id))).join(', ')}</b> <span class="text-rose-200/70">(서로 감싸주세요)</span></div>` : ''}
     <div class="mt-3 text-[10px] tracking-[.3em] text-slate-500">SECRET WORD</div>
-    <div class="secret-word">${fox ? '<span class="text-rose-200">???</span> <span class="text-sm font-medium text-rose-300/80">(당신은 여우입니다)</span>' : esc(s.you.word)}</div>
-    <div class="text-xs mt-2 ${fox ? 'text-rose-200/70' : 'text-sky-200/60'}">${fox
+    <div class="relative"><div class="sec secret-word">${fox ? '<span class="text-rose-200">???</span> <span class="text-sm font-medium text-rose-300/80">(당신은 여우입니다)</span>' : esc(s.you.word)}</div>
+      <div class="sec-ph absolute inset-0 items-center rounded-xl bg-black/30 px-3 text-amber-200 font-bold text-sm">🔒 ······ (꾹 눌러서 확인)</div></div>
+    <div class="sec-ph text-xs mt-2 text-slate-400">옆자리 화면에 보이지 않게 평소엔 가려져 있어요</div>
+    <div class="sec-hide text-xs mt-2 ${fox ? 'text-rose-200/70' : 'text-sky-200/60'}">${fox
       ? '다른 강아지들의 단서로 제시어를 추리하고, 들키지 않게 무리에 섞여드세요.'
       : (s.settings && s.settings.mode === 'fool' ? '🤪 바보 모드: 누군가는 비슷한 가짜 제시어를 받았어요. 나일 수도 있어요!' : '여우는 모르게, 동료 강아지는 알아챌 수 있게 설명하세요.')}</div>
   </div>`;
@@ -3511,46 +3534,37 @@ function showReveal(s){
   const ov = $('#reveal-overlay');
   const me = s.players.find(p => p.id === myId) || { color:profile.color, outfit:profile.outfit };
   const fox = s.you.role === 'fox';
+  const mates = fox && s.you.mates && s.you.mates.length ? `<div class="mt-2 text-xs text-rose-200 text-center">동료 여우: <b>${s.you.mates.map(id => esc(nameOf(id))).join(', ')}</b></div>` : '';
   ov.className = 'overlay';
+  // 🔒 카드는 가려진 채로 나오고, 마우스로 누르고 있는 동안만 뒤집혀서 역할·제시어가 보임 (옆자리 노출 방지)
   ov.innerHTML = `
     <div class="absolute inset-0 bg-[#05070C]/[.96]"></div>
     <div class="reveal-vignette"></div>
     <div class="relative flex flex-col items-center">
-      <div id="rv-top" class="text-[11px] tracking-[.5em] text-amber-200/80 font-bold mb-5">SECRET IDENTITY</div>
-      <div class="card3d w-[250px] h-[370px]">
-        <div class="card3d-inner" id="rv-inner">
+      <div class="text-[11px] tracking-[.5em] text-amber-200/80 font-bold mb-5">SECRET IDENTITY</div>
+      <div class="card3d w-[250px] h-[370px] peek-zone" onmousedown="setPeek(true)" ontouchstart="setPeek(true)">
+        <div class="card3d-inner peekcard" id="rv-inner">
           <div class="face card-front flex flex-col items-center justify-center">
             <div class="font-display text-7xl gold-text font-black italic">?</div>
             <div class="mt-4 text-[10px] tracking-[.5em] text-amber-200/70">LIAR LOUNGE</div>
-            <div class="absolute inset-3 rounded-[18px] border border-amber-300/25"></div>
+            <div class="mt-8 px-4 py-2 rounded-full text-sm font-bold text-amber-200" style="background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5)">👆 꾹 누르고 있으면 보여요</div>
+            <div class="mt-2 text-[11px] text-slate-400">손을 떼면 다시 가려져요</div>
+            <div class="absolute inset-3 rounded-[18px] border border-amber-300/25 pointer-events-none"></div>
           </div>
-          <div class="face back card-back flex flex-col items-center p-5">
+          <div class="face back card-back flex flex-col items-center p-5" style="${fox ? 'background:radial-gradient(300px 200px at 50% 0%, rgba(225,29,72,.4), transparent 70%), linear-gradient(170deg,#2A1020,#0B0E14 75%);border-color:rgba(251,113,133,.85)' : ''}">
             <div class="text-[10px] tracking-[.4em] text-slate-400 mt-1">YOUR ROLE</div>
-            <div id="rv-mask" class="mask-stack w-40 h-40 mt-3">
-              ${fox ? `<div class="layer fox-layer">${foxSVG()}</div>` : ''}
-              <div class="layer dog-layer">${dogSVG(me.color, 'normal', me.outfit)}</div>
-            </div>
-            <div id="rv-role" class="mt-3 text-xl font-black text-sky-300">${roleName(me.outfit)}</div>
-            <div class="mt-3 text-xs text-slate-400">카테고리 · <span class="text-amber-100 font-bold">${s.catInfo.icon} ${esc(s.catInfo.name)}</span></div>
-            <div id="rv-word" class="mt-1 text-3xl font-black text-white text-center leading-tight">${fox ? '???' : esc(s.you.word)}</div>
+            <div class="w-40 h-40 mt-3">${fox ? foxSVG() : dogSVG(me.color, 'normal', me.outfit)}</div>
+            <div class="mt-3 text-xl font-black ${fox ? 'text-rose-300' : 'text-sky-300'}">${fox ? '🦊 여우 (라이어)' : roleName(me.outfit)}</div>
+            <div class="mt-2 text-xs text-slate-400">카테고리 · <span class="text-amber-100 font-bold">${s.catInfo.icon} ${esc(s.catInfo.name)}</span></div>
+            <div class="mt-1 text-3xl font-black text-white text-center leading-tight">${fox ? '???' : esc(s.you.word)}</div>
+            ${mates}
           </div>
         </div>
       </div>
-      <div id="rv-msg" class="mt-6 text-sm text-slate-300 h-5 text-center">${fox ? '' : (s.settings && s.settings.mode === 'fool' ? '🤪 바보 모드 — 이 제시어가 진짜인지는 아무도 몰라요!' : '여우가 모르게, 동료는 알아보게 설명하세요.')}</div>
+      <div class="mt-6 text-sm text-slate-300 text-center">카드를 <b class="text-amber-200">마우스로 꾹 누르고 있는 동안</b>만 역할과 제시어가 보여요<br><span class="text-xs text-slate-500">게임 중에도 오른쪽 '내 카드'를 누르면 다시 볼 수 있어요</span></div>
       <button class="btn btn-ghost px-8 py-2 mt-4" onclick="closeReveal()">확인</button>
     </div>`;
-  revealTimers.push(setTimeout(() => { const el = $('#rv-inner'); if(el){ el.classList.add('wobble'); Snd.heart(); } }, 120));
-  revealTimers.push(setTimeout(() => { const el = $('#rv-inner'); if(el){ el.classList.remove('wobble'); el.classList.add('flipped'); Snd.flip(); } }, 1000));
-  if(fox){
-    revealTimers.push(setTimeout(() => {
-      const m = $('#rv-mask'); if(!m) return;
-      m.classList.add('unmask'); ov.classList.add('fox-mode'); Snd.foxReveal();
-      $('#rv-role').innerHTML = '<span class="text-rose-300">🦊 당신은 여우입니다</span>';
-      $('#rv-word').innerHTML = '<span class="text-rose-200">???</span><div class="text-sm font-medium text-rose-300/80 mt-1">(당신은 여우입니다)</div>';
-      $('#rv-top').innerHTML = '<span class="text-rose-300">THE MASK FALLS</span>';
-      $('#rv-msg').innerHTML = (s.you.mates && s.you.mates.length) ? `<span class="text-rose-200">동료 여우: <b>${s.you.mates.map(id => esc(nameOf(id))).join(', ')}</b> — 함께 끝까지 들키지 마세요.</span>` : '<span class="text-rose-200">강아지들의 단서로 제시어를 추리하고, 끝까지 들키지 마세요.</span>';
-    }, 1000 + 1100 + 1500));
-  }
+  Snd.flip();
   revealTimers.push(setTimeout(closeReveal, Math.max(1500, (s.timerRemaining || T.REVEAL) - 300)));
 }
 function closeReveal(){ revealTimers.forEach(clearTimeout); revealTimers = []; const ov = $('#reveal-overlay'); ov.classList.add('hidden'); ov.innerHTML = ''; }
