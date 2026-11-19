@@ -238,7 +238,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
 .judge-accused{ width:9rem; height:9rem; border-radius:2rem; padding:6px; background:radial-gradient(circle at 50% 38%, rgba(251,113,133,.35), rgba(30,20,30,.9) 75%); border:2px solid rgba(251,113,133,.75); box-shadow:0 0 50px rgba(225,29,72,.5), inset 0 1px 0 rgba(255,255,255,.15); animation:beat 1.1s ease-in-out infinite; }
 .aw-wrap{ position:relative; z-index:2; width:min(1180px,94vw); max-height:94vh; overflow:auto; padding:28px 30px; border-radius:var(--r-xl); text-align:center; }
 .aw-mvp{ position:relative; margin:14px auto 0; padding:18px 22px 20px; border-radius:26px; max-width:620px; border:1.5px solid rgba(212,175,55,.6); background:radial-gradient(120% 140% at 50% 0%, rgba(212,175,55,.22), rgba(11,15,25,.9) 70%); box-shadow:0 0 60px rgba(212,175,55,.25), var(--inner-glow); animation:awIn .7s var(--ease-spring) both; }
-.aw-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-top:20px; }
+.aw-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:20px; }
 .aw-card{ position:relative; padding:14px 12px 16px; border-radius:22px; background:rgba(15,20,32,.92); border:1px solid rgba(255,255,255,.1); box-shadow:var(--inner-glow); opacity:0; animation:awIn .6s var(--ease-spring) forwards; }
 .aw-card .ic{ font-size:34px; line-height:1; }
 .aw-av{ width:64px; height:64px; border-radius:20px; overflow:hidden; margin:0 auto; background:radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--pc) 32%, #1E293B), #0B0F19 78%); }
@@ -656,6 +656,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
 
 <div id="result-overlay" class="overlay hidden" style="z-index:65"></div>
 <div id="awards-overlay" class="overlay hidden" style="z-index:66"></div>
+<div id="inter-overlay" class="overlay hidden" style="z-index:67"></div>
 
 <!-- Wardrobe -->
 <div id="wardrobe" class="overlay hidden" style="z-index:80">
@@ -722,9 +723,9 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
    CONSTANTS & DATA
    ========================================================= */
 const MAX_PLAYERS = 12, MIN_PLAYERS = 3;
-const VER = 'v21';
+const VER = 'v23';
 const MAX_SPECS = 6;   // 관전석   // 방장과 참가자의 버전이 다르면 입장 차단
-const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000 };
+const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000, INTERLUDE:20000, INTERMISSION:5000 };
 const MAX_TRIALS = 3;   // 재판(최후 변론→찬반) 최대 횟수. 모두 반대면 여우 승리
 const PREFIX = 'noir-liar-lounge-v1-';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -811,8 +812,8 @@ const CATS = {
 };
 const CUSTOM_FOX = ['다들 아는 그거예요','생각보다 자주 접해요','이름만 들어도 바로 떠올라요','호불호가 좀 갈려요','설명하기 은근 애매하네요'];
 
-const PHASE_LABEL = { lobby:'대기실', reveal:'역할 확인', hint:'ROUND 1 · 단서', discuss:'ROUND 2 · 토론', vote:'최후의 투표', runoff:'결선 투표', defense:'최후의 변론', judge:'찬반 투표', execution:'처형', foxguess:'여우의 반격', foxreveal:'여우의 정체', result:'결과 발표' };
-const PHASE_TONE = { lobby:'amber', reveal:'amber', hint:'blue', discuss:'blue', vote:'red', runoff:'red', defense:'red', judge:'red', execution:'red', foxguess:'red', foxreveal:'red', result:'amber' };
+const PHASE_LABEL = { lobby:'대기실', reveal:'역할 확인', hint:'단서 차례', discuss:'자유 토론', intermission:'다음 판 준비', vote:'최후의 투표', runoff:'결선 투표', defense:'최후의 변론', judge:'찬반 투표', execution:'처형', foxguess:'여우의 반격', foxreveal:'여우의 정체', result:'결과 발표' };
+const PHASE_TONE = { intermission:'amber', lobby:'amber', reveal:'amber', hint:'blue', discuss:'blue', vote:'red', runoff:'red', defense:'red', judge:'red', execution:'red', foxguess:'red', foxreveal:'red', result:'amber' };
 const REASON = {
   innocent:'무고한 강아지가 처형되었습니다. 여우는 무리 속에 섞여 살아남았습니다.',
   innocent_perfect:'무고한 강아지가 처형되고, 여우는 비밀 제시어까지 정확히 맞혔습니다. 완벽한 승리!',
@@ -1372,7 +1373,7 @@ function restoreHost(snap, attempt){
     G = snap.G; myId = G.hostPid;
     G.settings = { ...DEFAULT_SETTINGS, ...(G.settings || {}) };
     if(!Array.isArray(G.foxIds)) G.foxIds = G.foxId ? [G.foxId] : [];
-    G.out = G.out || {}; G.maxTrials = G.maxTrials || MAX_TRIALS; G.specs = G.specs || [];
+    G.out = G.out || {}; G.maxTrials = G.maxTrials || 1; G.specs = G.specs || []; G.gain = G.gain || {}; G.guesses = G.guesses || {}; G.trialLog = G.trialLog || []; G.trialVotes = G.trialVotes || {};
     G.specs.forEach(p => { if(p.id !== myId) p.connected = false; });
     G.players.forEach(p => { if(!p.isBot && p.id !== myId) p.connected = false; });
     Sched.q = [];
@@ -1456,6 +1457,7 @@ function markDisconnected(pid){
     sys(`⚠️ ${p.name}님의 연결이 끊어졌습니다. 재접속을 기다립니다.`, 'danger');
     if(G.phase === 'vote' || G.phase === 'runoff') checkAllVoted();
     if(G.phase === 'judge') checkAllJudged();
+    if(G.phase === 'foxguess') checkAllGuessed();
   }
   hostBroadcast();
 }
@@ -1645,6 +1647,13 @@ function pushMsg(m){
 function sys(text, tone='info'){ pushMsg({ kind:'system', text, tone }); }
 function setPhase(ph, ms){ G.phase = ph; G.phaseId++; G.timerTotal = ms || 0; G.timerEnd = ms ? Date.now() + ms : 0; }
 function freeColor(){ const used = G.players.map(p => p.color); return (COLORS.find(c => !used.includes(c.c)) || pick(COLORS)).c; }
+const chatTokens = {};
+function chatBucket(pid){   // 토큰 버킷: 최대 6개 저장, 0.3초마다 1개씩 충전
+  const now = Date.now(), t = chatTokens[pid] || (chatTokens[pid] = { n:6, at:now });
+  t.n = Math.min(6, t.n + (now - t.at) / 300); t.at = now;
+  if(t.n < 1) return false;
+  t.n -= 1; return true;
+}
 function rateOk(pid, type, ms){ const k = pid + type, n = Date.now(); if(rl[k] && n - rl[k] < ms) return false; rl[k] = n; return true; }
 function notify(pid, msg, kind='info'){ if(pid === myId) toast(msg, kind); else sendTo(pid, { type:'TOAST', msg, kind }); }
 
@@ -1686,14 +1695,14 @@ function buildStateFor(pid, maxChat=1000, maxRx=1000){
   let execution = null;
   if(revealPhase && G.execution){
     execution = { targetId:G.execution.targetId, name:G.execution.name, color:G.execution.color, outfit:G.execution.outfit, votes:G.execution.votes, tie:G.execution.tie, revealed:!!G.execution.revealed };
-    if(G.execution.revealed || G.phase !== 'execution') execution.wasFox = G.execution.wasFox;   // 🔒 가면이 깨지기 전엔 전송 안 함
+    if(G.execution.revealed || G.phase !== 'execution'){ execution.wasFox = G.execution.wasFox; execution.left = G.foxIds.filter(id => !isOut(id) && id !== G.execution.targetId).length; }   // 🔒 가면이 깨지기 전엔 전송 안 함
   }
   return {
     phase:G.phase, phaseId:G.phaseId, category:G.category, catInfo:{ name:cat.name, icon:cat.icon, custom:G.category === 'custom', count:cat.words.length },
     hasCustom:!!G.custom, roomCode, hostId:G.hostPid, settings:G.settings || { ...DEFAULT_SETTINGS }, ver:VER,
     foxCount:G.foxIds ? G.foxIds.length : 0,
-    series:G.series ? { round:G.series.played + (G.phase === 'lobby' || G.phase === 'result' ? 0 : 1), total:G.series.total, done:!!G.series.done } : null,
-    players:G.players.map(p => ({ id:p.id, name:p.name, color:p.color, outfit:p.outfit, isBot:p.isBot, isHost:p.isHost, ready:p.ready, connected:p.connected, out:isOut(p.id),
+    series:G.series ? { round:G.series.played + (['lobby','result','intermission'].includes(G.phase) ? 0 : 1), total:G.series.total, done:!!G.series.done, history:(G.series.history || []).slice() } : null,
+    players:G.players.map(p => ({ id:p.id, name:p.name, color:p.color, outfit:p.outfit, isBot:p.isBot, isHost:p.isHost, ready:p.ready, connected:p.connected, out:isOut(p.id), outFox:isOut(p.id) && isFoxId(p.id),
       voted:(G.phase === 'vote' || G.phase === 'runoff') && !!G.votes[p.id] })),
     chat, chatUpTo, chatSeq:G.seq, reactions,
     specs:(G.specs || []).map(p => ({ id:p.id, name:p.name, color:p.color, outfit:p.outfit, connected:p.connected, isHost:p.isHost, pendingPlay:!!p.pendingPlay })),
@@ -1706,6 +1715,7 @@ function buildStateFor(pid, maxChat=1000, maxRx=1000){
     runoff:G.runoff ? G.runoff.slice() : null,
     accused:(['defense','judge'].includes(G.phase) && G.accused) ? { ...G.accused } : null,
     judge:G.phase === 'judge' ? { done:Object.keys(G.judge).length, eligible:G.players.filter(p => p.connected && !isOut(p.id) && p.id !== (G.accused || {}).id).length, mine:G.judge[pid] === undefined ? null : G.judge[pid] } : null,
+    trialLog:(G.trialLog || []).slice(), guessProgress:G.phase === 'foxguess' ? { done:Object.keys(G.guesses).length, total:G.foxIds.length } : null,
     lastJudge:G.lastJudge, trials:G.trials || 0, maxTrials:G.maxTrials || MAX_TRIALS,
     foxReveal:G.phase === 'foxreveal' ? G.foxIds.map(gp).filter(Boolean).map(f => ({ id:f.id, name:f.name, color:f.color, outfit:f.outfit })) : null,
     execution, tally:revealPhase ? G.tally : null,
@@ -1793,10 +1803,12 @@ function handleAction(pid, a){
       break;
     }
     case 'CHAT': {
-      if(!p.isBot && !rateOk(pid, 'chat', 350)) return;
+      // 💬 도배 방지: 짧게 몰아 보내기(최대 6개)는 허용, 그 이상 계속 빠르면 본인에게 알리고 거절 (말없이 버리지 않음)
+      if(!p.isBot && !chatBucket(pid)){ notify(pid, '💬 너무 빨리 보내고 있어요. 잠깐만 천천히!', 'danger'); return; }
       const t = clean(a.text, 140); if(!t) return;
       if(sp){ pushMsg({ kind:'spec', pid, name:p.name, color:p.color, text:t }); break; }   // 관전석 채팅 (관전자끼리만)
-      if(isOut(pid) && G.phase !== 'result'){ notify(pid, '👻 처형된 여우는 이번 판이 끝날 때까지 관전만 할 수 있어요', 'danger'); return; }
+      if(G.phase === 'foxguess'){ notify(pid, '🔒 여우들이 정답을 입력하는 중이라 채팅이 잠겨 있어요', 'danger'); return; }
+      if(isOut(pid) && G.phase !== 'result' && G.phase !== 'lobby'){ notify(pid, '👻 처형된 사람은 이번 판이 끝날 때까지 관전만 할 수 있어요', 'danger'); return; }
       if(G.phase === 'defense' && G.accused && pid !== G.accused.id){ notify(pid, `🤐 최후 변론 중에는 ${G.accused.name}님만 말할 수 있어요`, 'danger'); return; }
       if(leaksWord(p, t)){ notify(pid, '🔒 제시어가 들어간 메시지는 전송되지 않아요 (다른 사람에겐 안 보여요)', 'danger'); return; }
       pushMsg({ kind:(G.phase === 'defense' && G.accused && pid === G.accused.id) ? 'defense' : 'chat', pid, name:p.name, color:p.color, text:t });
@@ -1820,7 +1832,7 @@ function handleAction(pid, a){
       break;
     }
     case 'SUSPECT': {
-      if(!['discuss','vote','runoff'].includes(G.phase)) return;
+      if(!['discuss','vote','runoff'].includes(G.phase) || isOut(pid)) return;
       if(!p.isBot && !rateOk(pid, 'sus', 250)) return;
       if(!a.target || G.suspect[pid] === a.target){ delete G.suspect[pid]; break; }
       if(!gp(a.target) || a.target === pid) return;
@@ -1837,9 +1849,10 @@ function handleAction(pid, a){
       checkAllVoted(); break;
     }
     case 'FOX_GUESS':
-      if(G.phase === 'foxguess' && pid === G.guesser){ G.guessBy = pid; resolveGuess(clean(a.text, 30)); }
-      else if(G.phase === 'foxreveal' && isFoxId(pid)){ G.guessBy = pid; resolveBonus(clean(a.text, 30)); }
-      else return;
+      if(G.phase !== 'foxguess' || !isFoxId(pid) || G.guesses[pid] !== undefined) return;
+      G.guesses[pid] = clean(a.text, 30) || '';
+      notify(pid, '🦊 제출 완료! 다른 여우가 입력을 마치면 결과가 공개돼요', 'gold');
+      checkAllGuessed();
       break;
     case 'JUDGE': {
       if(G.phase !== 'judge' || !G.accused || pid === G.accused.id || !p.connected || isOut(pid)) return;
@@ -1931,8 +1944,12 @@ function handleAction(pid, a){
     case 'SKIP_DISCUSS':
       if(!fromHost || G.phase !== 'discuss') return;
       sys('⏩ 방장이 토론을 조기 종료했습니다.'); startVote(); break;
-    case 'RESTART':
+    case 'RESTART':   // 시리즈 진행 중이면 대기실 없이 바로 다음 판, 끝났으면 대기실
       if(!fromHost || G.phase !== 'result') return;
+      if(G.series && !G.series.done) nextGame(); else backToLobby();
+      break;
+    case 'TO_LOBBY':
+      if(!fromHost || (G.phase !== 'result' && G.phase !== 'intermission')) return;
       backToLobby(); break;
     default: return;
   }
@@ -1965,8 +1982,9 @@ function youFor(pid){
   if(foxAware() || isOut(pid)){
     y.role = 'fox'; y.decoy = isFool() ? G.decoy : null;
     // 여우끼리는 서로 앎 (바보 모드는 자기가 여우인 줄 모르므로 동료도 모름)
-    if(!isFool() || G.phase === 'result' || G.phase === 'foxreveal') y.mates = G.foxIds.filter(id => id !== pid);
-    y.canGuess = (G.phase === 'foxguess' && G.guesser === pid) || G.phase === 'foxreveal';
+    if(!isFool() || G.phase === 'result' || G.phase === 'foxguess') y.mates = G.foxIds.filter(id => id !== pid);
+    y.canGuess = G.phase === 'foxguess' && G.guesses[pid] === undefined;
+    y.guessed = G.phase === 'foxguess' && G.guesses[pid] !== undefined;
   }
   else { y.role = 'dog'; y.word = G.decoy; }
   return y;
@@ -2028,7 +2046,7 @@ function startGame(){
   const want = (G.settings && G.settings.foxes) || 1, cap = maxFoxesFor(G.players.length), k = Math.min(want, cap);
   if(k < want) sys(`⚠️ ${G.players.length}명이라 여우는 ${k}마리로 진행해요. (여우 ${want}마리는 ${want * 2 + 1}명 이상)`, 'danger');
   G.foxIds = pickFoxes(k);
-  G.out = {}; G.guesser = null; G.guessBy = null; G.maxTrials = MAX_TRIALS + (k - 1);
+  G.out = {}; G.guesser = null; G.guessBy = null; G.maxTrials = k; G.gain = {}; G.guesses = {}; G.trialLog = []; G.trialVotes = {};
   // 🏆 라운드(단판/3/5) 진행
   if(!G.series || G.series.done) G.series = { total:(G.settings && G.settings.rounds) || 1, played:0, stats:{}, done:false, awards:null };
   G.players.forEach(p => stat(p.id));
@@ -2079,22 +2097,28 @@ function checkAllVoted(){
   const eligible = G.players.filter(p => p.connected && !isOut(p.id));
   if(eligible.length && eligible.every(p => G.votes[p.id])) tallyVotes();
 }
+/* =========================================================
+   ⚖️ v22 규칙: 단서 1바퀴 → 재판(= 여우 수)만큼 → 여우 전원 각자 정답 입력 → 판 점수
+   - 무고한 시민이 처형돼도 판은 계속 (처형된 사람은 관전)
+   - 여우를 다 찾으면 남은 재판 없이 바로 정답 입력
+   ========================================================= */
+function addPts(pid, n, note){
+  const g = G.gain[pid] || (G.gain[pid] = { pts:0, notes:[] });
+  g.pts += n; if(note) g.notes.push(note + (n >= 0 ? ' +' : ' ') + n);
+}
+function logTrial(entry){ G.trialLog.push({ n:G.trials, ...entry }); }
 function tallyVotes(){
   const tally = {};
   for(const [v, t] of Object.entries(G.votes)){ if(gp(v) && gp(t) && !isOut(v) && !isOut(t) && (!G.runoff || G.phase !== 'runoff' || G.runoff.includes(t))) tally[t] = (tally[t] || 0) + 1; }
   const entries = Object.entries(tally);
-  // 📊 하이라이트용 기록 (누가 누구를 찍었는지는 공개하지 않고 집계만)
-  if(entries.length){
-    const mx = Math.max(...entries.map(e => e[1])), crowdFox = entries.some(e => e[1] === mx && isFoxId(e[0]));
-    for(const [v, t] of Object.entries(G.votes)){
-      if(!tally[t] || isFoxId(v)) continue;
-      if(isFoxId(t)){ stat(v).detect++; if(!crowdFox) stat(v).lone++; }
-      else stat(t).wronged++;
-    }
-  }
   if(!entries.length){
     if(G.phase === 'runoff'){ const t = pick(G.runoff); tally[t] = 0; entries.push([t, 0]); }
-    else { G.tally = tally; sys('아무도 투표하지 않았습니다...', 'danger'); finish('fox', 'novote'); return; }
+    else {
+      G.tally = tally; G.trials++;
+      logTrial({ result:'novote' });
+      sys(`😶 아무도 투표하지 않아 재판 1번이 그냥 지나갔습니다. (재판 ${G.trials}/${G.maxTrials})`, 'danger');
+      nextTrialOrEnd(); return;
+    }
   }
   const max = Math.max(...entries.map(e => e[1]));
   const top = entries.filter(e => e[1] === max).map(e => e[0]);
@@ -2105,11 +2129,21 @@ function tallyVotes(){
     sys(`⚖️ ${top.map(id => gp(id).name).join(' vs ')} 동률! 결선 투표를 진행합니다. 후보자는 채팅으로 변론하세요. (25초)`, 'danger');
     botsOnPhase(); return;
   }
+  // 📊 이 재판을 결정한 투표 기록 → 점수/하이라이트 (누가 누구를 찍었는지는 공개 안 함)
+  const crowdFox = entries.some(e => e[1] === max && isFoxId(e[0]));
+  G.trialVotes = {};
+  for(const [v, t] of Object.entries(G.votes)){
+    if(!tally[t] || isOut(v)) continue;
+    G.trialVotes[v] = t;
+    if(isFoxId(v)) continue;
+    if(isFoxId(t)){ addPts(v, 1, '여우 지목'); stat(v).detect++; if(!crowdFox) stat(v).lone++; }
+    else stat(t).wronged++;
+  }
   let target = top[0], tie = false;
   if(top.length > 1){ tie = true; target = pick(top); sys(`🎲 결선에서도 동률! 운명의 룰렛이 ${gp(target).name}님을 선택했습니다.`, 'danger'); }
   G.tally = tally;
   const p = gp(target);
-  G.trials = (G.trials || 0) + 1;
+  G.trials++;
   G.accused = { id:target, name:p.name, color:p.color, outfit:p.outfit, votes:max, tie };
   G.judge = {}; G.lastJudge = null;
   sys(`🎤 최다 득표: ${p.name}님 (${max}표). ${T.DEFENSE / 1000}초 동안 최후의 변론! 다른 사람은 말할 수 없어요. (재판 ${G.trials}/${G.maxTrials})`, 'danger');
@@ -2140,93 +2174,120 @@ function resolveJudge(){
     return;
   }
   stat(G.accused.id).survive++;
-  if(G.trials >= G.maxTrials){ sys(`🕰️ 재판 기회 ${G.maxTrials}번을 모두 썼습니다...`, 'danger'); finish('fox', 'spared'); return; }
-  sys(`🔁 반대 다수! 다시 여우를 찾는 투표를 진행합니다. (남은 재판 ${G.maxTrials - G.trials}번)`, 'gold');
-  startVote();
+  logTrial({ result:'released', id:G.accused.id, name:G.accused.name, color:G.accused.color, outfit:G.accused.outfit, yes, no });
+  sys(`🕊️ ${G.accused.name}님 석방! 재판 1번이 사용됐어요.`, 'neon');
+  nextTrialOrEnd();
 }
+const speciesWord = o => (o && o.species === 'cat') ? '고양이' : '강아지';
 function afterExecution(){
   const ex = G.execution; ex.revealed = true;
+  G.out[ex.targetId] = true;
   if(ex.wasFox){
-    G.out[ex.targetId] = true;
-    const left = G.foxIds.filter(id => !isOut(id) && gp(id));
-    if(left.length){
-      // 🦊 여우가 아직 남아 있음 → 처형된 여우는 관전, 다시 투표
-      if(G.trials >= G.maxTrials){ sys(`🦊 ${ex.name}님은 여우였습니다! 하지만 재판 기회를 모두 써서 남은 여우 ${left.length}마리가 살아남았습니다...`, 'danger'); finish('fox', 'spared'); return; }
-      sys(`🦊 ${ex.name}님은 여우였습니다! 아직 여우가 ${left.length}마리 남았어요. 계속 찾아내세요! (남은 재판 ${G.maxTrials - G.trials}번)`, 'gold');
-      G.accused = null; startVote(); return;
-    }
-    G.guesser = ex.targetId;
-    sys(`🦊 ${ex.name}님은 ${G.foxIds.length > 1 ? '마지막 ' : ''}여우였습니다! 하지만 여우에게 최후의 기회가 주어집니다... (15초)`, 'danger');
-    setPhase('foxguess', T.GUESS);
-    botsOnPhase();
+    logTrial({ result:'fox', id:ex.targetId, name:ex.name, color:ex.color, outfit:ex.outfit });
+    const left = G.foxIds.filter(id => !isOut(id));
+    sys(left.length ? `🦊 ${ex.name}님은 여우였습니다! 남은 여우가 있어요.` : `🦊 ${ex.name}님은 ${G.foxIds.length > 1 ? '마지막 ' : ''}여우였습니다! 여우를 모두 찾아냈어요!`, 'gold');
   } else {
-    sys(`😢 ${ex.name}님은 무고한 ${(gp(ex.targetId) || {}).outfit && gp(ex.targetId).outfit.species === 'cat' ? '고양이' : '강아지'}였습니다... 진짜 여우가 정체를 드러냅니다!`, 'danger');
-    const fs = G.foxIds.map(gp).filter(Boolean);
-    if(!fs.some(f => f.connected)){ finish('fox', 'innocent'); return; }
-    setPhase('foxreveal', T.FOXREVEAL);
-    sys(`🦊 진짜 여우는 ${fs.map(f => f.name + '님').join(', ')}! 승리의 순간, 비밀 제시어까지 맞히면 완벽한 승리입니다. (15초)`, 'danger');
-    botsOnPhase();
+    logTrial({ result:'innocent', id:ex.targetId, name:ex.name, color:ex.color, outfit:ex.outfit });
+    // 🎭 이 시민을 투표에서 직접 찍은 (살아 있는) 여우만 +1
+    G.foxIds.forEach(fid => { if(!isOut(fid) && G.trialVotes[fid] === ex.targetId){ addPts(fid, 1, '시민 몰아가기'); stat(fid).frame++; } });
+    sys(`😢 ${ex.name}님은 무고한 ${speciesWord(ex.outfit)}였습니다... 처형된 사람은 이번 판을 관전해요. 여우는 아직 라운지에 있습니다!`, 'danger');
   }
+  nextTrialOrEnd();
 }
-function resolveBonus(text){
-  const answered = text !== null && text !== undefined && text !== '';
-  const ok = answered && norm(text) === norm(G.word);
-  G.guess = answered ? text : null;
-  if(answered) sys(`🦊 여우의 정답 도전: "${text}" → ${ok ? '정답!' : '오답'}`, ok ? 'danger' : 'info');
-  finish('fox', ok ? 'innocent_perfect' : 'innocent');
+function nextTrialOrEnd(){
+  G.accused = null;
+  const left = G.foxIds.filter(id => !isOut(id));
+  if(!left.length){ startFoxGuess(); return; }
+  if(G.trials >= G.maxTrials){ sys(`🕰️ 재판 ${G.maxTrials}번이 모두 끝났습니다. 여우 ${left.length}마리가 살아남았어요!`, 'danger'); startFoxGuess(); return; }
+  sys(`💬 다음 재판 전 ${T.INTERLUDE / 1000}초 토론! (남은 재판 ${G.maxTrials - G.trials}번)`, 'gold');
+  setPhase('discuss', T.INTERLUDE);
+  botsOnPhase();
 }
-function resolveGuess(text){
-  const answered = text !== null && text !== undefined;
-  const ok = answered && norm(text) !== '' && norm(text) === norm(G.word);
-  G.guess = answered ? text : null;
-  if(answered) sys(`🦊 여우의 최후 답변: "${text || '(공백)'}"`, 'danger');
-  finish(ok ? 'fox' : 'dog', !answered ? 'guess_timeout' : ok ? 'guess_correct' : 'guess_wrong');
+/* 🦊 판이 끝나면 여우 전원이 각자 정답 입력 (서로 안 보임 · 채팅 잠금) */
+function startFoxGuess(){
+  G.guesses = {};
+  if(!G.foxIds.some(id => (gp(id) || {}).connected)){ finishGame(); return; }
+  setPhase('foxguess', T.GUESS);
+  sys(`🦊 판 종료! 여우 ${G.foxIds.length}마리가 각자 비밀 제시어를 입력합니다. 맞히면 +1점 (${T.GUESS / 1000}초 · 채팅 잠금)`, 'danger');
+  botsOnPhase();
 }
-/* ===== 🏆 MVP + 분야별 하이라이트 ===== */
+function checkAllGuessed(){
+  if(G.phase !== 'foxguess') return;
+  if(G.foxIds.filter(id => (gp(id) || {}).connected).every(id => G.guesses[id] !== undefined)) finishGame();
+}
+function finishGame(){
+  const k = G.foxIds.length, caught = G.foxIds.filter(id => isOut(id)).length;
+  const outcome = caught === k ? 'all' : caught === 0 ? 'none' : 'partial';
+  const big = k >= 3;
+  // 판 결과 점수
+  G.players.forEach(p => {
+    if(isFoxId(p.id)){
+      const surv = !isOut(p.id);
+      if(surv) addPts(p.id, outcome === 'none' ? (big ? 4 : 3) : (big ? 3 : 2), '여우 생존');
+      const g = G.guesses[p.id];
+      if(g && norm(g) && norm(g) === norm(G.word)){ addPts(p.id, 1, '정답'); stat(p.id).guess++; }
+    } else {
+      if(outcome === 'all') addPts(p.id, 3, '여우 전원 검거');
+      else if(outcome === 'partial') addPts(p.id, 1, '여우 일부 검거');
+    }
+  });
+  // 시리즈 기록
+  const ser = G.series || (G.series = { total:1, played:0, stats:{}, done:false, awards:null });
+  G.players.forEach(p => {
+    const st = stat(p.id), g = G.gain[p.id];
+    st.played++; st.points += g ? g.pts : 0;
+    if(isFoxId(p.id)){ st.foxGames++; if(!isOut(p.id)) st.foxSurvive++; } else if(outcome === 'all') st.dogWin++;
+  });
+  ser.played++;
+  (ser.history = ser.history || []).push({ round:ser.played, outcome, caught, k });
+  if(ser.played >= ser.total){ ser.done = true; ser.awards = computeAwards(); }
+  const foxes = G.foxIds.map(id => { const f = gp(id) || {}; const g = G.guesses[id];
+    return { id, name:f.name || '???', color:f.color || '#888', outfit:f.outfit || null, caught:isOut(id), guess:g === undefined ? null : g, correct:!!(g && norm(g) && norm(g) === norm(G.word)) }; });
+  const gains = G.players.map(p => { const g = G.gain[p.id] || { pts:0, notes:[] };
+    return { id:p.id, name:p.name, color:p.color, outfit:p.outfit, fox:isFoxId(p.id), out:isOut(p.id), pts:g.pts, notes:g.notes }; })
+    .sort((a, b) => b.pts - a.pts);
+  G.result = { outcome, caught, k, winner:outcome === 'all' ? 'dog' : outcome === 'none' ? 'fox' : 'draw',
+    foxIds:G.foxIds.slice(), foxes, foxName:foxes.map(f => f.name).join(', '), word:G.word, decoy:G.decoy, mode:isFool() ? 'fool' : 'classic',
+    trials:G.trialLog.slice(), gains, series:{ round:ser.played, total:ser.total, final:ser.done }, awards:ser.done ? ser.awards : null };
+  setPhase('result', 0);
+  sys(outcome === 'all' ? '🏆 여우 전원 검거! 시민 팀 +3점' : outcome === 'none' ? '🦊 여우 전원 생존! 라운지는 여우의 손에...' : `⚖️ 여우 ${k}마리 중 ${caught}마리 검거!`, 'gold');
+  sys(`🔑 비밀 제시어는 [${G.word}]였습니다. 여우는 ${G.result.foxName}님!` + (G.decoy ? ` (여우가 받은 가짜 제시어: [${G.decoy}])` : ''), 'gold');
+  foxes.forEach(f => sys(`🦊 ${f.name}님의 답: ${f.guess ? `"${f.guess}"` : '(입력 안 함)'} ${f.correct ? '✅ 정답 +1' : f.guess ? '❌' : ''}`, f.correct ? 'gold' : 'info'));
+  if(ser.total > 1) sys(ser.done ? `🏆 ${ser.total}판 종료! MVP와 분야별 하이라이트를 발표합니다!` : `📍 ${ser.played}/${ser.total}판 종료 — 다음 판을 준비하세요.`, 'gold');
+}
+/* ===== 🏆 MVP(총점 1등) + 분야별 하이라이트 ===== */
 function stat(pid){
   const ser = G.series || (G.series = { total:(G.settings && G.settings.rounds) || 1, played:0, stats:{}, done:false, awards:null });
   const p = gp(pid);
-  const st = ser.stats[pid] || (ser.stats[pid] = { name:'', color:'#888', outfit:null, played:0, dogWin:0, foxWin:0, foxGames:0, detect:0, lone:0, wronged:0, survive:0, guess:0, chats:0 });
+  const st = ser.stats[pid] || (ser.stats[pid] = { name:'', color:'#888', outfit:null, played:0, points:0, dogWin:0, foxGames:0, foxSurvive:0, detect:0, lone:0, wronged:0, survive:0, guess:0, frame:0, chats:0 });
   if(p){ st.name = p.name; st.color = p.color; st.outfit = p.outfit; }
   return st;
 }
 const AWARD_DEFS = [
-  { k:'detect',  icon:'🕵️', title:'명탐정견',    desc:'여우를 가장 많이 정확히 지목',        unit:'번 적중' },
-  { k:'foxWin',  icon:'🦊', title:'천의 얼굴',   desc:'여우로 라운지를 장악',                unit:'승' },
-  { k:'survive', icon:'🎤', title:'명변론가',    desc:'최후 변론으로 살아남음',              unit:'번 생존' },
-  { k:'wronged', icon:'😭', title:'억울한 강아지', desc:'강아지인데 표를 가장 많이 받음',      unit:'표' },
-  { k:'guess',   icon:'🎯', title:'정답 사냥꾼', desc:'여우로 비밀 제시어를 맞힘',           unit:'번' },
-  { k:'lone',    icon:'🗳️', title:'소신 투표',   desc:'다수와 달랐지만 진짜 여우를 찍음',    unit:'번' },
-  { k:'chats',   icon:'💬', title:'수다왕',      desc:'채팅을 가장 많이 침',                 unit:'개' }
+  { k:'detect',     icon:'🕵️', title:'명탐정',       desc:'여우를 가장 많이 정확히 지목',        unit:'번 적중' },
+  { k:'foxSurvive', icon:'🦊', title:'천의 얼굴',    desc:'여우로 끝까지 살아남음',              unit:'번 생존' },
+  { k:'guess',      icon:'🎯', title:'정답 사냥꾼',  desc:'여우로 비밀 제시어를 맞힘',           unit:'번' },
+  { k:'frame',      icon:'🎭', title:'여론 조작꾼',  desc:'여우로 무고한 시민을 몰아감',         unit:'번' },
+  { k:'survive',    icon:'🎤', title:'명변론가',     desc:'최후 변론으로 살아남음',              unit:'번 석방' },
+  { k:'wronged',    icon:'😭', title:'억울한',       desc:'시민인데 표를 가장 많이 받음',        unit:'표' },
+  { k:'lone',       icon:'🗳️', title:'소신 투표',    desc:'다수와 달랐지만 진짜 여우를 찍음',    unit:'번' },
+  { k:'chats',      icon:'💬', title:'수다왕',       desc:'채팅을 가장 많이 침',                 unit:'개' }
 ];
-// MVP 내부 점수: 팀 승리가 기본, 개인 활약은 보너스 (점수 자체는 화면에 표시하지 않음)
-const mvpScore = st => st.dogWin + st.foxWin * 3 + st.detect + st.guess + st.survive * .5;
 function computeAwards(){
   const all = Object.entries(G.series.stats).map(([id, st]) => ({ id, ...st }));
   const pack = list => list.map(x => ({ id:x.id, name:x.name, color:x.color, outfit:x.outfit }));
   const best = key => { const mx = Math.max(0, ...all.map(x => x[key] || 0)); return mx > 0 ? { value:mx, who:pack(all.filter(x => x[key] === mx)) } : null; };
-  const ms = Math.max(0, ...all.map(mvpScore));
-  const mvp = { who:pack(all.filter(x => mvpScore(x) === ms)), line:'' };
-  const top = all.find(x => mvpScore(x) === ms);
-  if(top) mvp.line = [top.dogWin ? `강아지 ${top.dogWin}승` : '', top.foxWin ? `여우 ${top.foxWin}승` : '', top.detect ? `여우 지목 ${top.detect}번` : '', top.guess ? `정답 ${top.guess}번` : ''].filter(Boolean).join(' · ');
+  const ms = Math.max(0, ...all.map(x => x.points));
+  const winners = all.filter(x => x.points === ms);
+  const top = winners[0];
+  const mvp = { who:pack(winners), points:ms, line:top ? [`총 ${ms}점`, top.dogWin ? `여우 전원 검거 ${top.dogWin}판` : '', top.detect ? `여우 지목 ${top.detect}번` : '', top.foxSurvive ? `여우로 생존 ${top.foxSurvive}번` : '', top.guess ? `정답 ${top.guess}번` : ''].filter(Boolean).join(' · ') : '' };
   const hl = [];
-  AWARD_DEFS.forEach(d => { const b = best(d.k); if(b && (d.k !== 'chats' || b.value >= 3)) hl.push({ k:d.k, icon:d.icon, title:d.title, desc:d.desc, value:b.value, unit:d.unit, who:b.who }); });
-  return { mvp, highlights:hl.slice(0, 5), rounds:G.series.total };
-}
-function finish(winner, reason){
-  const foxes = G.foxIds.map(id => { const f = gp(id); return f ? { id, name:f.name, color:f.color, outfit:f.outfit } : { id, name:'???', color:'#888', outfit:null }; });
-  // 🏆 라운드 기록
-  const ser = G.series || (G.series = { total:1, played:0, stats:{}, done:false, awards:null });
-  G.players.forEach(p => { const st = stat(p.id); st.played++; if(isFoxId(p.id)){ st.foxGames++; if(winner === 'fox') st.foxWin++; } else if(winner === 'dog') st.dogWin++; });
-  if(['guess_correct','innocent_perfect'].includes(reason) && G.guessBy) stat(G.guessBy).guess++;
-  ser.played++;
-  if(ser.played >= ser.total){ ser.done = true; ser.awards = computeAwards(); }
-  G.result = { winner, reason, foxIds:G.foxIds.slice(), foxes, foxName:foxes.map(f => f.name).join(', '), foxColor:foxes[0] ? foxes[0].color : '#888', foxOutfit:foxes[0] ? foxes[0].outfit : null, word:G.word,
-    series:{ round:ser.played, total:ser.total, final:ser.done }, awards:ser.done ? ser.awards : null, decoy:G.decoy, lastJudge:G.lastJudge, executedName:G.execution ? G.execution.name : null, executedSpecies:G.execution && G.execution.outfit ? G.execution.outfit.species : null, mode:isFool() ? 'fool' : 'classic', guess:G.guess, votes:{ ...G.votes } };
-  setPhase('result', 0);
-  sys(winner === 'fox' ? '🦊 여우 승리! 라운지는 여우의 손에 넘어갔습니다.' : '🐶 강아지 팀 승리! 라운지의 평화가 지켜졌습니다.', 'gold');
-  sys(`🔑 비밀 제시어는 [${G.word}]였습니다. 여우는 ${G.result.foxName}님!` + (G.decoy ? ` (여우가 받은 가짜 제시어: [${G.decoy}])` : ''), 'gold');
-  if(ser.total > 1) sys(ser.done ? `🏆 ${ser.total}라운드 종료! MVP와 분야별 하이라이트를 발표합니다!` : `📍 ${ser.played}/${ser.total}판 종료 — 다음 판을 준비하세요.`, 'gold');
+  AWARD_DEFS.forEach(d => {
+    const b = best(d.k); if(!b || (d.k === 'chats' && b.value < 3)) return;
+    const title = d.k === 'wronged' ? `억울한 ${speciesWord(b.who[0].outfit)}` : d.title;
+    hl.push({ k:d.k, icon:d.k === 'wronged' && b.who[0].outfit && b.who[0].outfit.species === 'cat' ? '😿' : d.icon, title, desc:d.desc, value:b.value, unit:d.unit, who:b.who });
+  });
+  return { mvp, highlights:hl.slice(0, 6), rounds:G.series.total };
 }
 function moveToSpec(p){
   G.players = G.players.filter(x => x.id !== p.id);
@@ -2247,10 +2308,23 @@ function applyPendingMoves(){
   G.specs.filter(p => p.pendingPlay && p.connected).forEach(p => { if(G.players.length < MAX_PLAYERS) moveToPlay(p); });
   G.specs = G.specs.filter(p => p.connected || p.id === myId);
 }
+function resetRound(){
+  G.foxIds = []; G.out = {}; G.guesser = null; G.guessBy = null; G.word = null; G.hints = []; G.votes = {}; G.accuse = {}; G.suspect = {}; G.runoff = null; G.tally = null; G.execution = null; G.result = null; G.guess = null; G.turnOrder = []; G.turnIdx = 0;
+  G.accused = null; G.judge = {}; G.trials = 0; G.lastJudge = null; G.gain = {}; G.guesses = {}; G.trialLog = []; G.trialVotes = {};
+}
+/* ▶ 다음 판: 대기실을 거치지 않고 'GAME n/N' 연출 + 5초 카운트다운 → 바로 역할 배정 (준비 버튼 불필요) */
+function nextGame(){
+  const gone = G.players.filter(p => !p.connected && !p.isBot);
+  resetRound();
+  if(gone.length){ G.players = G.players.filter(p => p.connected || p.isBot); gone.forEach(p => { Object.keys(G.tokens).forEach(t => { if(G.tokens[t] === p.id) delete G.tokens[t]; }); sys(`🚪 ${p.name}님은 연결이 끊겨 다음 판에서 빠집니다.`); }); }
+  applyPendingMoves();
+  if(G.players.length < MIN_PLAYERS){ setPhase('lobby', 0); sys(`⚠️ 플레이어가 ${MIN_PLAYERS}명보다 적어 대기실로 돌아왔어요.`, 'danger'); G.players.forEach(p => { if(!p.isBot && !p.isHost) p.ready = false; }); return; }
+  setPhase('intermission', T.INTERMISSION);
+  sys(`🎬 GAME ${G.series.played + 1}/${G.series.total} — ${T.INTERMISSION / 1000}초 뒤 다음 판이 시작됩니다!`, 'gold');
+}
 function backToLobby(){
   setPhase('lobby', 0);
-  G.foxIds = []; G.out = {}; G.guesser = null; G.guessBy = null; G.word = null; G.hints = []; G.votes = {}; G.accuse = {}; G.suspect = {}; G.runoff = null; G.tally = null; G.execution = null; G.result = null; G.guess = null; G.turnOrder = []; G.turnIdx = 0;
-  G.accused = null; G.judge = {}; G.trials = 0; G.lastJudge = null;
+  resetRound();
   const gone = G.players.filter(p => !p.connected);
   G.players = G.players.filter(p => p.connected);
   gone.forEach(p => Object.keys(G.tokens).forEach(t => { if(G.tokens[t] === p.id) delete G.tokens[t]; }));
@@ -2260,6 +2334,7 @@ function backToLobby(){
 }
 function onTimeout(){
   switch(G.phase){
+    case 'intermission': startGame(); break;
     case 'reveal': startHint(); break;
     case 'hint': submitHint(G.turnOrder[G.turnIdx], '(시간 초과 — 침묵을 지켰습니다)', true); break;
     case 'discuss': startVote(); break;
@@ -2267,8 +2342,7 @@ function onTimeout(){
     case 'defense': startJudge(); break;
     case 'judge': sys('⏰ 찬반 투표 시간 종료! (투표하지 않은 사람은 기권)', 'danger'); resolveJudge(); break;
     case 'execution': afterExecution(); break;
-    case 'foxguess': resolveGuess(null); break;
-    case 'foxreveal': sys('⏰ 여우가 정답을 입력하지 않았습니다.'); resolveBonus(null); break;
+    case 'foxguess': sys('⏰ 정답 입력 시간 종료!'); finishGame(); break;
   }
 }
 
@@ -2363,19 +2437,9 @@ function botsOnPhase(){
       }));
       if(G.phase === 'runoff') G.runoff.forEach(id => { const b = gp(id); if(b && b.isBot) later(rand(1500, 4000), () => handleAction(b.id, { type:'CHAT', text:botDefense(b) })); });
       break;
-    case 'foxguess': {
-      const f = gp(G.guesser);
-      if(f && f.isBot) later(rand(5000, 9500), () => handleAction(f.id, { type:'FOX_GUESS', text:botGuess(f) }));
+    case 'foxguess':   // 봇 여우는 잡혔든 살아 있든 각자 추리해서 입력
+      G.players.filter(p => p.isBot && isFoxId(p.id)).forEach(f => later(rand(4000, 9500), () => handleAction(f.id, { type:'FOX_GUESS', text:botGuess(f) })));
       break;
-    }
-    case 'foxreveal': {
-      // 사람 여우가 있으면 사람에게 맡기고, 봇 여우만 있으면 한 마리가 대표로 도전
-      const fs = G.foxIds.map(gp).filter(Boolean);
-      if(fs.some(f => !f.isBot && f.connected)) break;
-      const f = fs.find(x => x.isBot);
-      if(f) later(rand(5000, 9500), () => handleAction(f.id, { type:'FOX_GUESS', text:botGuess(f) }));
-      break;
-    }
     case 'defense': {
       const a = gp(G.accused.id);
       if(a && a.isBot){ later(rand(1200, 2500), () => handleAction(a.id, { type:'CHAT', text:botDefense(a) })); later(rand(5000, 7500), () => handleAction(a.id, { type:'CHAT', text:pick(['제발 한 번만 믿어주세요 🙏', '저 찍으면 여우만 웃어요!', '다시 생각해 주세요, 진짜 아니에요']) })); }
@@ -2537,14 +2601,15 @@ function renderAll(s){
 
 function onPhaseEnter(s){
   switch(s.phase){
-    case 'lobby': closeReveal(); hideExec(); closeFoxModal(); closeVoteSheet(); closeAwards(); showResult._aw = null; $('#result-overlay').classList.add('hidden'); setTab('info', true); break;
-    case 'reveal': $('#result-overlay').classList.add('hidden'); closeAwards(); closeWardrobe(); infoDot = true; if(s.you.spec) showSplash('관전 모드', '👀 제시어와 여우를 모두 볼 수 있어요', 'blue'); else showReveal(s); break;
+    case 'intermission': closeReveal(); hideExec(); closeFoxModal(); closeVoteSheet(); closeAwards(); closeWardrobe(); $('#result-overlay').classList.add('hidden'); showIntermission(s); break;
+    case 'lobby': closeIntermission(); closeReveal(); hideExec(); closeFoxModal(); closeVoteSheet(); closeAwards(); showResult._aw = null; $('#result-overlay').classList.add('hidden'); setTab('info', true); break;
+    case 'reveal': closeIntermission(); $('#result-overlay').classList.add('hidden'); closeAwards(); closeWardrobe(); infoDot = true; if(s.you.spec) showSplash('관전 모드', '👀 제시어와 여우를 모두 볼 수 있어요', 'blue'); else showReveal(s); break;
     case 'hint': closeReveal(); Snd.chime(); setTab('chat', true); showSplash('단서 라운드', '순서대로 제시어를 한 줄로 설명하세요', 'blue'); onTurnChange(s); break;
-    case 'discuss': closeReveal(); Snd.chime(); setTab('chat', true); showSplash('자유 토론', `${(s.settings||{}).discuss||90}초 · 🎯로 의심 대상을 지목하세요`, 'blue'); break;
+    case 'discuss': closeReveal(); hideExec(); Snd.chime(); setTab('chat', true); if(s.trials) showSplash('다음 재판 준비', `${T.INTERLUDE / 1000}초 토론 · 남은 재판 ${s.maxTrials - s.trials}번`, 'blue'); else showSplash('자유 토론', `${(s.settings||{}).discuss||90}초 · 🎯로 의심 대상을 지목하세요`, 'blue'); break;
     case 'vote': if(canIVote(s)) attention('🔔 투표 시간!', '🗳️ 여우라고 생각하는 사람을 지목하세요.'); Snd.heart(); setTimeout(() => Snd.heart(), 750); showSplash('최후의 투표', '여우라고 생각하는 사람을 지목하세요', 'red'); setTimeout(openVoteSheet, 1500); break;
     case 'runoff': if(canIVote(s)) attention('🔔 결선 투표!', '⚖️ 동률 후보 중 한 명을 다시 골라주세요.'); Snd.heart(); setTimeout(() => Snd.heart(), 600); setTimeout(() => Snd.heart(), 1100); showSplash('결선 투표', '동률 후보 중 한 명을 다시 고르세요', 'red'); setTimeout(openVoteSheet, 1500); break;
     case 'execution': closeVoteSheet(); showExecution(s); break;
-    case 'foxguess': hideExec(); foxSubmitted = false; if(s.you.role !== 'fox') showSplash('여우의 반격', '여우가 제시어를 맞히면 역전승!', 'red'); break;
+    case 'foxguess': hideExec(); closeJudge(); foxSubmitted = false; if(s.you.role === 'fox') attention('🔔 정답 입력!', '🦊 판이 끝났어요. 비밀 제시어를 입력하세요 (+1점)'); else showSplash('판 종료', `🦊 여우 ${s.foxCount}마리가 각자 정답을 입력 중... (채팅 잠금)`, 'red'); break;
     case 'defense': closeVoteSheet(); Snd.heart(); showSplash('최후의 변론', `${esc(s.accused.name)}님만 ${T.DEFENSE / 1000}초 동안 말할 수 있어요`, 'red'); if(s.accused.id === myId){ setTab('chat', true); toast('🎤 최후의 변론! 채팅으로 결백을 호소하세요', 'danger'); } break;
     case 'judge': if(canIVote(s) && s.accused && s.accused.id !== myId) attention('🔔 찬반 투표!', `⚖️ ${s.accused.name}님을 처형할까요? 찬성/반대를 골라주세요.`); Snd.heart(); setTimeout(() => Snd.heart(), 600); showSplash('찬반 투표', `${esc(s.accused.name)}님을 처형할까요?`, 'red'); setTimeout(openJudge, 1400); break;
     case 'foxreveal': hideExec(); foxSubmitted = false; showFoxReveal(s); break;
@@ -2589,10 +2654,10 @@ function onTurnChange(s){
 /* ---------- header / timer ---------- */
 function renderHeader(s){
   const pill = $('#hdr-phase');
-  pill.textContent = PHASE_LABEL[s.phase] || s.phase;
+  pill.textContent = (s.phase === 'discuss' && s.trials) ? '다음 재판 준비' : (PHASE_LABEL[s.phase] || s.phase);
   pill.className = 'phase-pill inline-block tone-' + (PHASE_TONE[s.phase] || 'amber');
   $('#hdr-code').textContent = s.roomCode;
-  $('#hdr-cat').textContent = (s.series && s.series.total > 1 && s.phase !== 'lobby' ? `🏆 ${Math.min(s.series.round, s.series.total)}/${s.series.total}판 · ` : '') + `${s.catInfo.icon} ${s.catInfo.name}` + (s.settings && s.settings.mode === 'fool' ? ' · 🤪 바보 모드' : '') + (s.phase !== 'lobby' && s.foxCount > 1 ? ` · 🦊×${s.foxCount}` : '') + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
+  $('#hdr-cat').textContent = (s.series && s.series.total > 1 && s.phase !== 'lobby' ? `🏆 ${Math.min(s.series.round, s.series.total)}/${s.series.total}판 · ` : '') + `${s.catInfo.icon} ${s.catInfo.name}` + (s.settings && s.settings.mode === 'fool' ? ' · 🤪 바보 모드' : '') + (s.phase !== 'lobby' && s.foxCount > 1 ? ` · 🦊×${s.foxCount}` : '') + (['discuss','vote','runoff','defense','judge','execution'].includes(s.phase) && s.maxTrials ? ` · ⚖️ 재판 ${Math.min(s.maxTrials, s.trials + (['vote','runoff','discuss'].includes(s.phase) ? 1 : 0))}/${s.maxTrials}` : '') + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
   $('#tab-info-label').textContent = s.phase === 'lobby' ? '방 설정' : '내 카드';
   $('#tab-info-ic').textContent = s.phase === 'lobby' ? '⚙️' : '🃏';
 }
@@ -2632,7 +2697,7 @@ function renderStrip(s){
   const susCount = {}; Object.values(s.suspect || {}).forEach(t => susCount[t] = (susCount[t] || 0) + 1);
   if(!changed('strip', [s.players, s.currentTurn, s.phase, s.runoff, s.accused, s.suspect, s.result && s.result.foxIds, s.execution && s.execution.wasFox, s.you.mates, myId])) return;
   $('#strip').innerHTML = s.players.map(p => {
-    const foxR = (s.phase === 'result' && s.result && (s.result.foxIds || []).includes(p.id)) || p.out || (reveal && s.execution && s.execution.targetId === p.id && s.execution.wasFox === true && s.phase !== 'execution');
+    const foxR = (s.phase === 'result' && s.result && (s.result.foxIds || []).includes(p.id)) || p.outFox || (reveal && s.execution && s.execution.targetId === p.id && s.execution.wasFox === true && s.phase !== 'execution');
     const cls = ['ava', p.id === myId ? 'me' : '', s.currentTurn === p.id ? 'turn' : '', ((s.phase === 'runoff' && s.runoff && s.runoff.includes(p.id)) || (s.accused && s.accused.id === p.id)) ? 'cand' : '', foxR ? 'foxr' : '', !p.connected || p.out ? 'off' : ''].join(' ');
     const tick = p.voted || (s.phase === 'lobby' && !p.isHost && !p.isBot && p.ready);
     return `<div class="${cls}" style="--pc:${p.color}" onclick="setTab('players')" title="${esc(p.name)}">
@@ -2661,6 +2726,7 @@ function renderDock(s){
         h = `<button class="btn btn-gold primary-btn" ${err ? 'disabled' : ''} onclick="act({type:'START'})">🎬 게임 시작${err ? `<span class="sub">· ${esc(err)}</span>` : ''}</button>`; }
       else h = `<button class="btn ${me.ready ? 'btn-neon' : 'btn-gold'} primary-btn" onclick="act({type:'READY'})">${me.ready ? '✓ 준비 완료<span class="sub">· 누르면 취소</span>' : '🙋 준비하기'}</button>`;
       break;
+    case 'intermission': h = idle(`🎬 다음 판 준비 중... 곧 시작해요`); break;
     case 'reveal': h = `<button class="btn btn-neon primary-btn" onclick="setTab('info')">🃏 내 카드 다시 보기</button>`; break;
     case 'hint': h = myTurn ? `<button class="btn btn-gold primary-btn" onclick="focusClue()">🎙️ 내 차례! 단서 입력</button>` : idle(`🎙️ ${esc(nameOf(s.currentTurn))}님이 단서를 쓰는 중...`); break;
     case 'discuss': h = isHost ? `<button class="btn btn-crimson primary-btn" onclick="act({type:'SKIP_DISCUSS'})">⏩ 토론 끝내고 투표</button>` : `<button class="btn btn-neon primary-btn" onclick="setTab('players')">🎯 의심 대상 지목하기</button>`; break;
@@ -2671,7 +2737,8 @@ function renderDock(s){
     case 'judge': h = me.out ? idle('👻 관전 중 — 찬반 투표를 지켜보세요') : s.accused && s.accused.id === myId ? idle('⚖️ 운명의 찬반 투표가 진행 중...') : `<button class="btn ${s.judge && s.judge.mine !== null ? 'btn-neon' : 'btn-crimson'} primary-btn" onclick="openJudge()">⚖️ ${s.judge && s.judge.mine !== null ? (s.judge.mine ? '찬성 완료' : '반대 완료') + '<span class="sub">· 변경</span>' : '찬반 투표하기'}</button>`; break;
     case 'foxreveal': h = s.you.canGuess && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히고 완벽한 승리</button>` : idle('🦊 여우가 정답을 추리 중...'); break;
     case 'execution': h = idle('🔦 가면을 벗기는 중...'); break;
-    case 'foxguess': h = s.you.canGuess && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히기</button>` : idle('🦊 여우가 최후의 추리 중...'); break;
+    case 'foxguess': h = s.you.canGuess && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 비밀 제시어 입력 (+1점)</button>` : idle(s.you.role === 'fox' ? `🦊 제출 완료 · 다른 여우 기다리는 중 (${s.guessProgress ? s.guessProgress.done : 0}/${s.guessProgress ? s.guessProgress.total : 0})` : `🦊 여우들이 정답을 입력 중... (${s.guessProgress ? s.guessProgress.done : 0}/${s.guessProgress ? s.guessProgress.total : 0})`); break;
+    case 'foxguess_old': h = s.you.canGuess && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히기</button>` : idle('🦊 여우가 최후의 추리 중...'); break;
     case 'result': {
       const sr = s.result && s.result.series;
       const fin = s.result && s.result.awards;
@@ -2689,7 +2756,7 @@ function voteListHTML(s, where){
   const ro = s.phase === 'runoff';
   const cands = s.players.filter(p => p.id !== myId && !p.out && (!ro || (s.runoff || []).includes(p.id)));
   if(s.you.spec) return `<div class="rounded-2xl p-4 bg-white/5 text-center text-slate-300 text-sm">👀 관전 중 — 투표는 플레이어만 할 수 있어요</div>`;
-  if((s.players.find(p => p.id === myId) || {}).out) return `<div class="rounded-2xl p-4 bg-white/5 text-center text-slate-300 text-sm">👻 처형된 여우는 투표할 수 없어요. 남은 여우가 살아남는지 지켜보세요!</div>`;
+  if((s.players.find(p => p.id === myId) || {}).out) return `<div class="rounded-2xl p-4 bg-white/5 text-center text-slate-300 text-sm">👻 처형되어 이번 판은 관전 중이에요. 투표는 다음 판부터 할 수 있어요.</div>`;
   const iAmCand = ro && (s.runoff || []).includes(myId);
   return `<div class="flex items-center justify-between mb-2"><div class="text-rose-200 font-black text-sm">${ro ? '⚖️ 동률 후보 중 선택' : '🗳️ 여우를 지목하세요'}</div>
       <div class="text-xs font-mono text-slate-400 tnum">${s.voteCount}/${s.eligible} 완료</div></div>
@@ -2763,9 +2830,9 @@ function renderPlayers(s){
   const cards = s.players.map(p => {
     const me = p.id === myId, turn = s.currentTurn === p.id;
     const ex = reveal && s.execution && s.execution.targetId === p.id;
-    const foxRevealed = (s.phase === 'result' && s.result && (s.result.foxIds || []).includes(p.id)) || p.out || (ex && s.execution.wasFox === true && s.phase !== 'execution');
+    const foxRevealed = (s.phase === 'result' && s.result && (s.result.foxIds || []).includes(p.id)) || p.outFox || (ex && s.execution.wasFox === true && s.phase !== 'execution');
     const mate = (s.you.mates || []).includes(p.id);
-    const sad = ex && s.execution.wasFox === false && s.phase !== 'execution';
+    const sad = (ex && s.execution.wasFox === false && s.phase !== 'execution') || (p.out && !p.outFox);
     const av = foxRevealed ? foxC('pl' + p.id) : dogC(p.color, sad ? 'sad' : 'normal', p.outfit, 'pl' + p.id);
     const votes = s.tally && s.tally[p.id] ? s.tally[p.id] : 0;
     const hint = s.hints.find(h => h.pid === p.id);
@@ -2783,7 +2850,7 @@ function renderPlayers(s){
       me ? '<span class="badge bg-white/15 text-white">나</span>' : '',
       me && s.you.role === 'fox' && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="나만 볼 수 있음">🦊 비밀</span>' : '',
       foxRevealed ? '<span class="badge bg-rose-600 text-white">FOX</span>' : '',
-      p.out && s.phase !== 'result' ? '<span class="badge bg-slate-500/30 text-slate-300">👻 관전</span>' : '',
+      p.out && s.phase !== 'result' ? (p.outFox ? '<span class="badge bg-slate-500/30 text-slate-300">👻 관전</span>' : '<span class="badge bg-sky-400/15 text-sky-200">😢 처형됨</span>') : '',
       mate && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="여우끼리만 보여요">🦊 동료</span>' : '',
       s.you.spec && (s.you.allFoxes || []).includes(p.id) && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="관전자에게만 보여요">🦊 여우</span>' : '',
       inRunoff ? '<span class="badge bg-rose-500/30 text-rose-100">결선</span>' : '',
@@ -2996,13 +3063,15 @@ function renderInputMode(s){
   const defMe = s.phase === 'defense' && s.accused && s.accused.id === myId;
   const outMe = !!(s.players.find(p => p.id === myId) || {}).out && s.phase !== 'result';
   const specMe = !!s.you.spec;
-  const muted = !specMe && ((s.phase === 'defense' && s.accused && s.accused.id !== myId) || outMe);
-  if(!changed('input', [myTurn, defMe, muted, outMe, specMe])) return;
+  const guessLock = !specMe && s.phase === 'foxguess';
+  const muted = !specMe && ((s.phase === 'defense' && s.accused && s.accused.id !== myId) || outMe || guessLock);
+  if(!changed('input', [myTurn, defMe, muted, outMe, specMe, guessLock])) return;
   const inp = $('#chat-input');
   inp.placeholder = myTurn ? '🔎 나의 공식 단서를 한 줄로 입력하세요 (Enter)'
     : defMe ? '🎤 최후의 변론! 지금은 당신만 말할 수 있어요 (Enter)'
     : specMe ? '👀 관전석 채팅 — 관전자끼리만 보여요 (플레이어에게는 안 보임)'
-    : outMe ? '👻 처형된 여우는 이번 판이 끝날 때까지 관전만 할 수 있어요'
+    : outMe ? '👻 처형되어 이번 판은 관전 중이에요 (채팅 불가)'
+    : guessLock ? '🔒 여우들이 정답을 입력하는 중 — 채팅이 잠겨 있어요'
     : muted ? `🤐 ${s.accused.name}님의 최후 변론 중 — 지금은 말할 수 없어요` : '메시지를 입력하세요...';
   inp.maxLength = myTurn ? 60 : 140;
   inp.disabled = !!muted;
@@ -3105,8 +3174,11 @@ function renderAction(s){
         <div>2. 순서대로 제시어를 한 줄로 설명 (각 ${s.settings.hint}초)</div>
         <div>3. ${s.settings.discuss}초 자유 토론 (🎯 의심 화살표, 리액션 사용 가능)</div>
         <div>※ 강아지가 제시어를 그대로 말하면 전송되지 않아요</div>
-        <div>4. 최다 득표자는 10초 최후 변론 → 찬반 투표로 처형 결정 (반대면 다시 투표)</div>
-        <div>5. ${(s.settings.foxes || 1) > 1 ? '여우끼리는 서로 알아요. 여우를 모두 처형해야 강아지 승리!' : '여우를 처형해도 여우가 제시어를 맞히면 역전승!'}</div>
+        <div>4. 재판은 <b class="text-amber-200">여우 수만큼</b>: 투표 → 10초 최후 변론 → 찬반 (석방돼도 1번 사용)</div>
+        <div>5. 무고한 시민이 처형돼도 게임은 계속 (처형된 사람은 관전) · 여우를 다 찾으면 바로 종료</div>
+        <div>6. 판이 끝나면 여우 전원이 각자 제시어 입력 (맞히면 +1)</div>
+        <div>🏆 점수: 전원 검거 시민 +3 · 일부 검거 시민 +1/생존 여우 +2 · 못 찾음 생존 여우 +3 (여우 3마리면 여우 +1)</div>
+        <div>➕ 투표로 진짜 여우를 찍은 시민 +1 · 투표로 찍은 시민이 처형된 여우 +1</div>
       </div>
       <div class="mt-3 text-xs text-slate-500 text-center">방 코드 <b class="font-mono text-amber-200 tracking-widest">${esc(s.roomCode)}</b>를 친구에게 공유하세요</div>
       <div class="mt-1 text-[11px] text-center ${ICE ? 'text-emerald-300/80' : 'text-slate-600'}">${ICE ? '🛰️ 중계 서버(TURN) 활성 — 막힌 네트워크에서도 접속 가능' : '🛰️ 직접 연결 모드'}</div>`;
@@ -3133,9 +3205,9 @@ function renderAction(s){
       }
       case 'discuss':
         h += `<div class="rounded-2xl p-4 border border-amber-300/30 bg-amber-300/5">
-            <div class="text-amber-200 font-black">💬 자유 토론</div>
+            <div class="text-amber-200 font-black">💬 ${s.trials ? `다음 재판 전 토론 (남은 재판 ${s.maxTrials - s.trials}번)` : '자유 토론'}</div>
             <div class="text-sm text-slate-300 mt-1"><b class="text-rose-300">플레이어 카드</b>의 🎯로 의심 대상을 지목하면 모두에게 화살표가 보여요. 메시지를 길게 보면 리액션도 달 수 있어요.</div></div>
-          ${isHost ? `<button class="btn btn-ghost w-full py-2.5 mt-3" onclick="act({type:'SKIP_DISCUSS'})">⏩ 토론 종료 → 바로 투표</button>` : ''}`;
+          ${isHost ? `<button class="btn btn-ghost w-full py-2.5 mt-3" onclick="act({type:'SKIP_DISCUSS'})">⏩ 토론 종료 → 바로 투표</button>` : ''}` + trialLogHTML(s);
         break;
       case 'vote': case 'runoff':
         h += voteListHTML(s);
@@ -3146,9 +3218,9 @@ function renderAction(s){
             <div class="w-20 h-20 mx-auto">${dogC(a.color || '#888', 'normal', a.outfit, 'ac' + a.id)}</div>
             <div class="font-display text-2xl crimson-text mt-1">${s.phase === 'defense' ? '최후의 변론' : '찬반 투표'}</div>
             <div class="text-sm text-slate-200 mt-1"><b>${esc(a.name || '')}</b>님 · ${a.votes || 0}표 · 재판 ${s.trials}/${s.maxTrials}</div>
-            <div class="text-xs text-slate-400 mt-2">${s.phase === 'defense' ? '지금은 지목된 사람만 채팅할 수 있어요.' : `찬성이 반대보다 많으면 처형, 아니면 다시 투표해요. (${s.judge ? s.judge.done : 0}/${s.judge ? s.judge.eligible : 0} 투표)`}</div>
+            <div class="text-xs text-slate-400 mt-2">${s.phase === 'defense' ? '지금은 지목된 사람만 채팅할 수 있어요.' : `찬성이 반대보다 많으면 처형, 아니면 석방 (석방돼도 재판 1번 사용). (${s.judge ? s.judge.done : 0}/${s.judge ? s.judge.eligible : 0} 투표)`}</div>
             ${s.phase === 'judge' && !(a.id === myId) ? `<button class="btn btn-crimson w-full py-3 mt-3 font-display text-lg" onclick="openJudge()">⚖️ 찬반 투표 화면 열기</button>` : ''}
-          </div>` + tallyHTML(s);
+          </div>` + tallyHTML(s) + trialLogHTML(s);
         break;
       }
       case 'foxreveal':
@@ -3158,27 +3230,39 @@ function renderAction(s){
       case 'execution': h += `<div class="text-center text-rose-200 py-4 font-bold">🔦 가면을 벗기는 중...</div>` + tallyHTML(s); break;
       case 'foxguess':
         h += s.you.canGuess
-          ? `<div class="rounded-2xl p-4 border border-rose-400/60 bg-rose-500/10 text-center"><div class="text-rose-200 font-black">🦊 최후의 발악!</div>
-              <div class="text-sm text-slate-300 mt-1">제시어를 맞히면 역전승입니다.</div>
-              <button class="btn btn-gold w-full py-2.5 mt-3" onclick="openFoxModal(S)">답변 입력창 열기</button></div>`
-          : `<div class="rounded-2xl p-4 border border-rose-400/40 bg-rose-500/5 text-center"><div class="text-rose-200 font-black">🦊 여우가 추리 중...</div>
-              <div class="text-sm text-slate-400 mt-1">${esc(s.execution ? s.execution.name : '')}님이 비밀 제시어를 맞히면 여우의 역전승!</div></div>`;
-        h += tallyHTML(s); break;
+          ? `<div class="rounded-2xl p-4 border border-rose-400/60 bg-rose-500/10 text-center"><div class="text-rose-200 font-black">🦊 비밀 제시어 맞히기</div>
+              <div class="text-sm text-slate-300 mt-1">여우 전원이 각자 입력해요. 맞히면 <b class="text-amber-200">+1점</b> · 다른 여우의 답은 안 보여요.</div>
+              <button class="btn btn-gold w-full py-2.5 mt-3" onclick="openFoxModal(S)">입력창 열기</button></div>`
+          : `<div class="rounded-2xl p-4 border border-rose-400/40 bg-rose-500/5 text-center"><div class="text-rose-200 font-black">🦊 여우들이 정답을 입력 중... (${s.guessProgress ? s.guessProgress.done : 0}/${s.guessProgress ? s.guessProgress.total : 0})</div>
+              <div class="text-sm text-slate-400 mt-1">🔒 이 시간에는 채팅이 잠겨요. 결과 화면에서 한꺼번에 공개돼요.</div></div>`;
+        h += trialLogHTML(s); break;
       case 'result': {
-        const r = s.result;
-        h += `<div class="rounded-2xl p-4 text-center border ${r.winner === 'fox' ? 'border-rose-400/60 bg-rose-500/10' : 'border-sky-400/60 bg-sky-400/10'}">
-            <div class="text-2xl font-black ${r.winner === 'fox' ? 'text-rose-200' : 'text-sky-200'}">${r.winner === 'fox' ? '🦊 여우 승리' : '🐶 강아지 팀 승리'}</div>
-            <div class="text-sm text-slate-300 mt-2">제시어 <b class="text-amber-200">${esc(r.word)}</b> · 여우 <b class="text-rose-200">${esc(r.foxName)}</b></div></div>
-          ${tallyHTML(s)}
+        const r = s.result, mine = (r.gains || []).find(g => g.id === myId);
+        h += `<div class="rounded-2xl p-4 text-center border ${r.outcome === 'none' ? 'border-rose-400/60 bg-rose-500/10' : r.outcome === 'all' ? 'border-sky-400/60 bg-sky-400/10' : 'border-amber-300/50 bg-amber-300/5'}">
+            <div class="text-2xl font-black ${r.outcome === 'none' ? 'text-rose-200' : r.outcome === 'all' ? 'text-sky-200' : 'text-amber-200'}">${OUTCOME_TITLE[r.outcome] || ''}</div>
+            <div class="text-sm text-slate-300 mt-2">제시어 <b class="text-amber-200">${esc(r.word)}</b> · 여우 <b class="text-rose-200">${esc(r.foxName)}</b></div>
+            ${mine ? `<div class="mt-2 text-sm text-slate-200">이번 판 내 점수 <b class="font-display text-xl text-amber-200">+${mine.pts}</b></div>` : ''}</div>
+          ${trialLogHTML(s)}
           <button class="btn btn-ghost w-full py-2.5 mt-3" onclick="showResult(S)">🏆 결과 화면 다시 보기</button>
           <button class="btn btn-neon w-full py-2.5 mt-2" onclick="openWardrobe()">👗 옷장 열기</button>
-          ${isHost ? `<button class="btn btn-gold w-full py-3 mt-2" onclick="act({type:'RESTART'})">🥂 대기실로 돌아가기</button>` : '<div class="text-xs text-slate-500 text-center mt-2">방장이 다음 게임을 준비합니다.</div>'}`;
+          ${isHost ? (r.series && !r.series.final ? `<button class="btn btn-gold w-full py-3 mt-2" onclick="act({type:'RESTART'})">▶ 다음 판 (${r.series.round + 1}/${r.series.total})</button><button class="btn btn-ghost w-full py-2 mt-2 text-sm" onclick="act({type:'TO_LOBBY'})">대기실로 (설정 변경)</button>` : `<button class="btn btn-gold w-full py-3 mt-2" onclick="act({type:'RESTART'})">🥂 대기실로 돌아가기</button>`) : '<div class="text-xs text-slate-500 text-center mt-2">방장이 다음 판을 시작하면 바로 이어져요.</div>'}`;
         break;
       }
     }
     h += '</div>';
   }
   $('#action').innerHTML = h;
+}
+const OUTCOME_TITLE = { all:'🏆 여우 전원 검거', partial:'⚖️ 여우 일부 검거', none:'🦊 여우 전원 생존' };
+function trialLogHTML(s){
+  const log = s.trialLog || (s.result && s.result.trials) || [];
+  if(!log.length) return '';
+  const row = t => {
+    const fox = t.result === 'fox', inn = t.result === 'innocent';
+    const txt = fox ? `${esc(t.name)} 처형 → 🦊 여우!` : inn ? `${esc(t.name)} 처형 → 😢 무고한 ${speciesWord(t.outfit)}` : t.result === 'released' ? `${esc(t.name)} 석방 (찬 ${t.yes} : 반 ${t.no})` : '투표 없음';
+    return `<div class="flex items-center gap-2 text-sm rounded-xl px-2.5 py-1.5 ${fox ? 'bg-rose-500/10 text-rose-200' : inn ? 'bg-sky-400/10 text-sky-200' : 'bg-white/5 text-slate-300'}"><span class="text-[11px] text-slate-500 font-mono">#${t.n}</span>${txt}</div>`;
+  };
+  return `<div class="mt-3 rounded-2xl bg-black/25 p-3 space-y-1.5"><div class="text-[10px] tracking-[.3em] text-slate-500 mb-1">TRIALS · 재판 기록</div>${log.map(row).join('')}</div>`;
 }
 function tallyHTML(s){
   if(!s.tally || !Object.keys(s.tally).length) return '';
@@ -3303,7 +3387,7 @@ function maybeRevealExec(){
     ov.querySelector('.exec-stage').classList.add('shake');
     sparks(36);
     const fool = S && S.settings && S.settings.mode === 'fool';
-    v.innerHTML = '<span class="text-rose-400" style="text-shadow:0 0 30px rgba(239,68,68,.8)">🦊 여우였다!</span><div class="text-base text-rose-200 font-sans font-bold mt-1">' + (fool ? '본인도 몰랐던 바보 여우 발각!' : (S && S.foxCount > 1 ? '여우 한 마리 발각! 남은 여우가 있는지 확인하세요' : '정체가 발각되었습니다')) + '</div>';
+    v.innerHTML = '<span class="text-rose-400" style="text-shadow:0 0 30px rgba(239,68,68,.8)">🦊 여우였다!</span><div class="text-base text-rose-200 font-sans font-bold mt-1">' + (fool ? '본인도 몰랐던 바보 여우 발각!' : (ex.left > 0 ? `남은 여우 ${ex.left}마리! 계속 찾아내세요` : (S && S.foxCount > 1 ? '여우를 모두 찾아냈다!' : '정체가 발각되었습니다'))) + '</div>';
   } else {
     ov.classList.add('innocent'); Snd.sigh(); rain(60);
     v.innerHTML = (ex.outfit && ex.outfit.species === 'cat' ? '<span class="text-sky-200">무고한 고양이였습니다...</span><div class="text-base text-slate-400 font-sans font-bold mt-1">“냥... 억울해요” 여우는 아직 라운지에 있습니다</div>' : '<span class="text-sky-200">무고한 강아지였습니다...</span><div class="text-base text-slate-400 font-sans font-bold mt-1">“멍... 억울해요” 여우는 아직 라운지에 있습니다</div>');
@@ -3345,9 +3429,9 @@ function renderJudge(s){
     ${isMe ? `<div class="mt-6 text-lg text-rose-100 font-bold">${iOut && a.id !== myId ? (s.you.spec ? `👀 관전 중 — ${(s.you.allFoxes || []).includes(a.id) ? '진짜 여우가 지목됐어요!' : '무고한 강아지가 지목됐어요...'}` : '👻 관전 중 — 다른 사람들이 투표하고 있어요') : '🙏 다른 사람들이 투표하고 있어요'}</div>` : `
     <div class="grid grid-cols-2 gap-4 mt-6">
       <button class="judge-btn judge-yes ${j.mine === true ? 'on' : ''}" onclick="castJudge(true)"><span class="text-5xl">💀</span><span class="font-display text-3xl">찬성</span><span class="text-xs font-bold opacity-80">처형한다</span></button>
-      <button class="judge-btn judge-no ${j.mine === false ? 'on' : ''}" onclick="castJudge(false)"><span class="text-5xl">🕊️</span><span class="font-display text-3xl">반대</span><span class="text-xs font-bold opacity-80">살려주고 다시 투표</span></button>
+      <button class="judge-btn judge-no ${j.mine === false ? 'on' : ''}" onclick="castJudge(false)"><span class="text-5xl">🕊️</span><span class="font-display text-3xl">반대</span><span class="text-xs font-bold opacity-80">살려준다</span></button>
     </div>`}
-    <div class="mt-5 text-sm text-slate-300 tnum">투표 ${j.done}/${j.eligible} · 찬성이 반대보다 많아야 처형 (같으면 석방)</div>
+    <div class="mt-5 text-sm text-slate-300 tnum">투표 ${j.done}/${j.eligible} · 찬성이 반대보다 많아야 처형 (같으면 석방 · 석방돼도 재판 1번 사용)</div>
     <div class="timer-bar urgent mt-3 max-w-md mx-auto"><div id="judge-bar" style="width:100%"></div></div>
     ${isMe ? '' : '<button class="btn btn-ghost mt-4 px-5 py-2 text-sm" onclick="closeJudge()">채팅 보기</button>'}`;
   if(changed('judge', h)) $('#judge-body').innerHTML = h;
@@ -3376,10 +3460,11 @@ function openFoxModal(s){
   if(!s || (s.phase !== 'foxguess' && s.phase !== 'foxreveal') || !s.you.canGuess || foxSubmitted) return;
   const m = $('#fox-modal');
   if(m.classList.contains('hidden')){
-    const bonus = s.phase === 'foxreveal';
-    $('#fm-tag').textContent = bonus ? 'VICTORY LAP' : 'LAST CHANCE';
-    $('#fm-title').textContent = bonus ? '승리의 순간' : '최후의 발악';
-    $('#fm-desc').innerHTML = bonus ? '무고한 강아지가 처형됐어요! 이미 승리했지만, <b class="text-amber-200">비밀 제시어</b>까지 맞히면 <b class="text-amber-200">완벽한 승리</b>!' : '정체가 들켰다. 하지만 <b class="text-amber-200">비밀 제시어</b>를 맞히면 역전승!';
+    const bonus = false;
+    const caughtMe = (s.players.find(p => p.id === myId) || {}).outFox;
+    $('#fm-tag').textContent = 'FOX ANSWER · 각자 입력';
+    $('#fm-title').textContent = '비밀 제시어 맞히기';
+    $('#fm-desc').innerHTML = `판이 끝났어요! ${caughtMe ? '잡혔지만 ' : '끝까지 살아남았어요. '}<b class="text-amber-200">비밀 제시어</b>를 맞히면 <b class="text-amber-200">+1점</b>. 다른 여우의 답은 보이지 않아요.`;
     $('#fox-modal-avatar').innerHTML = foxSVG();
     $('#fox-modal-cat').textContent = `카테고리: ${s.catInfo.icon} ${s.catInfo.name}`;
     const dz = $('#fox-modal-decoy');
@@ -3387,7 +3472,7 @@ function openFoxModal(s){
     else dz.classList.add('hidden');
     $('#fox-hints').innerHTML = s.hints.filter(h => h.pid !== myId).map(h =>
       `<div class="hint-chip"><span class="dot" style="background:${h.color}"></span><b class="text-amber-100">${esc(h.name)}</b><span class="text-slate-200">${esc(h.text)}</span></div>`).join('') || '<span class="text-xs text-slate-500">단서 없음</span>';
-    $('#fox-input').value = ''; $('#fox-input').disabled = false; $('#fox-submit').disabled = false; $('#fox-submit').textContent = bonus ? '👑 정답 도전' : '🦊 최종 답변 제출';
+    $('#fox-input').value = ''; $('#fox-input').disabled = false; $('#fox-submit').disabled = false; $('#fox-submit').textContent = '🦊 제출';
     m.classList.remove('hidden'); Snd.foxReveal();
   }
   setTimeout(() => $('#fox-input').focus(), 80);
@@ -3403,54 +3488,47 @@ function closeFoxModal(){ $('#fox-modal').classList.add('hidden'); }
 /* ---------- RESULT (여우 승리 전용 연출 포함) ---------- */
 function showResult(s){
   if(!s || s.phase !== 'result' || !s.result) return;
-  const r = s.result, foxWin = r.winner === 'fox', iAmFox = s.you.role === 'fox';
-  const iSpec = !!s.you.spec;
-  const iWon = !iSpec && ((foxWin && iAmFox) || (!foxWin && !iAmFox));
-  const title = foxWin ? (r.reason === 'guess_correct' ? '여우의 대역전승!' : r.reason === 'innocent_perfect' ? '여우의 완벽한 승리' : '여우의 라운지 장악') : '강아지 팀 승리!';
-  const dogs = s.players.filter(p => !(r.foxIds || []).includes(p.id));
+  const r = s.result, iAmFox = (r.foxIds || []).includes(myId), iSpec = !!s.you.spec;
   const sr = r.series || { round:1, total:1, final:true };
+  const good = iSpec ? null : iAmFox ? r.outcome === 'none' : r.outcome === 'all';
+  const bad = iSpec ? null : iAmFox ? r.outcome === 'all' : r.outcome === 'none';
+  const tone = r.outcome === 'none' ? 'rgba(251,113,133,.55)' : r.outcome === 'all' ? 'rgba(96,165,250,.55)' : 'rgba(212,175,55,.55)';
+  const sub = r.outcome === 'all' ? `재판 ${r.trials.length}번 만에 여우 ${r.k}마리를 모두 찾았어요` : r.outcome === 'none' ? `재판 ${r.trials.length}번 동안 여우를 한 마리도 못 찾았어요` : `여우 ${r.k}마리 중 ${r.caught}마리를 찾았어요`;
+  const avBox = (p, sz, mood, fox) => `<div style="width:${sz}px;height:${sz}px;border-radius:${Math.round(sz / 4)}px;overflow:hidden;flex-shrink:0;background:radial-gradient(circle at 50% 35%, color-mix(in srgb, ${fox ? '#e11d48' : p.color} 30%, #1E293B), #0B0F19 78%)">${fox ? foxC('rs' + p.id) : dogC(p.color, mood || 'normal', p.outfit, 'rs' + p.id + (mood || ''))}</div>`;
+  const trials = (r.trials || []).map(t => {
+    const fox = t.result === 'fox', inn = t.result === 'innocent';
+    const p = { id:t.id || ('n' + t.n), color:t.color || '#64748b', outfit:t.outfit };
+    return `<div class="rounded-2xl p-2.5 flex items-center gap-2.5 text-left" style="background:${fox ? 'rgba(244,63,94,.1)' : inn ? 'rgba(56,189,248,.08)' : 'rgba(255,255,255,.04)'};border:1px solid ${fox ? 'rgba(244,63,94,.3)' : inn ? 'rgba(56,189,248,.25)' : 'rgba(255,255,255,.08)'}">
+      ${t.id ? avBox(p, 40, inn ? 'sad' : 'normal', fox) : '<div style="width:40px;height:40px" class="flex items-center justify-center text-xl">😶</div>'}
+      <div class="min-w-0 flex-1"><div class="text-[11px] text-slate-500">재판 ${t.n}</div><div class="text-sm font-bold leading-snug break-keep ${fox ? 'text-rose-200' : inn ? 'text-sky-200' : 'text-slate-300'}">${fox ? `${esc(t.name)} 처형 → 🦊 여우!` : inn ? `${esc(t.name)} 처형 → 😢 무고한 ${speciesWord(t.outfit)}` : t.result === 'released' ? `${esc(t.name)} 석방` : '투표 없음'}</div></div></div>`;
+  }).join('');
+  const guesses = (r.foxes || []).map(f => `<div class="rounded-xl bg-black/30 px-3 py-2 text-sm text-slate-200">🦊 ${esc(f.name)}${f.caught ? ' <span class="text-[10px] text-rose-300">(잡힘)</span>' : ' <span class="text-[10px] text-emerald-300">(생존)</span>'}: <b>${f.guess ? esc(f.guess) : '-'}</b> ${f.correct ? '<span class="text-emerald-300 font-bold">✅ +1</span>' : f.guess ? '<span class="text-rose-300">❌</span>' : '<span class="text-slate-500 text-xs">입력 안 함</span>'}</div>`).join('');
+  const gains = (r.gains || []).map(g => `<div class="flex items-center gap-2.5 rounded-2xl px-2.5 py-1.5" style="background:${g.fox ? 'rgba(244,63,94,.09)' : 'rgba(255,255,255,.035)'};border:1px solid ${g.id === myId ? 'rgba(212,175,55,.6)' : g.fox ? 'rgba(244,63,94,.3)' : 'rgba(255,255,255,.06)'}">
+      ${avBox(g, 36, g.out && !g.fox ? 'sad' : 'normal', g.fox)}
+      <div class="flex-1 min-w-0 text-left"><div class="text-sm font-bold text-white truncate">${esc(g.name)}${g.id === myId ? ' <span class="text-amber-200">(나)</span>' : ''} <span class="text-[10px] font-bold ${g.fox ? 'text-rose-300' : 'text-sky-300'}">${g.fox ? (g.out ? '잡힌 여우' : '생존 여우') : g.out ? '시민 · 처형됨' : '시민'}</span></div>
+        <div class="text-[11px] text-slate-400 leading-snug">${g.notes.length ? esc(g.notes.join(' · ')) : '-'}</div></div>
+      <div class="font-display text-xl ${g.pts > 0 ? 'text-amber-200' : 'text-slate-500'}">+${g.pts}</div></div>`).join('');
   const ov = $('#result-overlay');
   ov.className = 'overlay';
-  let scene;
-  if(foxWin){
-    scene = `<div class="throne-wrap">${throneSVG()}<div class="fox-on">${foxSVG()}</div><div class="crown-drop">${crownSVG()}</div></div>
-      <div class="flex flex-wrap justify-center gap-1.5 mt-3">${dogs.map((p, i) => `
-        <div class="minion" style="animation-delay:${1.6 + i * .3}s" data-taint="${i}">
-          <div class="l">${dogSVG(p.color, 'normal', p.outfit)}</div>
-          <div class="l hyp" style="animation-delay:${1.6 + i * .3}s">${dogSVG(p.color, 'hypno', p.outfit)}</div>
-        </div>`).join('')}</div>
-      <div class="text-xs text-rose-300/80 mt-2">강아지들이 하나둘 여우에게 홀려버렸습니다...</div>`;
-  } else {
-    scene = `<div class="cage-wrap"><div class="absolute inset-3">${foxSVG()}</div><div class="cage-bars">${cageSVG()}</div></div>
-      <div class="flex flex-wrap justify-center gap-1.5 mt-3">${dogs.map((p, i) => `<div class="minion cheer" style="animation-delay:${i * .12}s"><div class="l">${dogSVG(p.color, 'normal', p.outfit)}</div></div>`).join('')}</div>
-      <div class="text-xs text-sky-200/80 mt-2">여우는 철창 속으로! 라운지에 평화가 찾아왔습니다.</div>`;
-  }
   ov.innerHTML = `
     <div class="overlay-dim" onclick="$('#result-overlay').classList.add('hidden')"></div>
     <div id="rs-fx" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
-    <div class="modal glass-solid text-center" style="border-radius:var(--r-xl);border-color:${foxWin ? 'rgba(251,113,133,.55)' : 'rgba(96,165,250,.55)'};box-shadow:var(--inner-glow),0 0 70px ${foxWin ? 'rgba(225,29,72,.35)' : 'rgba(59,130,246,.3)'}">
-      <div class="text-[11px] tracking-[.5em] font-bold ${iWon ? 'text-amber-200' : 'text-slate-400'}">${sr.total > 1 ? `GAME ${sr.round}/${sr.total} · ` : ''}${iSpec ? 'GAME OVER · 관전' : iWon ? 'VICTORY' : 'DEFEAT'}</div>
-      <h2 class="font-display text-[40px] leading-tight mt-1 ${foxWin ? 'crimson-text' : 'gold-text'}">${title}</h2>
-      <p class="text-sm text-slate-300 mt-2">${(REASON[r.reason] || '').replace('무고한 강아지', '무고한 ' + (r.executedSpecies === 'cat' ? '고양이' : '강아지'))}</p>
-      <div class="mt-4">${scene}</div>
-      <div class="grid grid-cols-3 gap-2 mt-5 text-left">
-        <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">FOX${(r.foxIds || []).length > 1 ? ' ×' + r.foxIds.length : ''}</div><div class="font-black text-rose-200 truncate" title="${esc(r.foxName)}">${esc(r.foxName)}</div></div>
-        <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">WORD</div><div class="font-black text-amber-100 truncate">${esc(r.word)}</div>${r.decoy ? `<div class="text-[11px] text-rose-200/90 truncate mt-0.5">🤪 여우: ${esc(r.decoy)}</div>` : ''}</div>
-        <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">FOX'S GUESS</div><div class="font-bold truncate ${r.reason === 'guess_correct' ? 'text-rose-300' : 'text-slate-400'}">${r.guess !== null && r.guess !== undefined ? esc(r.guess || '(공백)') : '-'}</div></div>
-      </div>
-      <div class="flex gap-2 mt-5">
+    <div class="modal glass-solid text-center" style="width:min(940px,94vw);max-height:92vh;overflow:auto;border-radius:var(--r-xl);border-color:${tone};box-shadow:var(--inner-glow),0 0 70px ${tone.replace('.55', '.3')}">
+      <div class="text-[11px] tracking-[.5em] font-bold text-amber-200/90">${sr.total > 1 ? `GAME ${sr.round}/${sr.total} · ` : ''}RESULT${iSpec ? ' · 관전' : ''}</div>
+      <h2 class="font-display text-[42px] leading-tight mt-1 ${r.outcome === 'none' ? 'crimson-text' : 'gold-text'}">${OUTCOME_TITLE[r.outcome] || ''}</h2>
+      <p class="text-sm text-slate-300 mt-1">${sub} · 제시어 <b class="text-amber-200">${esc(r.word)}</b>${r.decoy ? ` <span class="text-rose-200/80">(바보 여우 단어: ${esc(r.decoy)})</span>` : ''}</p>
+      <div class="grid gap-2 mt-4" style="grid-template-columns:repeat(${Math.min(3, Math.max(1, (r.trials || []).length))},1fr)">${trials}</div>
+      <div class="grid gap-2 mt-2" style="grid-template-columns:repeat(${Math.min(3, Math.max(1, (r.foxes || []).length))},1fr)">${guesses}</div>
+      <div class="grid grid-cols-2 gap-1.5 mt-3">${gains}</div>
+      <div class="text-[11px] text-slate-500 mt-2">${sr.final ? '마지막 판! MVP와 하이라이트를 확인하세요' : '누적 점수는 마지막 판에 MVP · 하이라이트로 발표돼요'}</div>
+      <div class="flex gap-2 mt-4">
         <button class="btn btn-ghost flex-1 py-3" onclick="$('#result-overlay').classList.add('hidden')">닫기</button>
         ${r.awards ? `<button class="btn btn-gold flex-1 py-3" onclick="showAwards(S)">🏆 MVP · 하이라이트 보기</button>`
           : isHost ? `<button class="btn btn-gold flex-1 py-3" onclick="act({type:'RESTART'})">${sr.total > 1 ? `▶ 다음 판 (${sr.round + 1}/${sr.total})` : '🥂 대기실로'}</button>` : ''}
       </div>
     </div>`;
-  if(foxWin){
-    Snd.foxThrone();
-    dogs.forEach((p, i) => setTimeout(() => { const el = ov.querySelector(`[data-taint="${i}"]`); if(el){ el.classList.add('tainted'); Snd.tone(300 - i * 12, .3, { type:'sawtooth', v:.04, to:120 }); } }, (1.6 + i * .3) * 1000));
-    if(iWon) setTimeout(() => confetti(50, ['#EF4444','#F97316','#D4AF37']), 1400);
-  } else { if(iWon){ Snd.win(); confetti(70); } else if(!iSpec) Snd.lose(); }
-  if(foxWin && !iWon && !iSpec) setTimeout(() => Snd.lose(), 2400);
-  if(r.awards && !showResult._aw){ showResult._aw = s.phaseId; setTimeout(() => { if(S && S.phase === 'result' && S.phaseId === showResult._aw) showAwards(S); }, 5200); }
+  if(good){ Snd.win(); setTimeout(() => confetti(60), 200); } else if(bad) Snd.lose(); else Snd.chime();
+  if(r.awards && !showResult._aw){ showResult._aw = s.phaseId; setTimeout(() => { if(S && S.phase === 'result' && S.phaseId === showResult._aw) showAwards(S); }, 6500); }
 }
 /* ---------- 🏆 MVP + 분야별 하이라이트 ---------- */
 function awWho(list, big){
@@ -3459,6 +3537,30 @@ function awWho(list, big){
     <div class="font-black ${big ? 'text-2xl gold-text font-display mt-2' : 'text-sm text-white mt-1.5'} truncate max-w-[150px]">${esc(p.name)}${p.id === myId ? ' (나)' : ''}</div></div>`).join('')}
     ${more > 0 ? `<div class="self-center text-xs text-slate-400 font-bold" title="${esc(list.slice(3).map(p => p.name).join(', '))}">외 ${more}명</div>` : ''}</div>`;
 }
+/* 🎬 판 사이 연출: GAME n/N + 지난 판 결과 + 5초 카운트다운 */
+let interTimer = null;
+function showIntermission(s){
+  const sr = s.series || { round:0, total:1, history:[] };
+  const n = sr.round + 1, hist = sr.history || [];
+  const ic = { all:'🏆', partial:'⚖️', none:'🦊' }, lb = { all:'전원 검거', partial:'일부 검거', none:'전원 생존' };
+  const dots = Array.from({ length:sr.total }, (_, i) => { const h = hist[i];
+    return `<div class="flex flex-col items-center gap-1"><div style="width:62px;height:62px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;${h ? 'background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5)' : i === n - 1 ? 'background:rgba(56,189,248,.15);border:2px solid #38BDF8;box-shadow:0 0 24px rgba(56,189,248,.5)' : 'background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.18)'}">${h ? ic[h.outcome] : i === n - 1 ? '🎬' : ''}</div>
+      <div class="text-[11px] font-bold ${h ? 'text-amber-200' : i === n - 1 ? 'text-sky-300' : 'text-slate-600'}">${h ? `${i + 1}판 · ${lb[h.outcome]}` : i === n - 1 ? '이번 판' : `${i + 1}판`}</div></div>`; }).join('');
+  const ov = $('#inter-overlay');
+  ov.innerHTML = `<div class="absolute inset-0" style="background:radial-gradient(900px 600px at 50% 40%, rgba(30,41,82,.97), rgba(5,7,12,.98))"></div>
+    <div class="relative z-[2] text-center px-6">
+      <div class="text-[12px] tracking-[.6em] text-amber-200/80 font-bold">NEXT GAME</div>
+      <div class="font-display gold-text leading-none mt-3" style="font-size:120px">GAME ${n}<span style="font-size:56px;opacity:.7"> / ${sr.total}</span></div>
+      <div class="flex justify-center gap-4 mt-8">${dots}</div>
+      <div class="mt-8 text-slate-300 text-lg">새로운 제시어, 새로운 여우가 정해집니다 · <b class="text-amber-200">MVP는 마지막 판에 공개!</b></div>
+      <div id="inter-count" class="font-display text-white mt-6" style="font-size:72px;text-shadow:0 0 30px rgba(56,189,248,.8)">5</div>
+      ${isHost ? `<button class="btn btn-ghost px-5 py-2 mt-4 text-sm" onclick="act({type:'TO_LOBBY'})">대기실로 가기 (설정 변경)</button>` : ''}
+    </div>`;
+  ov.classList.remove('hidden'); Snd.chime();
+  clearInterval(interTimer);
+  interTimer = setInterval(() => { const el = $('#inter-count'); if(!el || !localTimerEnd){ return; } const sec = Math.max(1, Math.ceil((localTimerEnd - Date.now()) / 1000)); if(el.textContent !== String(sec)){ el.textContent = sec; Snd.tick(); } }, 150);
+}
+function closeIntermission(){ clearInterval(interTimer); const ov = $('#inter-overlay'); if(!ov.classList.contains('hidden')){ ov.classList.add('hidden'); ov.innerHTML = ''; } }
 function showAwards(s){
   const a = s && s.result && s.result.awards; if(!a) return;
   $('#result-overlay').classList.add('hidden');
