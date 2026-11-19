@@ -724,7 +724,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
    CONSTANTS & DATA
    ========================================================= */
 const MAX_PLAYERS = 12, MIN_PLAYERS = 3;
-const VER = 'v25';
+const VER = 'v26';
 const MAX_SPECS = 6;   // 관전석   // 방장과 참가자의 버전이 다르면 입장 차단
 const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000, INTERLUDE:20000, INTERMISSION:5000 };
 const MAX_TRIALS = 3;   // 재판(최후 변론→찬반) 최대 횟수. 모두 반대면 여우 승리
@@ -3372,7 +3372,7 @@ function renderAction(s){
         <button class="cat-btn !items-start !text-left !px-3 ${s.settings.mode === 'fool' ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_MODE',mode:'fool'})"` : 'disabled'}><span class="text-sm">🤪 바보 모드</span><span class="text-[10px] font-medium text-slate-400 leading-snug">여우도 비슷한 가짜 제시어를 받아 자기가 여우인 줄 몰라요</span></button>
       </div>
       <div class="label mt-4">🦊 여우 수 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
-      <div class="grid grid-cols-3 gap-2">${[1,2,3].map(n => `<button class="cat-btn !py-2 ${(s.settings.foxes || 1) === n ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_FOXES',n:${n}})"` : 'disabled'}><span class="text-sm">🦊 ${n}마리</span><span class="text-[10px] font-medium text-slate-400">${n === 1 ? '3명 이상' : (n * 2 + 1) + '명 이상'}</span></button>`).join('')}</div>
+      <div class="grid grid-cols-3 gap-2">${[1,2,3].map(n => `<button class="cat-btn !py-2 ${(s.settings.foxes || 1) === n ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_FOXES',n:${n}})"` : 'disabled'}><span class="text-sm">🦊 ${n}마리</span><span class="text-[10px] font-medium text-slate-400">${['','3~6명 추천','7~9명 추천','10~12명 추천'][n]}</span></button>`).join('')}</div>
       ${(s.settings.foxes || 1) > maxFoxesFor(s.players.length) ? `<div class="text-[11px] text-amber-200/80 mt-1.5">지금 ${s.players.length}명이라 시작하면 여우 ${maxFoxesFor(s.players.length)}마리로 진행돼요</div>` : ''}
       <div class="label mt-4">🏆 라운드 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
       <div class="grid grid-cols-3 gap-2">${[[1,'단판'],[3,'3라운드'],[5,'5라운드']].map(([n, l]) => `<button class="cat-btn !py-2 ${(s.settings.rounds || 1) === n ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_ROUNDS',n:${n}})"` : 'disabled'}><span class="text-sm">${l}</span></button>`).join('')}</div>
