@@ -282,6 +282,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
 .mask-stack.fox-shown .dog-layer{ display:none; }
 .hero-mask .dog-layer{ animation:heroPeel 6s cubic-bezier(.6,0,.25,1) infinite; }
 .hero-mask .fox-layer{ animation:heroFox 6s ease infinite; transition:none; }
+.hero-alt .dog-layer, .hero-alt .fox-layer{ animation-delay:-3s; }   /* 고양이는 강아지와 번갈아 가면을 벗음 */
 .eye-glow{ animation:eyeGlow 1.1s ease-in-out infinite alternate; }
 .tear{ transform-box:fill-box; transform-origin:center; animation:tear 1.6s ease-in infinite; } .tear.t2{ animation-delay:.7s; }
 
@@ -425,7 +426,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
   #screen-entry:not(.hidden){ display:flex; align-items:center; justify-content:center; padding:2rem; }
   .entry-grid{ width:100%; max-width:68rem; display:grid; grid-template-columns:minmax(0,1fr) 27rem; gap:3rem; align-items:center; }
   .entry-hero h1{ font-size:4.5rem !important; }
-  .entry-hero #hero-mask{ width:20rem !important; height:20rem !important; }
+  .entry-hero #hero-mask, .entry-hero #hero-mask2{ width:17rem !important; height:17rem !important; }
   .entry-hero .relative > div:first-child{ width:26rem !important; height:26rem !important; left:50%; transform:translateX(-50%); }
   /* 게임 화면: 상단바 / 플레이어 | 채팅 | 정보 + 메인 버튼 */
   #screen-game:not(.hidden){ display:grid !important; height:100%; max-width:110rem; margin:0 auto; padding:1rem 1.25rem 1.25rem; gap:1rem;
@@ -490,11 +491,11 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
   <div class="text-center">
     <div class="text-[11px] tracking-[.45em] text-slate-400 font-bold">NOIR MYSTERY LOUNGE</div>
     <h1 class="font-display text-[44px] leading-none mt-2 gold-text">라이어 라운지</h1>
-    <p class="text-slate-300 text-sm mt-2">강아지들 사이에 <b class="crimson-text font-display text-base">탈을 쓴 여우</b>가 숨어 있다</p>
+    <p class="text-slate-300 text-sm mt-2">강아지와 고양이들 사이에 <b class="crimson-text font-display text-base">탈을 쓴 여우</b>가 숨어 있다</p>
   </div>
   <div class="relative my-5">
     <div class="absolute inset-0 mx-auto w-56 h-56 rounded-full" style="background:radial-gradient(circle, rgba(245,158,11,.18), transparent 65%)"></div>
-    <div id="hero-mask" class="mask-stack hero-mask w-44 h-44 mx-auto"></div>
+    <div class="hero-pair flex justify-center items-end gap-4"><div id="hero-mask" class="mask-stack hero-mask w-40 h-40"></div><div id="hero-mask2" class="mask-stack hero-mask hero-alt w-40 h-40"></div></div>
   </div>
 
   </div>
@@ -533,7 +534,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
     </div>
     <div id="entry-status" class="text-sm text-amber-200/90 min-h-[20px] text-center font-semibold"></div>
   </div>
-  <div class="text-center text-[11px] text-slate-500 mt-5">3~10명 · 서버 없이 브라우저끼리 연결돼요</div>
+  <div class="text-center text-[11px] text-slate-500 mt-5">3~12명 · 관전 6명 · 서버 없이 브라우저끼리 연결돼요</div>
   </div>
   </div>
 </section>
@@ -723,7 +724,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
    CONSTANTS & DATA
    ========================================================= */
 const MAX_PLAYERS = 12, MIN_PLAYERS = 3;
-const VER = 'v23';
+const VER = 'v24';
 const MAX_SPECS = 6;   // 관전석   // 방장과 참가자의 버전이 다르면 입장 차단
 const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000, INTERLUDE:20000, INTERMISSION:5000 };
 const MAX_TRIALS = 3;   // 재판(최후 변론→찬반) 최대 횟수. 모두 반대면 여우 승리
@@ -1262,6 +1263,7 @@ const MAX_RETRY = 15;
 /* ---------- ENTRY ---------- */
 function initEntry(){
   $('#hero-mask').innerHTML = `<div class="layer fox-layer">${foxSVG()}</div><div class="layer dog-layer">${dogSVG('#D4AF37','normal',{ hat:'fedora' })}</div>`;
+  $('#hero-mask2').innerHTML = `<div class="layer fox-layer">${foxSVG()}</div><div class="layer dog-layer">${dogSVG('#10B981','normal',{ species:'cat', fur:'gray', hat:'beret', neck:'bowtie' })}</div>`;
   $('#swatches').innerHTML = COLORS.map((c,i) =>
     `<button class="swatch ${c.c===profile.color?'on':''}" style="background:radial-gradient(circle at 35% 30%, ${shade(c.c,.35)}, ${c.c} 55%, ${shade(c.c,-.4)});--sc:${c.c}" title="${c.name}" onclick="selectColor(${i})"></button>`).join('');
   $('#in-name').value = profile.name || '';
