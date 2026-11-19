@@ -732,7 +732,7 @@ body.peek .secret-card.secret-fox{ background:radial-gradient(260px 160px at 100
    CONSTANTS & DATA
    ========================================================= */
 const MAX_PLAYERS = 12, MIN_PLAYERS = 3;
-const VER = 'v27';
+const VER = 'v28';
 const MAX_SPECS = 6;   // 관전석   // 방장과 참가자의 버전이 다르면 입장 차단
 const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000, INTERLUDE:20000, INTERMISSION:5000 };
 const MAX_TRIALS = 3;   // 재판(최후 변론→찬반) 최대 횟수. 모두 반대면 여우 승리
@@ -1850,7 +1850,7 @@ onTick(() => {
 /* =========================================================
    HOST: GAME LOGIC (single source of truth)
    ========================================================= */
-const DEFAULT_SETTINGS = { hint:30, discuss:90, mode:'classic', foxes:1, rounds:1 };
+const DEFAULT_SETTINGS = { hint:30, discuss:90, mode:'classic', foxes:1, rounds:1, randomCat:false };
 const isFoxId = id => !!(G && G.foxIds && G.foxIds.includes(id));
 const isOut = id => !!(G && G.out && G.out[id]);
 // 인원 대비 여우 상한: 여우가 강아지보다 적도록 (3~4명 1, 5~6명 2, 7명 이상 3)
@@ -1866,6 +1866,15 @@ function mkPlayer(id, name, color, outfit, isBot, isHostP){
 const gp = id => G.players.find(p => p.id === id);
 const gs = id => (G.specs || []).find(p => p.id === id);          // 관전자
 const gpa = id => gp(id) || gs(id);                               // 플레이어 + 관전자
+function pickRandomCat(){
+  // 한 시리즈 안에서는 같은 카테고리가 다시 나오지 않게 (다 쓰면 초기화), 직전 카테고리는 항상 제외
+  const all = Object.keys(CATS);
+  const inSeries = G.series && !G.series.done && G.series.played > 0;
+  if(!inSeries || !Array.isArray(G.usedCats)) G.usedCats = [];
+  let keys = all.filter(k => !G.usedCats.includes(k) && k !== G.lastRandomCat);
+  if(!keys.length){ G.usedCats = []; keys = all.filter(k => k !== G.lastRandomCat); }
+  G.category = pick(keys); G.lastRandomCat = G.category; G.usedCats.push(G.category);
+}
 function hostCat(){ return G.category === 'custom' && G.custom ? G.custom : CATS[G.category] || CATS.food; }
 function pushMsg(m){
   m.id = ++G.seq; m.ts = Date.now(); G.chat.push(m);
@@ -2097,7 +2106,15 @@ function handleAction(pid, a){
       break;
     }
     case 'SET_CATEGORY':
-      if(!fromHost || G.phase !== 'lobby' || G.category === a.cat) return;
+      if(!fromHost || G.phase !== 'lobby') return;
+      if(a.cat === 'random'){   // 🎲 판마다 카테고리 자동 변경 (커스텀 제외)
+        if(G.settings.randomCat) return;
+        G.settings.randomCat = true; G.catPicked = false;
+        sys('🎲 카테고리 랜덤! 판마다 카테고리가 자동으로 바뀌어요.', 'gold');
+        break;
+      }
+      if(G.category === a.cat && !G.settings.randomCat) return;
+      G.settings.randomCat = false;
       if(a.cat === 'custom'){ if(!G.custom) return; }
       else if(!CATS[a.cat]) return;
       G.category = a.cat; sys(`카테고리가 [${hostCat().icon} ${hostCat().name}](으)로 변경되었습니다.`);
@@ -2259,6 +2276,7 @@ function pickFoxes(k){
   return out;
 }
 function startGame(){
+  if(G.settings && G.settings.randomCat){ if(!G.catPicked) pickRandomCat(); G.catPicked = false; }
   const cat = hostCat();
   // ♻️ 최근 제시어 중복 방지: 같은 카테고리에서 최근 나온 단어(최대 5개)는 제외
   G.recent = G.recent || {};
@@ -2546,6 +2564,7 @@ function nextGame(){
   if(gone.length){ G.players = G.players.filter(p => p.connected || p.isBot); gone.forEach(p => { Object.keys(G.tokens).forEach(t => { if(G.tokens[t] === p.id) delete G.tokens[t]; }); sys(`🚪 ${p.name}님은 연결이 끊겨 다음 판에서 빠집니다.`); }); }
   applyPendingMoves();
   if(G.players.length < MIN_PLAYERS){ setPhase('lobby', 0); sys(`⚠️ 플레이어가 ${MIN_PLAYERS}명보다 적어 대기실로 돌아왔어요.`, 'danger'); G.players.forEach(p => { if(!p.isBot && !p.isHost) p.ready = false; }); return; }
+  if(G.settings.randomCat){ pickRandomCat(); G.catPicked = true; }
   setPhase('intermission', T.INTERMISSION);
   sys(`🎬 GAME ${G.series.played + 1}/${G.series.total} — ${T.INTERMISSION / 1000}초 뒤 다음 판이 시작됩니다!`, 'gold');
 }
@@ -2884,7 +2903,7 @@ function renderHeader(s){
   pill.textContent = (s.phase === 'discuss' && s.trials) ? '다음 재판 준비' : (PHASE_LABEL[s.phase] || s.phase);
   pill.className = 'phase-pill inline-block tone-' + (PHASE_TONE[s.phase] || 'amber');
   $('#hdr-code').textContent = s.roomCode;
-  $('#hdr-cat').textContent = (s.series && s.series.total > 1 && s.phase !== 'lobby' ? `🏆 ${Math.min(s.series.round, s.series.total)}/${s.series.total}판 · ` : '') + `${s.catInfo.icon} ${s.catInfo.name}` + (s.settings && s.settings.mode === 'fool' ? ' · 🤪 바보 모드' : '') + (s.phase !== 'lobby' && s.foxCount > 1 ? ` · 🦊×${s.foxCount}` : '') + (['discuss','vote','runoff','defense','judge','execution'].includes(s.phase) && s.maxTrials ? ` · ⚖️ 재판 ${Math.min(s.maxTrials, s.trials + (['vote','runoff','discuss'].includes(s.phase) ? 1 : 0))}/${s.maxTrials}` : '') + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
+  $('#hdr-cat').textContent = (s.series && s.series.total > 1 && s.phase !== 'lobby' ? `🏆 ${Math.min(s.series.round, s.series.total)}/${s.series.total}판 · ` : '') + (s.settings && s.settings.randomCat && s.phase !== 'lobby' ? '🎲 ' : '') + (s.settings && s.settings.randomCat && s.phase === 'lobby' ? '🎲 랜덤' : `${s.catInfo.icon} ${s.catInfo.name}`) + (s.settings && s.settings.mode === 'fool' ? ' · 🤪 바보 모드' : '') + (s.phase !== 'lobby' && s.foxCount > 1 ? ` · 🦊×${s.foxCount}` : '') + (['discuss','vote','runoff','defense','judge','execution'].includes(s.phase) && s.maxTrials ? ` · ⚖️ 재판 ${Math.min(s.maxTrials, s.trials + (['vote','runoff','discuss'].includes(s.phase) ? 1 : 0))}/${s.maxTrials}` : '') + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
   $('#tab-info-label').textContent = s.phase === 'lobby' ? '방 설정' : '내 카드';
   $('#tab-info-ic').textContent = s.phase === 'lobby' ? '⚙️' : '🃏';
 }
@@ -3379,9 +3398,10 @@ function renderAction(s){
   let h = '';
   if(s.phase === 'lobby'){
     const me = s.players.find(p => p.id === myId) || {};
-    const cats = Object.entries(CATS).map(([k, c]) =>
-      `<button class="cat-btn ${s.category === k ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_CATEGORY',cat:'${k}'})"` : 'disabled'}><span class="text-xl">${c.icon}</span><span>${c.name}</span></button>`).join('')
-      + `<button class="cat-btn ${s.category === 'custom' ? 'cat-on' : ''}" ${isHost ? `onclick="customClick()"` : 'disabled'}><span class="text-xl">✏️</span><span class="truncate max-w-full">${s.category === 'custom' ? esc(s.catInfo.name) : '커스텀'}</span></button>`;
+    const rnd = !!(s.settings && s.settings.randomCat);
+    const cats = `<button class="cat-btn ${rnd ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_CATEGORY',cat:'random'})"` : 'disabled'}><span class="text-xl">🎲</span><span>랜덤</span></button>` + Object.entries(CATS).map(([k, c]) =>
+      `<button class="cat-btn ${!rnd && s.category === k ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_CATEGORY',cat:'${k}'})"` : 'disabled'}><span class="text-xl">${c.icon}</span><span>${c.name}</span></button>`).join('')
+      + `<button class="cat-btn ${!rnd && s.category === 'custom' ? 'cat-on' : ''}" ${isHost ? `onclick="customClick()"` : 'disabled'}><span class="text-xl">✏️</span><span class="truncate max-w-full">${s.category === 'custom' ? esc(s.catInfo.name) : '커스텀'}</span></button>`;
     const humans = s.players.filter(p => !p.isBot && !p.isHost);
     const err = startError(s.players);
     h = `<div class="panel-title mb-3">LOBBY · 대기실</div>
@@ -3785,7 +3805,8 @@ function showIntermission(s){
       <div class="text-[12px] tracking-[.6em] text-amber-200/80 font-bold">NEXT GAME</div>
       <div class="font-display gold-text leading-none mt-3" style="font-size:120px">GAME ${n}<span style="font-size:56px;opacity:.7"> / ${sr.total}</span></div>
       <div class="flex justify-center gap-4 mt-8">${dots}</div>
-      <div class="mt-8 text-slate-300 text-lg">새로운 제시어, 새로운 여우가 정해집니다 · <b class="text-amber-200">MVP는 마지막 판에 공개!</b></div>
+      ${s.settings && s.settings.randomCat ? `<div class="mt-7 inline-flex items-center gap-2 px-5 py-2 rounded-full text-lg font-bold text-amber-100" style="background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.45)">🎲 이번 카테고리: ${s.catInfo.icon} ${esc(s.catInfo.name)}</div>` : ''}
+      <div class="mt-6 text-slate-300 text-lg">새로운 제시어, 새로운 여우가 정해집니다 · <b class="text-amber-200">MVP는 마지막 판에 공개!</b></div>
       <div id="inter-count" class="font-display text-white mt-6" style="font-size:72px;text-shadow:0 0 30px rgba(56,189,248,.8)">5</div>
       ${isHost ? `<button class="btn btn-ghost px-5 py-2 mt-4 text-sm" onclick="act({type:'TO_LOBBY'})">대기실로 가기 (설정 변경)</button>` : ''}
     </div>`;
