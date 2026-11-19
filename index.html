@@ -236,6 +236,25 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
 #chat-form.defense-mode .clue-badge{ background:linear-gradient(180deg,#FB7185,#E11D48); color:#fff; }
 .inp:disabled{ opacity:.5; cursor:not-allowed; }
 .judge-accused{ width:9rem; height:9rem; border-radius:2rem; padding:6px; background:radial-gradient(circle at 50% 38%, rgba(251,113,133,.35), rgba(30,20,30,.9) 75%); border:2px solid rgba(251,113,133,.75); box-shadow:0 0 50px rgba(225,29,72,.5), inset 0 1px 0 rgba(255,255,255,.15); animation:beat 1.1s ease-in-out infinite; }
+.aw-wrap{ position:relative; z-index:2; width:min(1180px,94vw); max-height:94vh; overflow:auto; padding:28px 30px; border-radius:var(--r-xl); text-align:center; }
+.aw-mvp{ position:relative; margin:14px auto 0; padding:18px 22px 20px; border-radius:26px; max-width:620px; border:1.5px solid rgba(212,175,55,.6); background:radial-gradient(120% 140% at 50% 0%, rgba(212,175,55,.22), rgba(11,15,25,.9) 70%); box-shadow:0 0 60px rgba(212,175,55,.25), var(--inner-glow); animation:awIn .7s var(--ease-spring) both; }
+.aw-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-top:20px; }
+.aw-card{ position:relative; padding:14px 12px 16px; border-radius:22px; background:rgba(15,20,32,.92); border:1px solid rgba(255,255,255,.1); box-shadow:var(--inner-glow); opacity:0; animation:awIn .6s var(--ease-spring) forwards; }
+.aw-card .ic{ font-size:34px; line-height:1; }
+.aw-av{ width:64px; height:64px; border-radius:20px; overflow:hidden; margin:0 auto; background:radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--pc) 32%, #1E293B), #0B0F19 78%); }
+.aw-mvp .aw-av{ width:120px; height:120px; border-radius:30px; }
+.aw-who{ display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:10px; }
+@keyframes awIn{ from{ opacity:0; transform:translateY(18px) scale(.94); } to{ opacity:1; transform:none; } }
+.chat-av{ width:38px; height:38px; border-radius:14px; flex-shrink:0; margin-top:16px; overflow:hidden; background:radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--pc) 35%, #1E293B), #0B0F19 80%); border:1.5px solid color-mix(in srgb, var(--pc) 70%, transparent); }
+.chat-av img{ width:100%; height:100%; display:block; }
+.chat-av.sm{ width:28px; height:28px; border-radius:10px; margin-top:0; }
+.chat-av.lg{ width:48px; height:48px; border-radius:16px; margin-top:0; }
+.msg-cont{ margin-top:-2px !important; }
+.spec-row{ display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:14px; background:rgba(255,255,255,.035); border:1px dashed rgba(148,163,184,.25); }
+.spec-row .chat-av{ margin-top:0; width:30px; height:30px; border-radius:10px; }
+.bubble-spec{ background:rgba(100,116,139,.18); border:1px dashed rgba(148,163,184,.45); color:#CBD5E1; border-radius:16px; padding:7px 12px; font-size:13.5px; }
+.spec-tag{ font-size:10px; font-weight:800; letter-spacing:.08em; color:#94A3B8; background:rgba(148,163,184,.15); border-radius:999px; padding:1px 7px; }
+.msg-cont .chat-gap{ width:38px; flex-shrink:0; }
 .judge-btn{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:1.6rem .6rem; border-radius:28px; border:2px solid; transition:transform .2s var(--ease-spring), box-shadow .2s, outline-color .2s; outline:3px solid transparent; outline-offset:3px; }
 .judge-btn:hover{ transform:scale(1.04); } .judge-btn:active{ transform:scale(.95); }
 .judge-yes{ border-color:rgba(251,113,133,.65); color:#FFE4E6; background:linear-gradient(180deg, rgba(225,29,72,.42), rgba(76,18,34,.7)); box-shadow:inset 0 1px 0 rgba(255,255,255,.15), inset 0 -6px 0 rgba(136,19,55,.65), 0 22px 44px -18px rgba(225,29,72,.8); }
@@ -559,7 +578,8 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
         </button>
         <div id="hintbar-list" class="flex flex-wrap gap-1.5 mt-2 max-h-24 overflow-y-auto"></div>
       </div>
-      <div id="chat" class="flex-1 overflow-y-auto px-3 py-2 no-scrollbar"></div>
+      <div class="relative flex-1 min-h-0 flex flex-col"><div id="chat" class="flex-1 overflow-y-auto px-3 py-2 no-scrollbar"></div>
+        <button id="chat-newbtn" class="hidden btn btn-neon text-sm font-bold" style="position:absolute;left:50%;right:auto;bottom:12px;transform:translateX(-50%);width:auto;padding:8px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:5" onclick="chatToBottom()">⬇ 새 메시지</button></div>
       <form id="chat-form" onsubmit="event.preventDefault();sendChat()" class="flex gap-2 items-center">
         <span id="input-mode" class="hidden clue-badge">단서</span>
         <input id="chat-input" autocomplete="off" class="inp flex-1 min-w-0" maxlength="140" placeholder="메시지를 입력하세요...">
@@ -574,6 +594,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
       </div>
       <div id="players" class="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 no-scrollbar">
         <div id="players-inner"><div id="players-list" class="space-y-2"></div><svg id="sus-svg"></svg></div>
+        <div id="spec-box" class="mt-3"></div>
       </div>
     </div>
     <!-- 내 카드 / 방 설정 -->
@@ -634,6 +655,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
 </div>
 
 <div id="result-overlay" class="overlay hidden" style="z-index:65"></div>
+<div id="awards-overlay" class="overlay hidden" style="z-index:66"></div>
 
 <!-- Wardrobe -->
 <div id="wardrobe" class="overlay hidden" style="z-index:80">
@@ -699,7 +721,9 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
 /* =========================================================
    CONSTANTS & DATA
    ========================================================= */
-const MAX_PLAYERS = 10, MIN_PLAYERS = 3;
+const MAX_PLAYERS = 12, MIN_PLAYERS = 3;
+const VER = 'v20';
+const MAX_SPECS = 6;   // 관전석   // 방장과 참가자의 버전이 다르면 입장 차단
 const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000 };
 const MAX_TRIALS = 3;   // 재판(최후 변론→찬반) 최대 횟수. 모두 반대면 여우 승리
 const PREFIX = 'noir-liar-lounge-v1-';
@@ -710,7 +734,8 @@ const REACTIONS = ['👍','😂','🤔','😱','🦊','🐶'];
 const COLORS = [
   { name:'로열 블루', c:'#3B6EF5' }, { name:'에메랄드', c:'#10B981' }, { name:'버건디', c:'#B4234A' },
   { name:'샴페인 골드', c:'#D4AF37' }, { name:'바이올렛', c:'#8B5CF6' }, { name:'네온 시안', c:'#22D3EE' },
-  { name:'로즈', c:'#F472B6' }, { name:'실버', c:'#A8B3C7' }, { name:'탠저린', c:'#F97316' }, { name:'라임', c:'#84CC16' }
+  { name:'로즈', c:'#F472B6' }, { name:'실버', c:'#A8B3C7' }, { name:'탠저린', c:'#F97316' }, { name:'라임', c:'#84CC16' },
+  { name:'스카이', c:'#7DD3FC' }, { name:'모카', c:'#A0522D' }
 ];
 const BOT_NAMES = ['바둑이','초코','몽실','보리','해피','콩이','두부','망고','호두','누룽지'];
 
@@ -722,6 +747,7 @@ const FUR = {
   black:{ n:'블랙탄', l:'#6A6470', m:'#3E3943', d:'#242027', e1:'#1C191F', e2:'#0D0B0F', patch:'#C98A4B', muzzle:'#E0AE78', brow:'#C98A4B' }
 };
 const WARDROBE = {
+  species: { label:'캐릭터',   items:{ dog:'🐶 강아지', cat:'🐱 고양이' } },
   fur:     { label:'털색',     items:Object.fromEntries(Object.entries(FUR).map(([k,v]) => [k, v.n])) },
   hat:     { label:'모자',     items:{ none:'없음', fedora:'중절모', beret:'베레모', crown:'왕관', beanie:'비니', party:'파티 고깔', detective:'탐정모', tophat:'실크햇', cap:'야구모자' } },
   glasses: { label:'안경',     items:{ none:'없음', round:'동그란 안경', sun:'선글라스', monocle:'모노클', heart:'하트 안경', star:'스타 안경' } },
@@ -834,7 +860,7 @@ function toast(msg, kind='info'){
   setTimeout(() => { el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(), 400); }, 2600);
 }
 function defaultOutfit(color){
-  return { fur:'cream', hat:(COLORS.findIndex(c => c.c === color) % 2 === 1) ? 'fedora' : 'none', glasses:'none', neck:'scarf', outfit:'none', extra:'none' };
+  return { species:'dog', fur:'cream', hat:(COLORS.findIndex(c => c.c === color) % 2 === 1) ? 'fedora' : 'none', glasses:'none', neck:'scarf', outfit:'none', extra:'none' };
 }
 function normOutfit(o, color){
   const d = defaultOutfit(color || COLORS[0].c), r = {};
@@ -843,6 +869,7 @@ function normOutfit(o, color){
 }
 function randomOutfit(){
   const r = {}; OUTFIT_KEYS.forEach(k => { const keys = Object.keys(WARDROBE[k].items); r[k] = pick(keys); });
+  r.species = Math.random() < .5 ? 'dog' : 'cat';
   if(Math.random() < .35) r.hat = 'none'; if(Math.random() < .5) r.glasses = 'none'; if(Math.random() < .5) r.extra = 'none';
   return r;
 }
@@ -969,6 +996,46 @@ function dogSVG(color, mood='normal', outfit, fixedId){
     ? `<path d="M100 129 L100 136" stroke="#2A1C14" stroke-width="2.5" stroke-linecap="round"/><path d="M88 140 Q94 146 100 140 Q106 146 112 140" stroke="#2A1C14" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
     : `<path d="M95 140 Q100 153 105 140Z" fill="#E86A7A"/><path d="M100 129 L100 136 M100 136 Q92 145 85 139 M100 136 Q108 145 115 139" stroke="#2A1C14" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
 
+  /* ---- 🐱 고양이: 머리 중심·눈 위치를 강아지와 똑같이 맞춰서 모자/안경/목걸이가 그대로 맞음 ---- */
+  const cat = o.species === 'cat';
+  const head = cat ? `
+  <path d="M47 84 L50 26 Q53 21 58 25 L94 52Z" fill="url(#f${id})"/>
+  <path d="M153 84 L150 26 Q147 21 142 25 L106 52Z" fill="url(#f${id})"/>
+  <path d="M56 70 L58 36 L83 54Z" fill="#F9A8B8" opacity=".85"/><path d="M144 70 L142 36 L117 54Z" fill="#F9A8B8" opacity=".85"/>
+  <path d="M60 46 l4 9 M140 46 l-4 9" stroke="#fff" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
+  <ellipse cx="100" cy="104" rx="61" ry="56" fill="url(#f${id})"/>
+  <path d="M100 50 L100 63 M90 52 L92 62 M110 52 L108 62" stroke="${F.patch}" stroke-width="4.2" opacity=".55" stroke-linecap="round"/>
+  <path d="M40 104 l11 2 M41 113 l10 0 M160 104 l-11 2 M159 113 l-10 0" stroke="${F.patch}" stroke-width="3.4" opacity=".45" stroke-linecap="round"/>
+  <path d="M84 52 Q100 46 116 52" stroke="#fff" stroke-width="3" opacity=".2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="89" cy="129" rx="15" ry="11.5" fill="${F.muzzle}"/><ellipse cx="111" cy="129" rx="15" ry="11.5" fill="${F.muzzle}"/>
+  <ellipse cx="100" cy="137" rx="10" ry="7" fill="${F.muzzle}"/>
+  <circle cx="61" cy="123" r="8" fill="#F9A8B8" opacity=".35"/><circle cx="139" cy="123" r="8" fill="#F9A8B8" opacity=".35"/>`
+  : `
+  <path d="M58 56 C26 56 13 106 28 137 C36 153 56 147 60 125 C64 100 68 70 58 56Z" fill="url(#e${id})"/>
+  <path d="M142 56 C174 56 187 106 172 137 C164 153 144 147 140 125 C136 100 132 70 142 56Z" fill="url(#e${id})"/>
+  <ellipse cx="100" cy="102" rx="58" ry="58" fill="url(#f${id})"/>
+  <ellipse cx="127" cy="91" rx="19" ry="17" fill="${F.patch}" opacity=".5"/>
+  <path d="M84 52 Q100 46 116 52" stroke="#fff" stroke-width="3" opacity=".25" fill="none" stroke-linecap="round"/>
+  <ellipse cx="100" cy="131" rx="31" ry="23" fill="${F.muzzle}"/>
+  <circle cx="61" cy="123" r="8" fill="#F9A8B8" opacity=".3"/><circle cx="139" cy="123" r="8" fill="#F9A8B8" opacity=".3"/>`;
+  const catEyes = mood === 'normal' ? `
+    <ellipse cx="78" cy="101" rx="9.5" ry="11" fill="#1D130D"/><ellipse cx="80.4" cy="96.8" rx="3.4" ry="3.8" fill="#fff"/><circle cx="75.6" cy="105.5" r="1.6" fill="#fff" opacity=".75"/>
+    <ellipse cx="122" cy="101" rx="9.5" ry="11" fill="#1D130D"/><ellipse cx="124.4" cy="96.8" rx="3.4" ry="3.8" fill="#fff"/><circle cx="119.6" cy="105.5" r="1.6" fill="#fff" opacity=".75"/>
+    <path d="M66 92 Q70 87 75 88 M134 92 Q130 87 125 88" stroke="#1D130D" stroke-width="2" fill="none" stroke-linecap="round"/>` : eyes;
+  const catNose = `<path d="M94 117 Q100 114 106 117 Q103 122 100 123 Q97 122 94 117Z" fill="#F08A9C"/><ellipse cx="98" cy="117" rx="2" ry="1" fill="#fff" opacity=".6"/>`;
+  const catMouth = mood === 'sad'
+    ? `<path d="M100 123 L100 128" stroke="#2A1C14" stroke-width="2.2" stroke-linecap="round"/><path d="M89 137 Q100 128 111 137" stroke="#2A1C14" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+    : mood === 'hypno'
+    ? `<path d="M100 123 L100 128" stroke="#2A1C14" stroke-width="2.2" stroke-linecap="round"/><path d="M89 132 Q94 137 100 132 Q106 137 111 132" stroke="#2A1C14" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+    : `<path d="M97 134 Q100 141 103 134Z" fill="#E86A7A"/><path d="M100 123 L100 128 M100 128 Q94 135 88 130 M100 128 Q106 135 112 130" stroke="#2A1C14" stroke-width="2.3" fill="none" stroke-linecap="round"/>`;
+  // 고양이는 귀가 위에 있어서 귀걸이·헤드폰 위치를 따로 맞춤
+  const catExtrasMid = {
+    headphone:`<path d="M44 92 Q36 30 100 30 Q164 30 156 92" stroke="#1F2937" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <rect x="30" y="84" width="22" height="36" rx="10" fill="url(#hs${id})" stroke="#111827" stroke-width="2"/><rect x="148" y="84" width="22" height="36" rx="10" fill="url(#hs${id})" stroke="#111827" stroke-width="2"/>`,
+    earring:`<circle cx="52" cy="72" r="4.6" fill="none" stroke="${G_}" stroke-width="2.4"/><circle cx="52" cy="80.5" r="3.4" fill="#fff" stroke="#E5E7EB" stroke-width=".8"/>`
+  };
+  const whiskers = `<g stroke="#5B4636" stroke-width="1.4" opacity=".55" stroke-linecap="round" fill="none">
+    <path d="M76 127 Q58 122 38 123 M76 132 Q58 132 40 136 M124 127 Q142 122 162 123 M124 132 Q142 132 160 136"/></g>`;
   return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full block" overflow="visible">
   <defs>
     <radialGradient id="f${id}" cx="45%" cy="34%" r="72%"><stop offset="0" stop-color="${F.l}"/><stop offset=".65" stop-color="${F.m}"/><stop offset="1" stop-color="${F.d}"/></radialGradient>
@@ -981,21 +1048,15 @@ function dogSVG(color, mood='normal', outfit, fixedId){
   </defs>
   <path d="M44 178 Q100 156 156 178 L168 200 L32 200Z" fill="url(#f${id})"/>
   ${outfits[o.outfit] || ''}
-  <path d="M58 56 C26 56 13 106 28 137 C36 153 56 147 60 125 C64 100 68 70 58 56Z" fill="url(#e${id})"/>
-  <path d="M142 56 C174 56 187 106 172 137 C164 153 144 147 140 125 C136 100 132 70 142 56Z" fill="url(#e${id})"/>
-  <ellipse cx="100" cy="102" rx="58" ry="58" fill="url(#f${id})"/>
-  <ellipse cx="127" cy="91" rx="19" ry="17" fill="${F.patch}" opacity=".5"/>
-  <path d="M84 52 Q100 46 116 52" stroke="#fff" stroke-width="3" opacity=".25" fill="none" stroke-linecap="round"/>
-  <ellipse cx="100" cy="131" rx="31" ry="23" fill="${F.muzzle}"/>
-  <circle cx="61" cy="123" r="8" fill="#F9A8B8" opacity=".3"/><circle cx="139" cy="123" r="8" fill="#F9A8B8" opacity=".3"/>
+  ${head}
   ${extrasBelow[o.extra] || ''}
-  ${mouth}
+  ${cat ? catMouth + catNose + whiskers : `${mouth}
   <path d="M89 118 Q100 111 111 118 Q107 129 100 130 Q93 129 89 118Z" fill="#2A1C14"/>
-  <ellipse cx="96" cy="117" rx="3.6" ry="1.8" fill="#fff" opacity=".5"/>
-  ${eyes}
+  <ellipse cx="96" cy="117" rx="3.6" ry="1.8" fill="#fff" opacity=".5"/>`}
+  ${cat ? catEyes : eyes}
   ${glasses[o.glasses] || ''}
   ${necks[o.neck] || ''}
-  ${extrasMid[o.extra] || ''}
+  ${(cat && catExtrasMid[o.extra] !== undefined ? catExtrasMid[o.extra] : extrasMid[o.extra]) || ''}
   ${hats[o.hat] || ''}
   ${extrasTop[o.extra] || ''}
 </svg>`;
@@ -1266,6 +1327,7 @@ function hardReset(){
    HOST: CONNECTION
    ========================================================= */
 async function createRoom(){
+  askNotifyPermission();
   Snd.init(); const n = readName(); if(!n) return;
   if(peer) return;
   setEntryBusy(true, '연결 준비 중...'); await iceReady;
@@ -1302,6 +1364,10 @@ function restoreHost(snap, attempt){
   if(typeof Peer === 'undefined'){ toast('PeerJS를 불러오지 못했습니다.', 'danger'); setEntryBusy(false,''); return; }
   openHostPeer(snap.room, 0, () => {
     G = snap.G; myId = G.hostPid;
+    G.settings = { ...DEFAULT_SETTINGS, ...(G.settings || {}) };
+    if(!Array.isArray(G.foxIds)) G.foxIds = G.foxId ? [G.foxId] : [];
+    G.out = G.out || {}; G.maxTrials = G.maxTrials || MAX_TRIALS; G.specs = G.specs || [];
+    G.specs.forEach(p => { if(p.id !== myId) p.connected = false; });
     G.players.forEach(p => { if(!p.isBot && p.id !== myId) p.connected = false; });
     Sched.q = [];
     sys('🔄 방장이 복귀했습니다. 끊긴 플레이어는 자동으로 재접속됩니다.', 'gold');
@@ -1330,9 +1396,10 @@ function hostHandleJoin(c, d){
   const token = clean(d.token, 40);
   const reject = reason => { try{ c.send({ type:'REJECT', reason }); }catch(e){} setTimeout(() => { try{ c.close(); }catch(e){} }, 600); };
   if(!token) return reject('잘못된 접속 정보입니다.');
+  if(d.ver !== VER) return reject('방장과 게임 버전이 달라요. 새로고침(Ctrl+F5) 후 다시 들어와 주세요.');
   if(G.banned && G.banned[token]) return reject('방장에 의해 퇴장된 방입니다.');
   const existingId = G.tokens[token];
-  const existing = existingId && gp(existingId);
+  const existing = existingId && gpa(existingId);
   if(existing){
     // ▶ 재접속: 같은 플레이어 자리 복구
     const old = connByPlayer[existing.id];
@@ -1345,16 +1412,19 @@ function hostHandleJoin(c, d){
     if(G.phase === 'vote' || G.phase === 'runoff') checkAllVoted();
     hostBroadcast(); return;
   }
-  if(G.phase !== 'lobby') return reject('이미 게임이 진행 중인 방입니다. 다음 판에 참여해 주세요.');
-  if(G.players.length >= MAX_PLAYERS) return reject('방이 가득 찼습니다. (최대 10명)');
+  // 게임 중이거나 자리가 꽉 차면 관전석으로 입장 (관전석도 꽉 차면 거절)
+  const asSpec = G.phase !== 'lobby' || G.players.length >= MAX_PLAYERS;
+  if(asSpec && G.specs.length >= MAX_SPECS) return reject(G.phase !== 'lobby' ? `게임 중이고 관전석(${MAX_SPECS}석)도 꽉 찼어요. 다음 판에 참여해 주세요.` : `방이 가득 찼습니다. (플레이 ${MAX_PLAYERS}명 · 관전 ${MAX_SPECS}명)`);
   let name = clean(d.name, 12) || '손님';
-  while(G.players.some(p => p.name === name)) name = name.slice(0,10) + Math.floor(Math.random()*10);
+  while(G.players.some(p => p.name === name) || G.specs.some(p => p.name === name)) name = name.slice(0,10) + Math.floor(Math.random()*10);
   let color = COLORS.some(x => x.c === d.color) ? d.color : COLORS[0].c;
   if(G.players.some(p => p.color === color)) color = freeColor();
   const p = mkPlayer('p_' + rid(8), name, color, d.outfit, false, false);
-  G.players.push(p); G.tokens[token] = p.id;
+  if(asSpec){ p.spec = true; p.pendingPlay = G.phase !== 'lobby' && G.players.length < MAX_PLAYERS; G.specs.push(p); }
+  else G.players.push(p);
+  G.tokens[token] = p.id;
   connByPlayer[p.id] = c; playerByPeer[c.peer] = p.id; lastSeen[p.id] = Date.now(); sentChat[p.id] = Math.max(0, G.seq - 120);
-  sys(`🚪 ${name}님이 라운지에 입장했습니다.`);
+  sys(asSpec ? `👀 ${name}님이 관전석에 입장했습니다.${p.pendingPlay ? ' (다음 판 참가 예약)' : ''}` : `🚪 ${name}님이 라운지에 입장했습니다.`);
   try{ c.send({ type:'WELCOME', id:p.id }); }catch(e){}
   hostBroadcast();
 }
@@ -1367,6 +1437,12 @@ function hostOnClose(c){
   markDisconnected(pid);
 }
 function markDisconnected(pid){
+  const sp = gs(pid);
+  if(sp){   // 관전자는 게임에 영향 없음 → 조용히 처리, 20초 뒤 정리
+    if(!sp.connected) return; sp.connected = false;
+    setTimeout(() => { if(!G) return; const x = gs(pid); if(x && !x.connected){ G.specs = G.specs.filter(y => y.id !== pid); Object.keys(G.tokens).forEach(t => { if(G.tokens[t] === pid) delete G.tokens[t]; }); sys(`👀 ${x.name}님이 관전석에서 나갔습니다.`); hostBroadcast(); } }, 20000);
+    hostBroadcast(); return;
+  }
   const p = gp(pid); if(!p || p.isBot || !p.connected) return;
   p.connected = false;
   if(G.phase === 'lobby'){ sys(`📴 ${p.name}님의 연결이 끊겼습니다. (20초 내 재접속 대기)`); scheduleLobbyRemoval(pid); }
@@ -1403,6 +1479,7 @@ onTick(() => {
    GUEST: CONNECTION (자동 재접속 포함)
    ========================================================= */
 async function joinRoom(){
+  askNotifyPermission();
   Snd.init(); const n = readName(); if(!n) return;
   const code = clean($('#in-code').value, 5).toUpperCase();
   if(code.length < 5){ toast('5자리 방 코드를 입력해주세요', 'danger'); return; }
@@ -1438,7 +1515,7 @@ function guestConnect(){
     if(S || reconnecting) scheduleReconnect();
     else { toast('방에 연결할 수 없습니다. 코드를 확인하세요.', 'danger'); setEntryBusy(false, ''); }
   }, 10000);
-  c.on('open', () => { c.send({ type:'JOIN', name:profile.name, color:profile.color, outfit:profile.outfit, token:myToken }); });
+  c.on('open', () => { c.send({ type:'JOIN', ver:VER, name:profile.name, color:profile.color, outfit:profile.outfit, token:myToken }); });
   c.on('data', d => { if(c !== hostConn) return; lastHostMsgAt = Date.now(); guestOnData(d); });
   c.on('close', () => { if(c === hostConn) onHostLost(); });
   c.on('error', () => { if(c === hostConn) onHostLost(); });
@@ -1488,6 +1565,13 @@ function scheduleReconnect(){
     else guestConnect();
   }, 2000);
 }
+setInterval(() => {   // 💬 채팅 밀림 감지: 방장은 더 보냈다는데 내가 못 받은 상태가 4초 넘게 지속되면 재전송 요청
+  if(isHost || !S || !hostConn || !hostConn.open) return;
+  const behind = typeof S.chatSeq === 'number' && S.chatSeq > chatUpToSeen;
+  if(!behind){ chatBehindSince = 0; return; }
+  if(!chatBehindSince){ chatBehindSince = Date.now(); return; }
+  if(Date.now() - chatBehindSince > 4000){ chatBehindSince = Date.now(); try{ hostConn.send({ type:'RESYNC' }); }catch(e){} }
+}, 1000);
 setInterval(() => {   // 방장 무응답 감지
   if(isHost || !S || intentionalLeave || reconnecting) return;
   if(lastHostMsgAt && Date.now() - lastHostMsgAt > 11000){ try{ hostConn && hostConn.close(); }catch(e){} onHostLost(); }
@@ -1525,20 +1609,28 @@ onTick(() => {
   if(!isHost || !G) return;
   Sched.run();
   if(G.timerEnd && Date.now() >= G.timerEnd){ G.timerEnd = 0; onTimeout(); hostBroadcast(); }
+  if(moreTimer && Date.now() >= moreTimer){ moreTimer = null; hostBroadcast(); }
 });
 
 /* =========================================================
    HOST: GAME LOGIC (single source of truth)
    ========================================================= */
+const DEFAULT_SETTINGS = { hint:30, discuss:90, mode:'classic', foxes:1, rounds:1 };
+const isFoxId = id => !!(G && G.foxIds && G.foxIds.includes(id));
+const isOut = id => !!(G && G.out && G.out[id]);
+// 인원 대비 여우 상한: 여우가 강아지보다 적도록 (3~4명 1, 5~6명 2, 7명 이상 3)
+const maxFoxesFor = n => Math.max(1, Math.min(3, Math.floor((n - 1) / 2)));
 function newGame(){
   return { phase:'lobby', phaseId:1, category:'food', custom:null, players:[], chat:[], seq:0, hints:[], turnOrder:[], turnIdx:0,
-           votes:{}, accuse:{}, suspect:{}, banned:{}, settings:{ hint:30, discuss:90, mode:'classic' }, recent:{}, decoy:null, reactions:{}, runoff:null, tally:null, timerEnd:0, timerTotal:0, foxId:null, word:null,
+           votes:{}, accuse:{}, suspect:{}, banned:{}, settings:{ ...DEFAULT_SETTINGS }, recent:{}, decoy:null, reactions:{}, runoff:null, tally:null, timerEnd:0, timerTotal:0, foxIds:[], out:{}, specs:[], guesser:null, guessBy:null, series:null, maxTrials:MAX_TRIALS, word:null,
            execution:null, result:null, guess:null, tokens:{}, hostPid:null };
 }
 function mkPlayer(id, name, color, outfit, isBot, isHostP){
   return { id, name, color, outfit:normOutfit(outfit, color), isBot, isHost:!!isHostP, ready:!!(isBot || isHostP), connected:true };
 }
 const gp = id => G.players.find(p => p.id === id);
+const gs = id => (G.specs || []).find(p => p.id === id);          // 관전자
+const gpa = id => gp(id) || gs(id);                               // 플레이어 + 관전자
 function hostCat(){ return G.category === 'custom' && G.custom ? G.custom : CATS[G.category] || CATS.food; }
 function pushMsg(m){
   m.id = ++G.seq; m.ts = Date.now(); G.chat.push(m);
@@ -1567,7 +1659,16 @@ function buildStateFor(pid, maxChat=1000, maxRx=1000){
   const revealPhase = ['execution','foxguess','result'].includes(G.phase);
   const cat = hostCat();
   const lastId = sentChat[pid] || 0;
-  const chat = G.chat.filter(m => m.id > lastId).slice(0, maxChat);   // 오래된 것부터 순서대로, 나눠서 전송
+  const viewerSpec = !!gs(pid);
+  // 오래된 것부터 순서대로, 나눠서 전송 (관전석 채팅은 관전자에게만)
+  const chat = []; let chatUpTo = lastId;
+  for(const m of G.chat){
+    if(m.id <= lastId) continue;
+    if(chat.length >= maxChat) break;
+    chatUpTo = m.id;
+    if(m.kind === 'spec' && !viewerSpec) continue;
+    chat.push(m);
+  }
   const firstId = G.chat.length ? G.chat[Math.max(0, G.chat.length - 160)].id : 0;
   const reactions = {};
   const rxIds = Object.keys(G.reactions).map(Number).filter(id => id >= firstId).sort((a, b) => b - a).slice(0, maxRx);
@@ -1583,10 +1684,13 @@ function buildStateFor(pid, maxChat=1000, maxRx=1000){
   }
   return {
     phase:G.phase, phaseId:G.phaseId, category:G.category, catInfo:{ name:cat.name, icon:cat.icon, custom:G.category === 'custom', count:cat.words.length },
-    hasCustom:!!G.custom, roomCode, hostId:G.hostPid, settings:G.settings || { hint:30, discuss:90 },
-    players:G.players.map(p => ({ id:p.id, name:p.name, color:p.color, outfit:p.outfit, isBot:p.isBot, isHost:p.isHost, ready:p.ready, connected:p.connected,
+    hasCustom:!!G.custom, roomCode, hostId:G.hostPid, settings:G.settings || { ...DEFAULT_SETTINGS }, ver:VER,
+    foxCount:G.foxIds ? G.foxIds.length : 0,
+    series:G.series ? { round:G.series.played + (G.phase === 'lobby' || G.phase === 'result' ? 0 : 1), total:G.series.total, done:!!G.series.done } : null,
+    players:G.players.map(p => ({ id:p.id, name:p.name, color:p.color, outfit:p.outfit, isBot:p.isBot, isHost:p.isHost, ready:p.ready, connected:p.connected, out:isOut(p.id),
       voted:(G.phase === 'vote' || G.phase === 'runoff') && !!G.votes[p.id] })),
-    chat, reactions,
+    chat, chatUpTo, chatSeq:G.seq, reactions,
+    specs:(G.specs || []).map(p => ({ id:p.id, name:p.name, color:p.color, outfit:p.outfit, connected:p.connected, isHost:p.isHost, pendingPlay:!!p.pendingPlay })),
     hints:G.hints.map(h => ({ pid:h.pid, name:h.name, color:h.color, text:h.text, auto:h.auto })),
     turnOrder:G.turnOrder.slice(), turnIdx:G.turnIdx,
     currentTurn:G.phase === 'hint' ? G.turnOrder[G.turnIdx] : null,
@@ -1595,13 +1699,13 @@ function buildStateFor(pid, maxChat=1000, maxRx=1000){
     suspect:['discuss','vote','runoff'].includes(G.phase) ? { ...G.suspect } : {},
     runoff:G.runoff ? G.runoff.slice() : null,
     accused:(['defense','judge'].includes(G.phase) && G.accused) ? { ...G.accused } : null,
-    judge:G.phase === 'judge' ? { done:Object.keys(G.judge).length, eligible:G.players.filter(p => p.connected && p.id !== (G.accused || {}).id).length, mine:G.judge[pid] === undefined ? null : G.judge[pid] } : null,
-    lastJudge:G.lastJudge, trials:G.trials || 0, maxTrials:MAX_TRIALS,
-    foxReveal:(G.phase === 'foxreveal' && gp(G.foxId)) ? (f => ({ id:f.id, name:f.name, color:f.color, outfit:f.outfit }))(gp(G.foxId)) : null,
+    judge:G.phase === 'judge' ? { done:Object.keys(G.judge).length, eligible:G.players.filter(p => p.connected && !isOut(p.id) && p.id !== (G.accused || {}).id).length, mine:G.judge[pid] === undefined ? null : G.judge[pid] } : null,
+    lastJudge:G.lastJudge, trials:G.trials || 0, maxTrials:G.maxTrials || MAX_TRIALS,
+    foxReveal:G.phase === 'foxreveal' ? G.foxIds.map(gp).filter(Boolean).map(f => ({ id:f.id, name:f.name, color:f.color, outfit:f.outfit })) : null,
     execution, tally:revealPhase ? G.tally : null,
     result:G.phase === 'result' ? G.result : null,
     voteCount:(G.phase === 'vote' || G.phase === 'runoff') ? Object.keys(G.votes).length : 0,
-    eligible:G.players.filter(p => p.connected).length
+    eligible:G.players.filter(p => p.connected && !isOut(p.id)).length
   };
 }
 /* 브로드캐스트 디바운스: 같은 틱에서 여러 번 상태가 바뀌어도 1번만 전송
@@ -1626,19 +1730,19 @@ function hostBroadcast(){
 function flushBroadcast(){
   bcastQueued = false; if(!G) return;
   let more = false;
-  for(const p of G.players){
+  for(const p of [...G.players, ...(G.specs || [])]){
     if(p.isBot || p.id === myId) continue;
     const c = connByPlayer[p.id];
     if(c && c.open){
       try{
         const st = packStateFor(p.id);
         c.send({ type:'STATE_UPDATE', state:st });
-        if(st.chat.length) sentChat[p.id] = st.chat[st.chat.length - 1].id;
+        sentChat[p.id] = st.chatUpTo;
         if((sentChat[p.id] || 0) < G.seq) more = true;      // 남은 채팅은 다음 패킷으로
       }catch(e){ console.warn('send fail', e); }
     }
   }
-  if(more && !moreTimer) moreTimer = setTimeout(() => { moreTimer = null; hostBroadcast(); }, 60);
+  if(more) moreTimer = Date.now() + 60;   // 남은 채팅은 워커 틱에서 이어서 전송 (백그라운드 탭에서도 안 멈춤)
   const mine = buildStateFor(myId); sentChat[myId] = G.seq;
   onState(mine);
   const now = Date.now();
@@ -1656,15 +1760,41 @@ function startError(players, catOk=true){
 
 function handleAction(pid, a){
   if(!G || !a || typeof a !== 'object') return;
-  const p = gp(pid); if(!p) return;
+  const sp = !gp(pid) && gs(pid);
+  const p = gp(pid) || sp; if(!p) return;
   const fromHost = pid === myId;
+  // 관전자가 할 수 없는 행동
+  if(sp && ['SUBMIT_HINT','SUSPECT','READY','VOTE','FOX_GUESS','JUDGE'].includes(a.type)) return;
   switch(a.type){
+    case 'RESYNC': {   // 게스트가 채팅이 밀렸다고 알림 → 최근 80개부터 다시 보냄
+      if(!rateOk(pid, 'resync', 4000)) return;
+      sentChat[pid] = Math.max(0, Math.min(sentChat[pid] || 0, G.seq - 80));
+      break;
+    }
+    case 'SET_SPEC': {   // 👀 플레이 ↔ 관전 이동 (게임 중이면 다음 판부터 적용되는 예약)
+      if(!rateOk(pid, 'spec', 400)) return;
+      const between = G.phase === 'lobby' || G.phase === 'result';
+      if(sp){
+        if(!between){ sp.pendingPlay = !sp.pendingPlay; notify(pid, sp.pendingPlay ? '🎮 다음 판 참가 예약! 이번 판이 끝나면 플레이어로 이동해요' : '예약을 취소했어요', 'gold'); break; }
+        if(G.players.length >= MAX_PLAYERS){ notify(pid, `플레이 자리가 꽉 찼어요 (${MAX_PLAYERS}명)`, 'danger'); return; }
+        moveToPlay(sp);
+      } else {
+        if(p.isBot) return;
+        if(!between){ p.pendingSpec = !p.pendingSpec; notify(pid, p.pendingSpec ? '👀 이번 판이 끝나면 관전석으로 이동해요' : '관전 이동을 취소했어요', 'gold'); break; }
+        if(G.specs.length >= MAX_SPECS){ notify(pid, `관전석이 꽉 찼어요 (${MAX_SPECS}석)`, 'danger'); return; }
+        moveToSpec(p);
+      }
+      break;
+    }
     case 'CHAT': {
       if(!p.isBot && !rateOk(pid, 'chat', 350)) return;
       const t = clean(a.text, 140); if(!t) return;
+      if(sp){ pushMsg({ kind:'spec', pid, name:p.name, color:p.color, text:t }); break; }   // 관전석 채팅 (관전자끼리만)
+      if(isOut(pid) && G.phase !== 'result'){ notify(pid, '👻 처형된 여우는 이번 판이 끝날 때까지 관전만 할 수 있어요', 'danger'); return; }
       if(G.phase === 'defense' && G.accused && pid !== G.accused.id){ notify(pid, `🤐 최후 변론 중에는 ${G.accused.name}님만 말할 수 있어요`, 'danger'); return; }
       if(leaksWord(p, t)){ notify(pid, '🔒 제시어가 들어간 메시지는 전송되지 않아요 (다른 사람에겐 안 보여요)', 'danger'); return; }
       pushMsg({ kind:(G.phase === 'defense' && G.accused && pid === G.accused.id) ? 'defense' : 'chat', pid, name:p.name, color:p.color, text:t });
+      if(G.series && G.phase !== 'lobby') stat(pid).chats++;
       trackAccusation(pid, t); botMentions(t, pid);
       break;
     }
@@ -1694,20 +1824,19 @@ function handleAction(pid, a){
       if(G.phase !== 'lobby' || p.isHost) return;
       p.ready = !p.ready; break;
     case 'VOTE': {
-      if((G.phase !== 'vote' && G.phase !== 'runoff') || !p.connected) return;
-      if(!gp(a.target) || a.target === pid) return;
+      if((G.phase !== 'vote' && G.phase !== 'runoff') || !p.connected || isOut(pid)) return;
+      if(!gp(a.target) || a.target === pid || isOut(a.target)) return;
       if(G.phase === 'runoff' && !G.runoff.includes(a.target)) return;
       G.votes[pid] = a.target;
       checkAllVoted(); break;
     }
     case 'FOX_GUESS':
-      if(pid !== G.foxId) return;
-      if(G.phase === 'foxguess') resolveGuess(clean(a.text, 30));
-      else if(G.phase === 'foxreveal') resolveBonus(clean(a.text, 30));
+      if(G.phase === 'foxguess' && pid === G.guesser){ G.guessBy = pid; resolveGuess(clean(a.text, 30)); }
+      else if(G.phase === 'foxreveal' && isFoxId(pid)){ G.guessBy = pid; resolveBonus(clean(a.text, 30)); }
       else return;
       break;
     case 'JUDGE': {
-      if(G.phase !== 'judge' || !G.accused || pid === G.accused.id || !p.connected) return;
+      if(G.phase !== 'judge' || !G.accused || pid === G.accused.id || !p.connected || isOut(pid)) return;
       G.judge[pid] = !!a.agree;
       checkAllJudged(); break;
     }
@@ -1742,6 +1871,21 @@ function handleAction(pid, a){
       G.settings.mode = a.mode;
       sys(a.mode === 'fool' ? '🤪 바보 모드로 변경! 여우도 비슷한 가짜 제시어를 받아요.' : '🦊 기본 모드로 변경! 여우는 제시어를 모르고 시작해요.', 'gold');
       break;
+    case 'SET_FOXES': {
+      if(!fromHost || G.phase !== 'lobby') return;
+      const n = +a.n; if(![1,2,3].includes(n) || G.settings.foxes === n) return;
+      G.settings.foxes = n;
+      sys(`🦊 여우 수: ${n}마리` + (n > 1 ? ` (여우끼리는 서로 알아요 · ${n * 2 + 1}명 이상부터 적용)` : ''), 'gold');
+      break;
+    }
+    case 'SET_ROUNDS': {
+      if(!fromHost || G.phase !== 'lobby') return;
+      const n = +a.n; if(![1,3,5].includes(n) || G.settings.rounds === n) return;
+      const reset = G.series && !G.series.done && G.series.played > 0;
+      G.settings.rounds = n; G.series = null;
+      sys(`🏆 ${n === 1 ? '단판' : n + '라운드'} 진행으로 설정` + (reset ? ' (진행 중이던 라운드 기록은 초기화)' : '') + ' · 마지막에 MVP와 분야별 하이라이트를 발표해요!', 'gold');
+      break;
+    }
     case 'SET_TIME': {
       if(!fromHost || G.phase !== 'lobby') return;
       const h = +a.hint, d = +a.discuss;
@@ -1754,8 +1898,8 @@ function handleAction(pid, a){
       if(!fromHost || G.phase !== 'lobby') return;
       addBot(); break;
     case 'KICK': {
-      if(!fromHost || (G.phase !== 'lobby' && G.phase !== 'result')) return;
-      const k = gp(a.id); if(!k || k.isBot || k.isHost) return;
+      const k = gpa(a.id); if(!k || k.isBot || k.isHost) return;
+      if(!fromHost || (!k.spec && G.phase !== 'lobby' && G.phase !== 'result')) return;
       sendTo(k.id, { type:'KICKED_BY_HOST' });
       const kc = connByPlayer[k.id];
       setTimeout(() => { try{ kc && kc.close(); }catch(e){} }, 400);
@@ -1763,7 +1907,7 @@ function handleAction(pid, a){
       delete connByPlayer[k.id];
       G.banned = G.banned || {};
       Object.keys(G.tokens).forEach(t => { if(G.tokens[t] === k.id){ delete G.tokens[t]; G.banned[t] = true; } });
-      G.players = G.players.filter(x => x.id !== k.id);
+      G.players = G.players.filter(x => x.id !== k.id); G.specs = G.specs.filter(x => x.id !== k.id);
       sys(`🚫 ${k.name}님이 방장에 의해 퇴장되었습니다.`, 'danger');
       break;
     }
@@ -1802,10 +1946,22 @@ function foxAware(){
 }
 // 🔒 플레이어별로 보내는 역할/제시어 (바보 모드 여우는 '강아지 + 가짜 제시어'로 보임)
 function youFor(pid){
-  const y = { id:pid, role:null, word:null, decoy:null, vote:G.votes[pid] || null };
-  if(!G.foxId) return y;
-  if(pid !== G.foxId){ y.role = 'dog'; y.word = G.word; return y; }
-  if(foxAware()){ y.role = 'fox'; y.decoy = isFool() ? G.decoy : null; }
+  const y = { id:pid, role:null, word:null, decoy:null, vote:G.votes[pid] || null, mates:[], canGuess:false };
+  const sp = gs(pid);
+  if(sp){   // 👀 관전자 = 전지적 시점 (제시어 + 여우 전원). 대신 관전석 채팅은 플레이어에게 안 보임
+    y.spec = true; y.pendingPlay = !!sp.pendingPlay; y.role = 'spec';
+    y.word = G.word; y.decoy = G.decoy; y.allFoxes = (G.foxIds || []).slice();
+    return y;
+  }
+  const me = gp(pid); if(me) y.pendingSpec = !!me.pendingSpec;
+  if(!G.foxIds || !G.foxIds.length) return y;
+  if(!isFoxId(pid)){ y.role = 'dog'; y.word = G.word; return y; }
+  if(foxAware() || isOut(pid)){
+    y.role = 'fox'; y.decoy = isFool() ? G.decoy : null;
+    // 여우끼리는 서로 앎 (바보 모드는 자기가 여우인 줄 모르므로 동료도 모름)
+    if(!isFool() || G.phase === 'result' || G.phase === 'foxreveal') y.mates = G.foxIds.filter(id => id !== pid);
+    y.canGuess = (G.phase === 'foxguess' && G.guesser === pid) || G.phase === 'foxreveal';
+  }
   else { y.role = 'dog'; y.word = G.decoy; }
   return y;
 }
@@ -1823,15 +1979,33 @@ function leaksWord(p, text){
   if(!G.word || p.isBot) return false;
   if(G.phase === 'lobby' || G.phase === 'result') return false;
   let w;
-  if(p.id === G.foxId){
+  if(isFoxId(p.id)){
     // 여우가 진짜 제시어를 말하면 막지 않음(막으면 정답이 새어 나감)
     // 단, 바보 모드에서 아직 정체를 모르는 여우는 '자기가 받은 가짜 단어'를 강아지와 똑같이 막아야
     // 차단 여부로 자기가 여우인지 눈치채지 못함
-    if(!isFool() || foxAware()) return false;
+    if(!isFool() || foxAware() || isOut(p.id)) return false;
     w = G.decoy;
   } else w = G.word;
   w = norm(w); if(!w) return false;
   return norm(text).includes(w);
+}
+/* 🎲 여우 확률 공정성 (기본 적용)
+   - 직전 판 여우: 가중치 0.25 / 2판 전 여우: 0.5 / 그 외 1
+   - 여우를 안 한 판이 3판째부터 판마다 +0.5 (최대 +6.0)
+   - 기록은 방장 PC에만 있고 아무에게도 전송되지 않음 */
+function foxWeight(since){ if(since === 0) return .25; if(since === 1) return .5; return 1 + Math.min(12, since - 2) * .5; }
+function pickFoxes(k){
+  G.sinceFox = G.sinceFox || {};
+  const pool = G.players.map(p => ({ id:p.id, w:foxWeight(G.sinceFox[p.id] === undefined ? 2 : G.sinceFox[p.id]) }));
+  const out = [];
+  while(out.length < k && pool.length){
+    const total = pool.reduce((a, x) => a + x.w, 0);
+    let r = Math.random() * total, i = 0;
+    for(; i < pool.length - 1; i++){ r -= pool[i].w; if(r < 0) break; }
+    out.push(pool.splice(i, 1)[0].id);
+  }
+  G.players.forEach(p => { G.sinceFox[p.id] = out.includes(p.id) ? 0 : (G.sinceFox[p.id] === undefined ? 2 : G.sinceFox[p.id]) + 1; });
+  return out;
 }
 function startGame(){
   const cat = hostCat();
@@ -1845,13 +2019,21 @@ function startGame(){
   G.recent[key] = keep ? [...rec.filter(w => w !== G.word), G.word].slice(-keep) : [];
   G.decoy = isFool() ? pickDecoy(cat, G.word) : null;
   if(isFool() && !G.decoy){ G.settings.mode = 'classic'; sys('⚠️ 제시어가 부족해 이번 판은 기본 모드로 진행합니다.', 'danger'); }
-  G.foxId = pick(G.players).id;
+  const want = (G.settings && G.settings.foxes) || 1, cap = maxFoxesFor(G.players.length), k = Math.min(want, cap);
+  if(k < want) sys(`⚠️ ${G.players.length}명이라 여우는 ${k}마리로 진행해요. (여우 ${want}마리는 ${want * 2 + 1}명 이상)`, 'danger');
+  G.foxIds = pickFoxes(k);
+  G.out = {}; G.guesser = null; G.guessBy = null; G.maxTrials = MAX_TRIALS + (k - 1);
+  // 🏆 라운드(단판/3/5) 진행
+  if(!G.series || G.series.done) G.series = { total:(G.settings && G.settings.rounds) || 1, played:0, stats:{}, done:false, awards:null };
+  G.players.forEach(p => stat(p.id));
   G.turnOrder = shuffle(G.players.map(p => p.id)); G.turnIdx = 0;
   G.hints = []; G.votes = {}; G.accuse = {}; G.suspect = {}; G.runoff = null; G.tally = null; G.execution = null; G.result = null; G.guess = null;
   G.accused = null; G.judge = {}; G.trials = 0; G.lastJudge = null;
-  sys(isFool()
-    ? `🤪 바보 모드 시작! 카테고리는 [${cat.icon} ${cat.name}]. 여우도 가짜 제시어를 받아서 자기가 여우인 줄 몰라요. 나일 수도...?`
-    : `🎬 게임 시작! 카테고리는 [${cat.icon} ${cat.name}]. 이 라운지 어딘가에 여우가 숨어 있습니다...`, 'gold');
+  const rTag = G.series.total > 1 ? `[🏆 ${G.series.played + 1}/${G.series.total}판] ` : '';
+  const foxTxt = k > 1 ? `여우 ${k}마리가` : '여우가';
+  sys(rTag + (isFool()
+    ? `🤪 바보 모드 시작! 카테고리는 [${cat.icon} ${cat.name}]. ${foxTxt} 가짜 제시어를 받아서 자기가 여우인 줄 몰라요. 나일 수도...?`
+    : `🎬 게임 시작! 카테고리는 [${cat.icon} ${cat.name}]. 이 라운지 어딘가에 ${foxTxt} 숨어 있습니다...`), 'gold');
   setPhase('reveal', T.REVEAL);
 }
 function startHint(){
@@ -1888,13 +2070,22 @@ function startVote(){
 }
 function checkAllVoted(){
   if(G.phase !== 'vote' && G.phase !== 'runoff') return;
-  const eligible = G.players.filter(p => p.connected);
+  const eligible = G.players.filter(p => p.connected && !isOut(p.id));
   if(eligible.length && eligible.every(p => G.votes[p.id])) tallyVotes();
 }
 function tallyVotes(){
   const tally = {};
-  for(const [v, t] of Object.entries(G.votes)){ if(gp(v) && gp(t) && (!G.runoff || G.phase !== 'runoff' || G.runoff.includes(t))) tally[t] = (tally[t] || 0) + 1; }
+  for(const [v, t] of Object.entries(G.votes)){ if(gp(v) && gp(t) && !isOut(v) && !isOut(t) && (!G.runoff || G.phase !== 'runoff' || G.runoff.includes(t))) tally[t] = (tally[t] || 0) + 1; }
   const entries = Object.entries(tally);
+  // 📊 하이라이트용 기록 (누가 누구를 찍었는지는 공개하지 않고 집계만)
+  if(entries.length){
+    const mx = Math.max(...entries.map(e => e[1])), crowdFox = entries.some(e => e[1] === mx && isFoxId(e[0]));
+    for(const [v, t] of Object.entries(G.votes)){
+      if(!tally[t] || isFoxId(v)) continue;
+      if(isFoxId(t)){ stat(v).detect++; if(!crowdFox) stat(v).lone++; }
+      else stat(t).wronged++;
+    }
+  }
   if(!entries.length){
     if(G.phase === 'runoff'){ const t = pick(G.runoff); tally[t] = 0; entries.push([t, 0]); }
     else { G.tally = tally; sys('아무도 투표하지 않았습니다...', 'danger'); finish('fox', 'novote'); return; }
@@ -1915,7 +2106,7 @@ function tallyVotes(){
   G.trials = (G.trials || 0) + 1;
   G.accused = { id:target, name:p.name, color:p.color, outfit:p.outfit, votes:max, tie };
   G.judge = {}; G.lastJudge = null;
-  sys(`🎤 최다 득표: ${p.name}님 (${max}표). ${T.DEFENSE / 1000}초 동안 최후의 변론! 다른 사람은 말할 수 없어요. (재판 ${G.trials}/${MAX_TRIALS})`, 'danger');
+  sys(`🎤 최다 득표: ${p.name}님 (${max}표). ${T.DEFENSE / 1000}초 동안 최후의 변론! 다른 사람은 말할 수 없어요. (재판 ${G.trials}/${G.maxTrials})`, 'danger');
   setPhase('defense', T.DEFENSE);
   botsOnPhase();
 }
@@ -1927,7 +2118,7 @@ function startJudge(){
 }
 function checkAllJudged(){
   if(G.phase !== 'judge') return;
-  const eligible = G.players.filter(p => p.connected && p.id !== G.accused.id);
+  const eligible = G.players.filter(p => p.connected && !isOut(p.id) && p.id !== G.accused.id);
   if(eligible.length && eligible.every(p => G.judge[p.id] !== undefined)) resolveJudge();
 }
 function resolveJudge(){
@@ -1937,27 +2128,37 @@ function resolveJudge(){
   sys(`⚖️ 찬성 ${yes} · 반대 ${no} → ${kill ? `${G.accused.name}님 처형 결정` : `${G.accused.name}님 석방`}`, kill ? 'danger' : 'neon');
   if(kill){
     const a = G.accused;
-    G.execution = { targetId:a.id, name:a.name, color:a.color, outfit:a.outfit, wasFox:a.id === G.foxId, votes:a.votes, tie:a.tie, yes, no, revealed:false };
+    G.execution = { targetId:a.id, name:a.name, color:a.color, outfit:a.outfit, wasFox:isFoxId(a.id), votes:a.votes, tie:a.tie, yes, no, revealed:false };
     setPhase('execution', T.EXEC);
     later(T.EXEC_REVEAL, () => { G.execution.revealed = true; hostBroadcast(); });
     return;
   }
-  if(G.trials >= MAX_TRIALS){ sys(`🕰️ ${MAX_TRIALS}번의 재판이 모두 반대로 끝났습니다...`, 'danger'); finish('fox', 'spared'); return; }
-  sys(`🔁 반대 다수! 다시 여우를 찾는 투표를 진행합니다. (남은 재판 ${MAX_TRIALS - G.trials}번)`, 'gold');
+  stat(G.accused.id).survive++;
+  if(G.trials >= G.maxTrials){ sys(`🕰️ 재판 기회 ${G.maxTrials}번을 모두 썼습니다...`, 'danger'); finish('fox', 'spared'); return; }
+  sys(`🔁 반대 다수! 다시 여우를 찾는 투표를 진행합니다. (남은 재판 ${G.maxTrials - G.trials}번)`, 'gold');
   startVote();
 }
 function afterExecution(){
   const ex = G.execution; ex.revealed = true;
   if(ex.wasFox){
-    sys(`🦊 ${ex.name}님은 여우였습니다! 하지만 여우에게 최후의 기회가 주어집니다... (15초)`, 'danger');
+    G.out[ex.targetId] = true;
+    const left = G.foxIds.filter(id => !isOut(id) && gp(id));
+    if(left.length){
+      // 🦊 여우가 아직 남아 있음 → 처형된 여우는 관전, 다시 투표
+      if(G.trials >= G.maxTrials){ sys(`🦊 ${ex.name}님은 여우였습니다! 하지만 재판 기회를 모두 써서 남은 여우 ${left.length}마리가 살아남았습니다...`, 'danger'); finish('fox', 'spared'); return; }
+      sys(`🦊 ${ex.name}님은 여우였습니다! 아직 여우가 ${left.length}마리 남았어요. 계속 찾아내세요! (남은 재판 ${G.maxTrials - G.trials}번)`, 'gold');
+      G.accused = null; startVote(); return;
+    }
+    G.guesser = ex.targetId;
+    sys(`🦊 ${ex.name}님은 ${G.foxIds.length > 1 ? '마지막 ' : ''}여우였습니다! 하지만 여우에게 최후의 기회가 주어집니다... (15초)`, 'danger');
     setPhase('foxguess', T.GUESS);
     botsOnPhase();
   } else {
-    sys(`😢 ${ex.name}님은 무고한 강아지였습니다... 진짜 여우가 정체를 드러냅니다!`, 'danger');
-    const f = gp(G.foxId);
-    if(!f || !f.connected){ finish('fox', 'innocent'); return; }
+    sys(`😢 ${ex.name}님은 무고한 ${(gp(ex.targetId) || {}).outfit && gp(ex.targetId).outfit.species === 'cat' ? '고양이' : '강아지'}였습니다... 진짜 여우가 정체를 드러냅니다!`, 'danger');
+    const fs = G.foxIds.map(gp).filter(Boolean);
+    if(!fs.some(f => f.connected)){ finish('fox', 'innocent'); return; }
     setPhase('foxreveal', T.FOXREVEAL);
-    sys(`🦊 진짜 여우는 ${f.name}님! 승리의 순간, 비밀 제시어까지 맞히면 완벽한 승리입니다. (15초)`, 'danger');
+    sys(`🦊 진짜 여우는 ${fs.map(f => f.name + '님').join(', ')}! 승리의 순간, 비밀 제시어까지 맞히면 완벽한 승리입니다. (15초)`, 'danger');
     botsOnPhase();
   }
 }
@@ -1975,22 +2176,81 @@ function resolveGuess(text){
   if(answered) sys(`🦊 여우의 최후 답변: "${text || '(공백)'}"`, 'danger');
   finish(ok ? 'fox' : 'dog', !answered ? 'guess_timeout' : ok ? 'guess_correct' : 'guess_wrong');
 }
+/* ===== 🏆 MVP + 분야별 하이라이트 ===== */
+function stat(pid){
+  const ser = G.series || (G.series = { total:(G.settings && G.settings.rounds) || 1, played:0, stats:{}, done:false, awards:null });
+  const p = gp(pid);
+  const st = ser.stats[pid] || (ser.stats[pid] = { name:'', color:'#888', outfit:null, played:0, dogWin:0, foxWin:0, foxGames:0, detect:0, lone:0, wronged:0, survive:0, guess:0, chats:0 });
+  if(p){ st.name = p.name; st.color = p.color; st.outfit = p.outfit; }
+  return st;
+}
+const AWARD_DEFS = [
+  { k:'detect',  icon:'🕵️', title:'명탐정견',    desc:'여우를 가장 많이 정확히 지목',        unit:'번 적중' },
+  { k:'foxWin',  icon:'🦊', title:'천의 얼굴',   desc:'여우로 라운지를 장악',                unit:'승' },
+  { k:'survive', icon:'🎤', title:'명변론가',    desc:'최후 변론으로 살아남음',              unit:'번 생존' },
+  { k:'wronged', icon:'😭', title:'억울한 강아지', desc:'강아지인데 표를 가장 많이 받음',      unit:'표' },
+  { k:'guess',   icon:'🎯', title:'정답 사냥꾼', desc:'여우로 비밀 제시어를 맞힘',           unit:'번' },
+  { k:'lone',    icon:'🗳️', title:'소신 투표',   desc:'다수와 달랐지만 진짜 여우를 찍음',    unit:'번' },
+  { k:'chats',   icon:'💬', title:'수다왕',      desc:'채팅을 가장 많이 침',                 unit:'개' }
+];
+// MVP 내부 점수: 팀 승리가 기본, 개인 활약은 보너스 (점수 자체는 화면에 표시하지 않음)
+const mvpScore = st => st.dogWin + st.foxWin * 3 + st.detect + st.guess + st.survive * .5;
+function computeAwards(){
+  const all = Object.entries(G.series.stats).map(([id, st]) => ({ id, ...st }));
+  const pack = list => list.map(x => ({ id:x.id, name:x.name, color:x.color, outfit:x.outfit }));
+  const best = key => { const mx = Math.max(0, ...all.map(x => x[key] || 0)); return mx > 0 ? { value:mx, who:pack(all.filter(x => x[key] === mx)) } : null; };
+  const ms = Math.max(0, ...all.map(mvpScore));
+  const mvp = { who:pack(all.filter(x => mvpScore(x) === ms)), line:'' };
+  const top = all.find(x => mvpScore(x) === ms);
+  if(top) mvp.line = [top.dogWin ? `강아지 ${top.dogWin}승` : '', top.foxWin ? `여우 ${top.foxWin}승` : '', top.detect ? `여우 지목 ${top.detect}번` : '', top.guess ? `정답 ${top.guess}번` : ''].filter(Boolean).join(' · ');
+  const hl = [];
+  AWARD_DEFS.forEach(d => { const b = best(d.k); if(b && (d.k !== 'chats' || b.value >= 3)) hl.push({ k:d.k, icon:d.icon, title:d.title, desc:d.desc, value:b.value, unit:d.unit, who:b.who }); });
+  return { mvp, highlights:hl.slice(0, 5), rounds:G.series.total };
+}
 function finish(winner, reason){
-  const fox = gp(G.foxId);
-  G.result = { winner, reason, foxId:G.foxId, foxName:fox ? fox.name : '???', foxColor:fox ? fox.color : '#888', foxOutfit:fox ? fox.outfit : null, word:G.word, decoy:G.decoy, lastJudge:G.lastJudge, executedName:G.execution ? G.execution.name : null, mode:isFool() ? 'fool' : 'classic', guess:G.guess, votes:{ ...G.votes } };
+  const foxes = G.foxIds.map(id => { const f = gp(id); return f ? { id, name:f.name, color:f.color, outfit:f.outfit } : { id, name:'???', color:'#888', outfit:null }; });
+  // 🏆 라운드 기록
+  const ser = G.series || (G.series = { total:1, played:0, stats:{}, done:false, awards:null });
+  G.players.forEach(p => { const st = stat(p.id); st.played++; if(isFoxId(p.id)){ st.foxGames++; if(winner === 'fox') st.foxWin++; } else if(winner === 'dog') st.dogWin++; });
+  if(['guess_correct','innocent_perfect'].includes(reason) && G.guessBy) stat(G.guessBy).guess++;
+  ser.played++;
+  if(ser.played >= ser.total){ ser.done = true; ser.awards = computeAwards(); }
+  G.result = { winner, reason, foxIds:G.foxIds.slice(), foxes, foxName:foxes.map(f => f.name).join(', '), foxColor:foxes[0] ? foxes[0].color : '#888', foxOutfit:foxes[0] ? foxes[0].outfit : null, word:G.word,
+    series:{ round:ser.played, total:ser.total, final:ser.done }, awards:ser.done ? ser.awards : null, decoy:G.decoy, lastJudge:G.lastJudge, executedName:G.execution ? G.execution.name : null, executedSpecies:G.execution && G.execution.outfit ? G.execution.outfit.species : null, mode:isFool() ? 'fool' : 'classic', guess:G.guess, votes:{ ...G.votes } };
   setPhase('result', 0);
   sys(winner === 'fox' ? '🦊 여우 승리! 라운지는 여우의 손에 넘어갔습니다.' : '🐶 강아지 팀 승리! 라운지의 평화가 지켜졌습니다.', 'gold');
   sys(`🔑 비밀 제시어는 [${G.word}]였습니다. 여우는 ${G.result.foxName}님!` + (G.decoy ? ` (여우가 받은 가짜 제시어: [${G.decoy}])` : ''), 'gold');
+  if(ser.total > 1) sys(ser.done ? `🏆 ${ser.total}라운드 종료! MVP와 분야별 하이라이트를 발표합니다!` : `📍 ${ser.played}/${ser.total}판 종료 — 다음 판을 준비하세요.`, 'gold');
+}
+function moveToSpec(p){
+  G.players = G.players.filter(x => x.id !== p.id);
+  p.spec = true; p.pendingSpec = false; p.pendingPlay = false; p.ready = false;
+  if(p.isHost) G.hostSpec = true;
+  G.specs.push(p);
+  sys(`👀 ${p.name}님이 관전석으로 이동했습니다. (${G.specs.length}/${MAX_SPECS})`);
+}
+function moveToPlay(p){
+  G.specs = G.specs.filter(x => x.id !== p.id);
+  p.spec = false; p.pendingPlay = false; p.pendingSpec = false; p.ready = !!p.isHost;
+  if(G.players.some(x => x.color === p.color)) p.color = freeColor();
+  G.players.push(p);
+  sys(`🎮 ${p.name}님이 플레이어로 참가합니다. (${G.players.length}/${MAX_PLAYERS})`);
+}
+function applyPendingMoves(){
+  G.players.filter(p => p.pendingSpec).forEach(p => { if(G.specs.length < MAX_SPECS) moveToSpec(p); else p.pendingSpec = false; });
+  G.specs.filter(p => p.pendingPlay && p.connected).forEach(p => { if(G.players.length < MAX_PLAYERS) moveToPlay(p); });
+  G.specs = G.specs.filter(p => p.connected || p.id === myId);
 }
 function backToLobby(){
   setPhase('lobby', 0);
-  G.foxId = null; G.word = null; G.hints = []; G.votes = {}; G.accuse = {}; G.suspect = {}; G.runoff = null; G.tally = null; G.execution = null; G.result = null; G.guess = null; G.turnOrder = []; G.turnIdx = 0;
+  G.foxIds = []; G.out = {}; G.guesser = null; G.guessBy = null; G.word = null; G.hints = []; G.votes = {}; G.accuse = {}; G.suspect = {}; G.runoff = null; G.tally = null; G.execution = null; G.result = null; G.guess = null; G.turnOrder = []; G.turnIdx = 0;
   G.accused = null; G.judge = {}; G.trials = 0; G.lastJudge = null;
   const gone = G.players.filter(p => !p.connected);
   G.players = G.players.filter(p => p.connected);
   gone.forEach(p => Object.keys(G.tokens).forEach(t => { if(G.tokens[t] === p.id) delete G.tokens[t]; }));
   G.players.forEach(p => { if(!p.isBot && !p.isHost) p.ready = false; });
   sys('🥂 대기실로 돌아왔습니다. 다음 게임을 준비하세요.', 'gold');
+  applyPendingMoves();
 }
 function onTimeout(){
   switch(G.phase){
@@ -2030,11 +2290,12 @@ function inferWord(excludePid, noise){
   return { best:ranked[0], conf:score[ranked[0]] - (score[ranked[1]] || 0), score, ranked };
 }
 function suspicionMap(b, pool){
-  const isFox = b.id === G.foxId, persona = b.persona || BOT_PERSONA[1];
+  const isFox = isFoxId(b.id), persona = b.persona || BOT_PERSONA[1];
+  const knows = isFox && !isFool();   // 정체를 아는 여우는 동료 여우를 의심하지 않음
   const refWord = isFox ? (isFool() && !foxAware() ? G.decoy : inferWord(b.id, .05).best) : G.word;
   const fox = hostCat().fox, sus = {};
   (pool || G.players.map(p => p.id)).forEach(id => {
-    const p = gp(id); if(!p || p.id === b.id) return;
+    const p = gp(id); if(!p || p.id === b.id || isOut(p.id) || (knows && isFoxId(p.id))) return;
     let s = 0;
     const h = G.hints.find(x => x.pid === p.id);
     if(!h) s += .35;
@@ -2055,7 +2316,7 @@ const topOf = (map, n=1) => Object.entries(map).sort((a, b) => b[1] - a[1]).slic
 const lowOf = map => (Object.entries(map).sort((a, b) => a[1] - b[1])[0] || [])[0];
 
 function addBot(){
-  if(G.players.length >= MAX_PLAYERS){ toast('최대 인원(10명)입니다', 'danger'); return; }
+  if(G.players.length >= MAX_PLAYERS){ toast(`최대 인원(${MAX_PLAYERS}명)입니다`, 'danger'); return; }
   const used = G.players.map(p => p.name);
   const base = BOT_NAMES.find(n => !used.includes(n + ' 봇')) || ('멍멍' + Math.floor(Math.random()*99));
   const name = base + ' 봇', color = freeColor();
@@ -2065,8 +2326,8 @@ function addBot(){
   sys(`🤖 ${name}이(가) 라운지에 합류했습니다.`);
 }
 function botsOnPhase(){
-  const bots = G.players.filter(p => p.isBot);
-  if(!bots.length) return;
+  const bots = G.players.filter(p => p.isBot && !isOut(p.id));
+  if(!G.players.some(p => p.isBot)) return;
   switch(G.phase){
     case 'hint': {
       const cur = gp(G.turnOrder[G.turnIdx]);
@@ -2096,9 +2357,17 @@ function botsOnPhase(){
       }));
       if(G.phase === 'runoff') G.runoff.forEach(id => { const b = gp(id); if(b && b.isBot) later(rand(1500, 4000), () => handleAction(b.id, { type:'CHAT', text:botDefense(b) })); });
       break;
-    case 'foxguess': case 'foxreveal': {
-      const f = gp(G.foxId);
+    case 'foxguess': {
+      const f = gp(G.guesser);
       if(f && f.isBot) later(rand(5000, 9500), () => handleAction(f.id, { type:'FOX_GUESS', text:botGuess(f) }));
+      break;
+    }
+    case 'foxreveal': {
+      // 사람 여우가 있으면 사람에게 맡기고, 봇 여우만 있으면 한 마리가 대표로 도전
+      const fs = G.foxIds.map(gp).filter(Boolean);
+      if(fs.some(f => !f.isBot && f.connected)) break;
+      const f = fs.find(x => x.isBot);
+      if(f) later(rand(5000, 9500), () => handleAction(f.id, { type:'FOX_GUESS', text:botGuess(f) }));
       break;
     }
     case 'defense': {
@@ -2114,7 +2383,7 @@ function botsOnPhase(){
 // 봇 찬반: 강아지는 의심도가 높으면 찬성, 여우(정체를 아는)는 강아지가 지목되면 찬성
 function botJudge(b){
   const tid = G.accused.id;
-  if(b.id === G.foxId && !isFool()) return tid !== b.id;
+  if(isFoxId(b.id) && !isFool()) return !isFoxId(tid);
   const sus = suspicionMap(b), vals = Object.values(sus).sort((x, y) => y - x);
   const rank = vals.indexOf(sus[tid]);
   return rank <= 1 ? Math.random() < .85 : Math.random() < .35;
@@ -2122,12 +2391,12 @@ function botJudge(b){
 function botHint(b){
   const cat = hostCat(), used = G.hints.map(h => h.text);
   const fresh = pool => { const c = pool.filter(t => !used.includes(t)); return c.length ? c : pool; };
-  if(b.id === G.foxId && isFool()){   // 바보 여우: 가짜 단어를 진짜라고 믿고 설명
+  if(isFoxId(b.id) && isFool()){   // 바보 여우: 가짜 단어를 진짜라고 믿고 설명
     const d = cat.words.find(w => w[0] === G.decoy);
     if(!d || !d[1].length || Math.random() < .1) return pick(fresh(cat.fox));
     return pick(fresh(d[1]));
   }
-  if(b.id === G.foxId){
+  if(isFoxId(b.id)){
     const inf = inferWord(b.id, .1);
     const hasInfo = G.hints.some(h => !h.auto && h.pid !== b.id);
     if(hasInfo && inf.conf > .25 && Math.random() < .4){
@@ -2147,8 +2416,8 @@ function botLine(b, sus){
   const safe = gp(lowOf(sus));
   const th = G.hints.find(h => h.pid === tId);
   const hq = th && !th.auto ? `“${th.text}”` : '침묵';
-  if(b.id === G.foxId && !isFool()){
-    const accused = G.players.filter(p => p.id !== b.id).sort((x, y) => (G.accuse[y.id] || 0) - (G.accuse[x.id] || 0))[0];
+  if(isFoxId(b.id) && !isFool()){
+    const accused = G.players.filter(p => !isFoxId(p.id) && !isOut(p.id)).sort((x, y) => (G.accuse[y.id] || 0) - (G.accuse[x.id] || 0))[0];
     const tgt = accused && (G.accuse[accused.id] || 0) > 0 ? accused : t;
     return pick([
       `${tgt.name}님 단서 ${hq === '침묵' ? '없었던 거' : hq} 솔직히 좀 애매하지 않았어요?`,
@@ -2179,7 +2448,7 @@ function botVote(b){
   const pool = G.phase === 'runoff' ? G.runoff.filter(id => id !== b.id) : null;
   if(pool && !pool.length) return null;
   const sus = suspicionMap(b, pool);
-  if(b.id === G.foxId && !isFool()){
+  if(isFoxId(b.id) && !isFool()){
     const crowd = {};
     Object.keys(sus).forEach(id => { crowd[id] = sus[id] + (G.accuse[id] || 0) * .4 + Object.values(G.votes).filter(v => v === id).length * .5; });
     return topOf(crowd)[0];
@@ -2233,41 +2502,79 @@ const changed = (k, v) => { const s = JSON.stringify(v); if(memo[k] === s) retur
 
 function onState(s){
   prevS = S; S = s;
+  if(!isHost && s.ver !== VER && !onState._warned){ onState._warned = true; toast('⚠️ 방장과 게임 버전이 달라요. 모두 새로고침(Ctrl+F5) 후 다시 들어오세요', 'danger'); }
   if(s.you && s.you.id) myId = s.you.id;
   localTimerEnd = s.timerRemaining > 0 ? Date.now() + s.timerRemaining : 0;
   localTimerTotal = s.timerTotal || 0;
   if((s.phase === 'vote' || s.phase === 'runoff') && voteRound !== s.phaseId){ voteRound = s.phaseId; myVote = null; }
   if(s.you.vote) myVote = s.you.vote;
-  try{ renderAll(s); }catch(e){ console.error('render error', e); }
+  renderAll(s);
   const phaseChanged = !prevS || prevS.phase !== s.phase;
+  if(phaseChanged && blinkTimer) stopAttention();
   if(phaseChanged) onPhaseEnter(s);
   else if(prevS.phaseId !== s.phaseId && s.phase === 'hint') onTurnChange(s);
   if(s.phase === 'execution') execOnState(s);
-  if((s.phase === 'foxguess' || s.phase === 'foxreveal') && s.you.role === 'fox' && $('#fox-modal').classList.contains('hidden') && !foxSubmitted) setTimeout(() => openFoxModal(S), s.phase === 'foxreveal' ? 2600 : 0);
+  if((s.phase === 'foxguess' || s.phase === 'foxreveal') && s.you.canGuess && $('#fox-modal').classList.contains('hidden') && !foxSubmitted) setTimeout(() => openFoxModal(S), s.phase === 'foxreveal' ? 2600 : 0);
   renderJudge(s);
   if(s.phase !== 'judge') closeJudge();
   if(s.phase !== 'foxreveal') closeFoxReveal();
 }
-function renderAll(s){ renderHeader(s); renderStrip(s); renderPlayers(s); renderChat(s); renderReactions(s); renderHintBar(s); renderAction(s); renderInputMode(s); renderDock(s); renderVoteSheet(s); renderBadges(); }
+/* 화면 그리기: 한 부분에서 오류가 나도 나머지(특히 채팅)는 계속 갱신되도록 각각 분리 */
+const RENDERERS = [renderChat, renderReactions, renderHeader, renderStrip, renderPlayers, renderSpecBox, renderHintBar, renderAction, renderInputMode, renderDock, renderVoteSheet, () => renderBadges()];
+const renderErrSeen = new Set();
+function renderAll(s){
+  for(const fn of RENDERERS){
+    try{ fn(s); }
+    catch(e){ const k = (fn.name || 'fn') + ':' + e.message; if(!renderErrSeen.has(k)){ renderErrSeen.add(k); console.error('render error', fn.name, e); } }
+  }
+}
 
 function onPhaseEnter(s){
   switch(s.phase){
-    case 'lobby': closeReveal(); hideExec(); closeFoxModal(); closeVoteSheet(); $('#result-overlay').classList.add('hidden'); setTab('info', true); break;
-    case 'reveal': $('#result-overlay').classList.add('hidden'); closeWardrobe(); infoDot = true; showReveal(s); break;
+    case 'lobby': closeReveal(); hideExec(); closeFoxModal(); closeVoteSheet(); closeAwards(); showResult._aw = null; $('#result-overlay').classList.add('hidden'); setTab('info', true); break;
+    case 'reveal': $('#result-overlay').classList.add('hidden'); closeAwards(); closeWardrobe(); infoDot = true; if(s.you.spec) showSplash('관전 모드', '👀 제시어와 여우를 모두 볼 수 있어요', 'blue'); else showReveal(s); break;
     case 'hint': closeReveal(); Snd.chime(); setTab('chat', true); showSplash('단서 라운드', '순서대로 제시어를 한 줄로 설명하세요', 'blue'); onTurnChange(s); break;
     case 'discuss': closeReveal(); Snd.chime(); setTab('chat', true); showSplash('자유 토론', `${(s.settings||{}).discuss||90}초 · 🎯로 의심 대상을 지목하세요`, 'blue'); break;
-    case 'vote': Snd.heart(); setTimeout(() => Snd.heart(), 750); showSplash('최후의 투표', '여우라고 생각하는 사람을 지목하세요', 'red'); setTimeout(openVoteSheet, 1500); break;
-    case 'runoff': Snd.heart(); setTimeout(() => Snd.heart(), 600); setTimeout(() => Snd.heart(), 1100); showSplash('결선 투표', '동률 후보 중 한 명을 다시 고르세요', 'red'); setTimeout(openVoteSheet, 1500); break;
+    case 'vote': if(canIVote(s)) attention('🔔 투표 시간!', '🗳️ 여우라고 생각하는 사람을 지목하세요.'); Snd.heart(); setTimeout(() => Snd.heart(), 750); showSplash('최후의 투표', '여우라고 생각하는 사람을 지목하세요', 'red'); setTimeout(openVoteSheet, 1500); break;
+    case 'runoff': if(canIVote(s)) attention('🔔 결선 투표!', '⚖️ 동률 후보 중 한 명을 다시 골라주세요.'); Snd.heart(); setTimeout(() => Snd.heart(), 600); setTimeout(() => Snd.heart(), 1100); showSplash('결선 투표', '동률 후보 중 한 명을 다시 고르세요', 'red'); setTimeout(openVoteSheet, 1500); break;
     case 'execution': closeVoteSheet(); showExecution(s); break;
     case 'foxguess': hideExec(); foxSubmitted = false; if(s.you.role !== 'fox') showSplash('여우의 반격', '여우가 제시어를 맞히면 역전승!', 'red'); break;
     case 'defense': closeVoteSheet(); Snd.heart(); showSplash('최후의 변론', `${esc(s.accused.name)}님만 ${T.DEFENSE / 1000}초 동안 말할 수 있어요`, 'red'); if(s.accused.id === myId){ setTab('chat', true); toast('🎤 최후의 변론! 채팅으로 결백을 호소하세요', 'danger'); } break;
-    case 'judge': Snd.heart(); setTimeout(() => Snd.heart(), 600); showSplash('찬반 투표', `${esc(s.accused.name)}님을 처형할까요?`, 'red'); setTimeout(openJudge, 1400); break;
+    case 'judge': if(canIVote(s) && s.accused && s.accused.id !== myId) attention('🔔 찬반 투표!', `⚖️ ${s.accused.name}님을 처형할까요? 찬성/반대를 골라주세요.`); Snd.heart(); setTimeout(() => Snd.heart(), 600); showSplash('찬반 투표', `${esc(s.accused.name)}님을 처형할까요?`, 'red'); setTimeout(openJudge, 1400); break;
     case 'foxreveal': hideExec(); foxSubmitted = false; showFoxReveal(s); break;
     case 'result': hideExec(); closeFoxModal(); closeVoteSheet(); setTimeout(() => showResult(S), 450); break;
   }
 }
+/* 🔔 내 차례 알림 (소리 없음): 다른 창을 보고 있을 때만
+   - 윈도우 팝업 알림 (처음 입장할 때 '알림 허용' 1회)
+   - 탭 제목 깜빡임 — 게임 창으로 돌아오면 멈춤 */
+const BASE_TITLE = document.title;
+let blinkTimer = null;
+function askNotifyPermission(){
+  try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); }catch(e){}
+}
+function pageAway(){ return document.hidden || !document.hasFocus(); }
+function stopAttention(){ if(blinkTimer){ clearInterval(blinkTimer); blinkTimer = null; } document.title = BASE_TITLE; }
+function attention(title, body){
+  if(!pageAway()) return;
+  stopAttention();
+  let on = false;
+  blinkTimer = setInterval(() => { on = !on; document.title = on ? title : BASE_TITLE; }, 900);
+  document.title = title;
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      const n = new Notification(title, { body, tag:'liar-lounge-turn', renotify:true, silent:true });
+      n.onclick = () => { try{ window.focus(); }catch(e){} n.close(); };
+      setTimeout(() => { try{ n.close(); }catch(e){} }, 15000);
+    }
+  }catch(e){}
+}
+window.addEventListener('focus', stopAttention);
+document.addEventListener('visibilitychange', () => { if(!document.hidden && document.hasFocus()) stopAttention(); });
+function canIVote(s){ const me = s.players.find(p => p.id === myId); return !!me && !me.out && !s.you.spec; }
 function onTurnChange(s){
   if(s.currentTurn === myId){
+    attention('🔔 내 차례! 단서 입력', '🎙️ 단서를 입력할 차례예요. 클릭해서 게임으로 돌아가세요.');
     Snd.chime(); toast('🎙️ 당신의 차례! 채팅창에 공식 단서를 입력하세요', 'gold');
     setTab('chat', true); setTimeout(() => $('#chat-input').focus(), 120);
   } else Snd.tone(660, .25, { type:'triangle', v:.07 });
@@ -2279,7 +2586,7 @@ function renderHeader(s){
   pill.textContent = PHASE_LABEL[s.phase] || s.phase;
   pill.className = 'phase-pill inline-block tone-' + (PHASE_TONE[s.phase] || 'amber');
   $('#hdr-code').textContent = s.roomCode;
-  $('#hdr-cat').textContent = `${s.catInfo.icon} ${s.catInfo.name}` + (s.settings && s.settings.mode === 'fool' ? ' · 🤪 바보 모드' : '') + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
+  $('#hdr-cat').textContent = (s.series && s.series.total > 1 && s.phase !== 'lobby' ? `🏆 ${Math.min(s.series.round, s.series.total)}/${s.series.total}판 · ` : '') + `${s.catInfo.icon} ${s.catInfo.name}` + (s.settings && s.settings.mode === 'fool' ? ' · 🤪 바보 모드' : '') + (s.phase !== 'lobby' && s.foxCount > 1 ? ` · 🦊×${s.foxCount}` : '') + (s.phase === 'hint' && s.turnOrder.length ? ` · 단서 ${Math.min(s.turnIdx + 1, s.turnOrder.length)}/${s.turnOrder.length}` : '');
   $('#tab-info-label').textContent = s.phase === 'lobby' ? '방 설정' : '내 카드';
   $('#tab-info-ic').textContent = s.phase === 'lobby' ? '⚙️' : '🃏';
 }
@@ -2317,10 +2624,10 @@ function renderStrip(s){
   const reveal = ['execution','foxguess','result'].includes(s.phase);
   const susPhase = ['discuss','vote','runoff'].includes(s.phase);
   const susCount = {}; Object.values(s.suspect || {}).forEach(t => susCount[t] = (susCount[t] || 0) + 1);
-  if(!changed('strip', [s.players, s.currentTurn, s.phase, s.runoff, s.accused, s.suspect, s.result && s.result.foxId, s.execution && s.execution.wasFox, myId])) return;
+  if(!changed('strip', [s.players, s.currentTurn, s.phase, s.runoff, s.accused, s.suspect, s.result && s.result.foxIds, s.execution && s.execution.wasFox, s.you.mates, myId])) return;
   $('#strip').innerHTML = s.players.map(p => {
-    const foxR = (s.phase === 'result' && s.result && s.result.foxId === p.id) || (reveal && s.execution && s.execution.targetId === p.id && s.execution.wasFox === true && s.phase !== 'execution');
-    const cls = ['ava', p.id === myId ? 'me' : '', s.currentTurn === p.id ? 'turn' : '', ((s.phase === 'runoff' && s.runoff && s.runoff.includes(p.id)) || (s.accused && s.accused.id === p.id)) ? 'cand' : '', foxR ? 'foxr' : '', !p.connected ? 'off' : ''].join(' ');
+    const foxR = (s.phase === 'result' && s.result && (s.result.foxIds || []).includes(p.id)) || p.out || (reveal && s.execution && s.execution.targetId === p.id && s.execution.wasFox === true && s.phase !== 'execution');
+    const cls = ['ava', p.id === myId ? 'me' : '', s.currentTurn === p.id ? 'turn' : '', ((s.phase === 'runoff' && s.runoff && s.runoff.includes(p.id)) || (s.accused && s.accused.id === p.id)) ? 'cand' : '', foxR ? 'foxr' : '', !p.connected || p.out ? 'off' : ''].join(' ');
     const tick = p.voted || (s.phase === 'lobby' && !p.isHost && !p.isBot && p.ready);
     return `<div class="${cls}" style="--pc:${p.color}" onclick="setTab('players')" title="${esc(p.name)}">
       <div class="ring"><div class="face">${foxR ? foxC('st' + p.id) : dogC(p.color, 'normal', p.outfit, 'st' + p.id)}</div>${tick ? '<span class="tick">✓</span>' : ''}${susPhase && susCount[p.id] ? `<span class="susn tnum">${susCount[p.id]}</span>` : ''}</div>
@@ -2335,6 +2642,13 @@ function renderDock(s){
   const me = s.players.find(p => p.id === myId) || {};
   const idle = txt => `<button class="btn primary-btn primary-idle" disabled>${txt}</button>`;
   let h = '';
+  if(s.you.spec && !(isHost && ['lobby','discuss','result'].includes(s.phase))){
+    h = (s.phase === 'lobby' || s.phase === 'result')
+      ? `<button class="btn btn-gold primary-btn" onclick="act({type:'SET_SPEC'})" ${s.players.length >= MAX_PLAYERS ? 'disabled' : ''}>🎮 플레이로 이동<span class="sub">· 지금은 관전 중</span></button>`
+      : idle(`👀 관전 중 · 전지적 시점${s.you.pendingPlay ? ' · 다음 판 참가 예약됨' : ''}`);
+    if(changed('dock', h)) $('#primary-action').innerHTML = h;
+    return;
+  }
   switch(s.phase){
     case 'lobby':
       if(isHost){ const err = startError(s.players, s.category !== 'custom' || s.hasCustom);
@@ -2345,13 +2659,20 @@ function renderDock(s){
     case 'hint': h = myTurn ? `<button class="btn btn-gold primary-btn" onclick="focusClue()">🎙️ 내 차례! 단서 입력</button>` : idle(`🎙️ ${esc(nameOf(s.currentTurn))}님이 단서를 쓰는 중...`); break;
     case 'discuss': h = isHost ? `<button class="btn btn-crimson primary-btn" onclick="act({type:'SKIP_DISCUSS'})">⏩ 토론 끝내고 투표</button>` : `<button class="btn btn-neon primary-btn" onclick="setTab('players')">🎯 의심 대상 지목하기</button>`; break;
     case 'vote': case 'runoff':
+      if(me.out){ h = idle('👻 관전 중 — 투표할 수 없어요'); break; }
       h = `<button class="btn ${myVote ? 'btn-neon' : 'btn-crimson'} primary-btn" onclick="openVoteSheet()">${s.phase === 'runoff' ? '⚖️ 결선 ' : '🗳️ '}${myVote ? `투표 완료<span class="sub">· ${esc(nameOf(myVote))} 지목 · 변경</span>` : '투표하기'}</button>`; break;
     case 'defense': h = s.accused && s.accused.id === myId ? `<button class="btn btn-crimson primary-btn" onclick="focusClue()">🎤 최후의 변론 — 채팅으로 호소하세요</button>` : idle(`🎤 ${esc(s.accused ? s.accused.name : '')}님의 최후 변론 중...`); break;
-    case 'judge': h = s.accused && s.accused.id === myId ? idle('⚖️ 운명의 찬반 투표가 진행 중...') : `<button class="btn ${s.judge && s.judge.mine !== null ? 'btn-neon' : 'btn-crimson'} primary-btn" onclick="openJudge()">⚖️ ${s.judge && s.judge.mine !== null ? (s.judge.mine ? '찬성 완료' : '반대 완료') + '<span class="sub">· 변경</span>' : '찬반 투표하기'}</button>`; break;
-    case 'foxreveal': h = s.you.role === 'fox' && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히고 완벽한 승리</button>` : idle('🦊 여우가 정답을 추리 중...'); break;
+    case 'judge': h = me.out ? idle('👻 관전 중 — 찬반 투표를 지켜보세요') : s.accused && s.accused.id === myId ? idle('⚖️ 운명의 찬반 투표가 진행 중...') : `<button class="btn ${s.judge && s.judge.mine !== null ? 'btn-neon' : 'btn-crimson'} primary-btn" onclick="openJudge()">⚖️ ${s.judge && s.judge.mine !== null ? (s.judge.mine ? '찬성 완료' : '반대 완료') + '<span class="sub">· 변경</span>' : '찬반 투표하기'}</button>`; break;
+    case 'foxreveal': h = s.you.canGuess && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히고 완벽한 승리</button>` : idle('🦊 여우가 정답을 추리 중...'); break;
     case 'execution': h = idle('🔦 가면을 벗기는 중...'); break;
-    case 'foxguess': h = s.you.role === 'fox' && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히기</button>` : idle('🦊 여우가 최후의 추리 중...'); break;
-    case 'result': h = isHost ? `<button class="btn btn-gold primary-btn" onclick="act({type:'RESTART'})">🥂 한 판 더 · 대기실로</button>` : `<button class="btn btn-neon primary-btn" onclick="showResult(S)">🏆 결과 다시 보기</button>`; break;
+    case 'foxguess': h = s.you.canGuess && !foxSubmitted ? `<button class="btn btn-crimson primary-btn" onclick="openFoxModal(S)">🦊 제시어 맞히기</button>` : idle('🦊 여우가 최후의 추리 중...'); break;
+    case 'result': {
+      const sr = s.result && s.result.series;
+      const fin = s.result && s.result.awards;
+      h = isHost ? `<button class="btn btn-gold primary-btn" onclick="act({type:'RESTART'})">${sr && sr.total > 1 && !sr.final ? `▶ 다음 판 준비 (${sr.round + 1}/${sr.total})` : '🥂 한 판 더 · 대기실로'}</button>`
+        : fin ? `<button class="btn btn-neon primary-btn" onclick="showAwards(S)">🏆 시상식 다시 보기</button>` : `<button class="btn btn-neon primary-btn" onclick="showResult(S)">🏆 결과 다시 보기</button>`;
+      break;
+    }
   }
   if(changed('dock', h)) $('#primary-action').innerHTML = h;
 }
@@ -2360,7 +2681,9 @@ let sheetOpen = false;
 function voteListHTML(s, where){
   where = where || 'va';
   const ro = s.phase === 'runoff';
-  const cands = s.players.filter(p => p.id !== myId && (!ro || (s.runoff || []).includes(p.id)));
+  const cands = s.players.filter(p => p.id !== myId && !p.out && (!ro || (s.runoff || []).includes(p.id)));
+  if(s.you.spec) return `<div class="rounded-2xl p-4 bg-white/5 text-center text-slate-300 text-sm">👀 관전 중 — 투표는 플레이어만 할 수 있어요</div>`;
+  if((s.players.find(p => p.id === myId) || {}).out) return `<div class="rounded-2xl p-4 bg-white/5 text-center text-slate-300 text-sm">👻 처형된 여우는 투표할 수 없어요. 남은 여우가 살아남는지 지켜보세요!</div>`;
   const iAmCand = ro && (s.runoff || []).includes(myId);
   return `<div class="flex items-center justify-between mb-2"><div class="text-rose-200 font-black text-sm">${ro ? '⚖️ 동률 후보 중 선택' : '🗳️ 여우를 지목하세요'}</div>
       <div class="text-xs font-mono text-slate-400 tnum">${s.voteCount}/${s.eligible} 완료</div></div>
@@ -2424,17 +2747,18 @@ let foxTpl = null;
 const foxC = slot => (foxTpl || (foxTpl = foxSVG('__UID__'))).split('__UID__').join(slotId(slot || uid()) + 'f');
 let cardCache = { ids:'', html:[] };
 function renderPlayers(s){
-  const key = [s.phase, s.players, s.currentTurn, s.hints, s.tally, s.execution, s.result && s.result.foxId, s.suspect, s.runoff, s.accused, myId, s.you.role];
+  const key = [s.phase, s.players, s.currentTurn, s.hints, s.tally, s.execution, s.result && s.result.foxIds, s.suspect, s.runoff, s.accused, myId, s.you.role, s.you.allFoxes];
   if(!changed('players', key)) return;
   const reveal = ['execution','foxguess','result'].includes(s.phase);
   const susPhase = ['discuss','vote','runoff'].includes(s.phase);
   const susCount = {}; Object.values(s.suspect || {}).forEach(t => susCount[t] = (susCount[t] || 0) + 1);
-  $('#player-count').textContent = `${s.players.length}/${MAX_PLAYERS}`;
+  $('#player-count').textContent = `${s.players.length}/${MAX_PLAYERS}` + ((s.specs || []).length ? ` · 👀${s.specs.length}` : '');
   $('#sus-legend').classList.toggle('hidden', !susPhase);
   const cards = s.players.map(p => {
     const me = p.id === myId, turn = s.currentTurn === p.id;
     const ex = reveal && s.execution && s.execution.targetId === p.id;
-    const foxRevealed = (s.phase === 'result' && s.result && s.result.foxId === p.id) || (ex && s.execution.wasFox === true && s.phase !== 'execution');
+    const foxRevealed = (s.phase === 'result' && s.result && (s.result.foxIds || []).includes(p.id)) || p.out || (ex && s.execution.wasFox === true && s.phase !== 'execution');
+    const mate = (s.you.mates || []).includes(p.id);
     const sad = ex && s.execution.wasFox === false && s.phase !== 'execution';
     const av = foxRevealed ? foxC('pl' + p.id) : dogC(p.color, sad ? 'sad' : 'normal', p.outfit, 'pl' + p.id);
     const votes = s.tally && s.tally[p.id] ? s.tally[p.id] : 0;
@@ -2453,16 +2777,19 @@ function renderPlayers(s){
       me ? '<span class="badge bg-white/15 text-white">나</span>' : '',
       me && s.you.role === 'fox' && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="나만 볼 수 있음">🦊 비밀</span>' : '',
       foxRevealed ? '<span class="badge bg-rose-600 text-white">FOX</span>' : '',
+      p.out && s.phase !== 'result' ? '<span class="badge bg-slate-500/30 text-slate-300">👻 관전</span>' : '',
+      mate && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="여우끼리만 보여요">🦊 동료</span>' : '',
+      s.you.spec && (s.you.allFoxes || []).includes(p.id) && !foxRevealed ? '<span class="badge bg-rose-500/25 text-rose-200" title="관전자에게만 보여요">🦊 여우</span>' : '',
       inRunoff ? '<span class="badge bg-rose-500/30 text-rose-100">결선</span>' : '',
       susPhase && susCount[p.id] ? `<span class="badge bg-rose-500/15 text-rose-300">🎯${susCount[p.id]}</span>` : ''
     ].join(' ');
-    const susBtn = susPhase && !me && p.connected
+    const susBtn = susPhase && !me && p.connected && !p.out && !s.you.spec
       ? `<button class="sus-btn ${s.suspect[myId] === p.id ? 'on' : ''}" onclick="act({type:'SUSPECT',target:'${p.id}'})" title="의심 대상으로 지목">🎯</button>` : '';
     const removeBtn = isHost && s.phase === 'lobby' && p.isBot
       ? `<button class="absolute top-1.5 right-1.5 text-slate-500 hover:text-rose-300 text-xs px-1" onclick="act({type:'REMOVE_BOT',id:'${p.id}'})" title="봇 제거">✕</button>`
       : isHost && (s.phase === 'lobby' || s.phase === 'result') && !p.isBot && !p.isHost
       ? `<button class="absolute top-1.5 right-1.5 text-slate-500 hover:text-rose-300 text-[10px] px-1" onclick="kickPlayer('${p.id}')" title="강퇴">🚫 강퇴</button>` : '';
-    return `<div class="player-card ${turn ? 'turn-focus' : ''} ${!p.connected ? 'opacity-50 grayscale' : ''} ${foxRevealed ? 'fox-card' : ''} ${inRunoff ? 'runoff-card' : ''}" data-pid="${p.id}">
+    return `<div class="player-card ${turn ? 'turn-focus' : ''} ${!p.connected || (p.out && s.phase !== 'result') ? 'opacity-50 grayscale' : ''} ${foxRevealed ? 'fox-card' : ''} ${inRunoff ? 'runoff-card' : ''}" data-pid="${p.id}">
       <div class="avatar-wrap" style="--pc:${p.color}">${av}</div>
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-1 flex-wrap"><span class="font-bold text-sm text-white truncate max-w-[100px]">${esc(p.name)}</span>${badges}</div>
@@ -2479,6 +2806,29 @@ function renderPlayers(s){
   else cards.forEach((h, i) => { if(cardCache.html[i] !== h) list.children[i].outerHTML = h; });
   cardCache = { ids, html:cards };
   requestAnimationFrame(() => drawArrows(S));
+}
+/* ---------- 👀 관전석 + 플레이/관전 이동 ---------- */
+function renderSpecBox(s){
+  const specs = s.specs || [], between = s.phase === 'lobby' || s.phase === 'result';
+  const iSpec = !!s.you.spec, me = s.players.find(p => p.id === myId);
+  if(!changed('specbox', [specs, s.phase, iSpec, s.you.pendingPlay, s.you.pendingSpec, s.players.length, myId])) return;
+  let btn;
+  if(iSpec){
+    const full = s.players.length >= MAX_PLAYERS;
+    btn = between ? `<button class="btn btn-gold w-full py-2.5" onclick="act({type:'SET_SPEC'})" ${full ? 'disabled' : ''}>🎮 플레이로 이동${full ? ' (자리 없음)' : ''}</button>`
+      : `<button class="btn ${s.you.pendingPlay ? 'btn-ghost' : 'btn-neon'} w-full py-2.5" onclick="act({type:'SET_SPEC'})">${s.you.pendingPlay ? '↩ 다음 판 참가 예약 취소' : '🎮 다음 판 참가 예약'}</button>`;
+  } else if(me && !me.isBot){
+    const full = specs.length >= MAX_SPECS;
+    btn = between ? `<button class="btn btn-ghost w-full py-2.5" onclick="act({type:'SET_SPEC'})" ${full ? 'disabled' : ''}>👀 관전으로 이동${full ? ' (관전석 꽉 참)' : ''}</button>`
+      : `<button class="btn btn-ghost w-full py-2.5" onclick="act({type:'SET_SPEC'})">${s.you.pendingSpec ? '↩ 관전 이동 취소' : '👀 이번 판 끝나고 관전으로'}</button>`;
+  } else btn = '';
+  $('#spec-box').innerHTML = `<div class="flex items-center justify-between px-1 mb-2"><div class="panel-title">👀 관전석</div><div class="text-[11px] text-slate-400 font-bold tnum">${specs.length}/${MAX_SPECS}</div></div>
+    <div class="space-y-1.5">${specs.map(p => `<div class="spec-row ${!p.connected ? 'opacity-50' : ''}">${chatAv({ pid:p.id, color:p.color })}<span class="text-sm font-bold text-slate-200 truncate">${esc(p.name)}</span>
+      ${p.isHost ? '<span class="badge bg-amber-300/20 text-amber-200">HOST</span>' : ''}${p.id === myId ? '<span class="badge bg-white/15 text-white">나</span>' : ''}
+      ${p.pendingPlay ? '<span class="badge bg-sky-400/15 text-sky-300">다음 판 참가</span>' : ''}${!p.connected ? '<span class="text-[10px] text-amber-300">끊김</span>' : ''}
+      ${isHost && !p.isHost ? `<button class="ml-auto text-slate-500 hover:text-rose-300 text-[10px] px-1" onclick="kickPlayer('${p.id}')">🚫</button>` : ''}</div>`).join('') || '<div class="text-xs text-slate-500 px-1">아직 관전자가 없어요</div>'}</div>
+    <div class="mt-2">${btn}</div>
+    <div class="text-[10px] text-slate-500 mt-1.5 px-1 leading-snug">관전자는 제시어와 여우를 모두 볼 수 있고, 관전석 채팅은 관전자끼리만 보여요.${between ? '' : ' 게임 중 이동은 이번 판이 끝난 뒤 적용돼요.'}</div>`;
 }
 function drawArrows(s){
   const inner = $('#players-inner'), svg = $('#sus-svg');
@@ -2505,11 +2855,38 @@ function drawArrows(s){
 window.addEventListener('resize', () => { if(!S) return; memo.players = null; renderPlayers(S); if(isDesktop()) closeVoteSheet(); });
 
 /* ---------- chat + reactions ---------- */
+/* 💬 채팅 아바타: 플레이어마다 '얼굴 이미지'를 한 번만 만들어 재사용
+   - <img src="data:..."> 로 넣어서 SVG 그라데이션 ID 충돌(투명 강아지 버그)이 원천적으로 없음
+   - 여우도 항상 커스텀한 강아지 모습(표정 고정) → 역할 스포일러 없음 */
+const avCache = new Map();
+function avatarURL(color, outfit){
+  const k = color + '|' + JSON.stringify(outfit || null);
+  let u = avCache.get(k);
+  if(!u){
+    if(avCache.size > 120) avCache.clear();
+    const svg = dogSVG(color, 'normal', outfit, 'av').replace('viewBox="0 0 200 200"', 'viewBox="24 -4 152 152"').replace(' class="w-full h-full block"', '');
+    u = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    avCache.set(k, u);
+  }
+  return u;
+}
+function chatAv(m, size){
+  const p = S && (S.players.find(x => x.id === m.pid) || (S.specs || []).find(x => x.id === m.pid));
+  const color = p ? p.color : m.color, outfit = p ? p.outfit : null;
+  return `<div class="chat-av ${size || ''}" style="--pc:${color}"><img src="${avatarURL(color, outfit)}" alt="" draggable="false"></div>`;
+}
+let lastSender = null;   // 같은 사람이 연달아 치면 첫 줄에만 아바타/이름
 function msgHTML(m){
   if(m.kind === 'defense'){
     return `<div class="msg-in msg-wrap my-3 mx-1" data-mid="${m.id}"><div class="defense-bubble rounded-2xl p-3 pl-5">
-      <div class="flex items-center gap-2 mb-1.5"><span class="defense-tag">🎤 최후의 변론</span><span class="font-bold text-rose-100 text-sm">${esc(m.name)}</span></div>
+      <div class="flex items-center gap-2 mb-1.5"><span class="defense-tag">🎤 최후의 변론</span>${chatAv(m, 'lg')}<span class="font-bold text-rose-100 text-base">${esc(m.name)}</span></div>
       <div class="text-lg font-bold leading-snug text-white">“${esc(m.text)}”</div></div><div class="rx pl-2" id="rx-${m.id}"></div></div>`;
+  }
+  if(m.kind === 'spec'){
+    const mine = m.pid === myId;
+    return `<div class="msg-in msg-wrap flex ${mine ? 'justify-end' : ''} my-1.5 gap-2" data-mid="${m.id}">${mine ? '' : chatAv(m)}
+      <div class="max-w-[78%] flex flex-col ${mine ? 'items-end' : 'items-start'}"><div class="text-[11px] text-slate-400 mb-0.5 ml-1"><span class="spec-tag">👀 관전석</span> ${mine ? '' : esc(m.name)}</div>
+      <div class="bubble-spec">${esc(m.text)}</div></div></div>`;
   }
   if(m.kind === 'system'){
     const cls = { info:'text-slate-400', gold:'text-amber-200', neon:'text-sky-300', danger:'text-rose-300' }[m.tone || 'info'];
@@ -2519,30 +2896,54 @@ function msgHTML(m){
   if(m.kind === 'hint'){
     return `<div class="msg-in msg-wrap my-3 mx-1" data-mid="${m.id}"><div class="hint-bubble rounded-2xl p-3 pl-5">
       <div class="flex items-center gap-2 mb-1.5"><span class="clue-tag">OFFICIAL CLUE #${m.n}</span>
-      <span class="w-2.5 h-2.5 rounded-full" style="background:${m.color};box-shadow:0 0 8px ${m.color}"></span>
+      ${chatAv(m, 'sm')}
       <span class="font-bold text-amber-100 text-sm">${esc(m.name)}</span><span class="ml-auto">${rxBtn}</span></div>
       <div class="text-lg font-bold leading-snug ${m.auto ? 'text-slate-400 italic text-base' : 'text-white'}">${m.auto ? esc(m.text) : `“${esc(m.text)}”`}</div></div>
       <div class="rx pl-2" id="rx-${m.id}"></div></div>`;
   }
-  const mine = m.pid === myId;
-  const dot = `<div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-black mt-4" style="background:${m.color}22;border:1.5px solid ${m.color};color:${m.color}">${esc(m.name[0] || '?')}</div>`;
-  return `<div class="msg-in msg-wrap flex ${mine ? 'justify-end' : ''} my-1.5 gap-2" data-mid="${m.id}">${mine ? '' : dot}
-    <div class="max-w-[78%] flex flex-col ${mine ? 'items-end' : 'items-start'}">${mine ? '' : `<div class="text-[11px] text-slate-400 mb-0.5 ml-1">${esc(m.name)}</div>`}
+  const mine = m.pid === myId, cont = !!m._cont;
+  const dot = cont ? '<div class="chat-gap"></div>' : chatAv(m);
+  return `<div class="msg-in msg-wrap flex ${mine ? 'justify-end' : ''} ${cont ? 'msg-cont mb-1' : 'my-1.5'} gap-2" data-mid="${m.id}">${mine ? '' : dot}
+    <div class="max-w-[78%] flex flex-col ${mine ? 'items-end' : 'items-start'}">${mine || cont ? '' : `<div class="text-[11px] text-slate-400 mb-0.5 ml-1">${esc(m.name)}</div>`}
     <div class="flex items-center gap-1 ${mine ? 'flex-row-reverse' : ''}"><div class="bubble ${mine ? 'bubble-me' : 'bubble-other'}">${esc(m.text)}</div>${rxBtn}</div>
     <div class="rx" id="rx-${m.id}"></div></div></div>`;
 }
+let chatStick = true, chatNew = 0, chatUpToSeen = 0, chatBehindSince = 0;
+function chatAtBottom(){ const b = $('#chat'); return b.scrollHeight - b.scrollTop - b.clientHeight < 140; }
+function chatToBottom(){ const b = $('#chat'); b.scrollTop = b.scrollHeight; chatStick = true; chatNew = 0; updateNewMsgBtn(); }
+document.addEventListener('DOMContentLoaded', () => { const b = $('#chat'); if(b) b.addEventListener('scroll', () => { chatStick = chatAtBottom(); if(chatStick){ chatNew = 0; updateNewMsgBtn(); } }, { passive:true }); });
+function updateNewMsgBtn(){
+  const el = $('#chat-newbtn'); if(!el) return;
+  el.classList.toggle('hidden', chatStick || !chatNew);
+  el.textContent = `⬇ 새 메시지 ${chatNew > 99 ? '99+' : chatNew}개`;
+}
 function renderChat(s){
   const box = $('#chat');
-  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
-  let added = false, ping = false, clue = false, html = '';
+  // 🔧 방장 복구 등으로 메시지 번호가 처음부터 다시 시작된 경우 → 내 기준점을 맞춤 (안 하면 새 채팅이 영영 안 보임)
+  if(typeof s.chatSeq === 'number' && s.chatSeq < lastMsgId){
+    const first = s.chat.length ? s.chat[0].id - 1 : s.chatSeq;
+    lastMsgId = Math.max(0, Math.min(first, s.chatSeq));
+  }
+  if(typeof s.chatUpTo === 'number') chatUpToSeen = Math.max(s.chatUpTo, s.chatSeq < chatUpToSeen ? 0 : chatUpToSeen);
+  const nearBottom = chatStick || chatAtBottom();
+  let added = false, ping = false, clue = false, html = '', n = 0;
   for(const m of s.chat){
     if(m.id <= lastMsgId) continue;
-    lastMsgId = m.id; added = true; html += msgHTML(m);
+    lastMsgId = m.id; added = true;
+    const key = m.kind === 'chat' ? m.pid : null;
+    m._cont = !!key && lastSender && lastSender.pid === key && m.ts - lastSender.ts < 60000;
+    lastSender = key ? { pid:key, ts:m.ts } : null;
+    try{ html += msgHTML(m); n++; }
+    catch(e){ console.error('msg render', e); html += `<div class="flex justify-center my-1"><div class="sys-line text-slate-400">${esc(String(m.name || ''))} ${esc(String(m.text || ''))}</div></div>`; }
     if(prevS){ if(m.kind === 'chat' && m.pid !== myId) ping = true; if(m.kind === 'hint') clue = true; if(m.kind !== 'system' && m.pid !== myId && curTab !== 'chat') unreadChat++; }
   }
   if(html) box.insertAdjacentHTML('beforeend', html);
   while(box.children.length > 200) box.removeChild(box.firstChild);
-  if(added && (nearBottom || !prevS || (s.chat[s.chat.length-1] || {}).pid === myId)) box.scrollTop = box.scrollHeight;
+  if(added){
+    if(nearBottom || !prevS || (s.chat[s.chat.length-1] || {}).pid === myId){ box.scrollTop = box.scrollHeight; chatStick = true; chatNew = 0; }
+    else chatNew += n;
+    updateNewMsgBtn();
+  }
   if(clue) Snd.clue(); else if(ping) Snd.blip();
 }
 let rxCache = {};
@@ -2587,11 +2988,15 @@ function toggleHints(){ hintsOpen = !hintsOpen; Snd.click(); if(S) renderHintBar
 function renderInputMode(s){
   const myTurn = s.phase === 'hint' && s.currentTurn === myId;
   const defMe = s.phase === 'defense' && s.accused && s.accused.id === myId;
-  const muted = s.phase === 'defense' && s.accused && s.accused.id !== myId;
-  if(!changed('input', [myTurn, defMe, muted])) return;
+  const outMe = !!(s.players.find(p => p.id === myId) || {}).out && s.phase !== 'result';
+  const specMe = !!s.you.spec;
+  const muted = !specMe && ((s.phase === 'defense' && s.accused && s.accused.id !== myId) || outMe);
+  if(!changed('input', [myTurn, defMe, muted, outMe, specMe])) return;
   const inp = $('#chat-input');
   inp.placeholder = myTurn ? '🔎 나의 공식 단서를 한 줄로 입력하세요 (Enter)'
     : defMe ? '🎤 최후의 변론! 지금은 당신만 말할 수 있어요 (Enter)'
+    : specMe ? '👀 관전석 채팅 — 관전자끼리만 보여요 (플레이어에게는 안 보임)'
+    : outMe ? '👻 처형된 여우는 이번 판이 끝날 때까지 관전만 할 수 있어요'
     : muted ? `🤐 ${s.accused.name}님의 최후 변론 중 — 지금은 말할 수 없어요` : '메시지를 입력하세요...';
   inp.maxLength = myTurn ? 60 : 140;
   inp.disabled = !!muted;
@@ -2609,7 +3014,23 @@ function sendChat(){
 }
 
 /* ---------- action panel ---------- */
+function specCard(s){
+  const foxes = (s.you.allFoxes || []).map(id => s.players.find(p => p.id === id)).filter(Boolean);
+  return `<div class="secret-card" style="border-color:rgba(148,163,184,.45)">
+    <div class="text-[10px] tracking-[.3em] text-slate-400">👀 SPECTATOR · 전지적 시점</div>
+    <div class="grid grid-cols-2 gap-2 mt-2">
+      <div class="rounded-xl bg-black/25 p-2"><div class="text-[10px] text-slate-500">카테고리</div><div class="font-bold text-amber-100 truncate">${s.catInfo.icon} ${esc(s.catInfo.name)}</div></div>
+      <div class="rounded-xl bg-black/25 p-2"><div class="text-[10px] text-slate-500">단서 진행</div><div class="font-bold text-slate-200">${s.hints.length} / ${s.turnOrder.length}</div></div>
+    </div>
+    <div class="mt-3 text-[10px] tracking-[.3em] text-slate-500">SECRET WORD</div>
+    <div class="secret-word">${esc(s.you.word || '-')}${s.you.decoy ? ` <span class="text-sm font-medium text-rose-300/80">(바보 여우: ${esc(s.you.decoy)})</span>` : ''}</div>
+    <div class="mt-2 rounded-xl bg-rose-500/10 border border-rose-400/30 p-2 text-sm text-rose-100">🦊 여우: <b>${foxes.map(p => esc(p.name)).join(', ') || '-'}</b></div>
+    <div class="text-xs mt-2 text-slate-400">관전석 채팅은 관전자끼리만 보여요. 스포일러는 마음껏!</div>
+  </div>`;
+}
+const roleName = o => (o && o.species === 'cat') ? '🐱 고양이 (시민)' : '🐶 강아지 (시민)';
 function secretCard(s){
+  if(s.you.spec) return specCard(s);
   const me = s.players.find(p => p.id === myId) || { color:profile.color, outfit:profile.outfit };
   const fox = s.you.role === 'fox';
   return `<div class="secret-card ${fox ? 'secret-fox' : ''}">
@@ -2620,13 +3041,14 @@ function secretCard(s){
       </div>
       <div>
         <div class="text-[10px] tracking-[.3em] text-slate-400">YOUR SECRET ROLE</div>
-        <div class="font-black text-lg ${fox ? 'text-rose-300' : 'text-sky-300'}">${fox ? '🦊 여우 (라이어)' : '🐶 강아지 (시민)'}</div>
+        <div class="font-black text-lg ${fox ? 'text-rose-300' : 'text-sky-300'}">${fox ? '🦊 여우 (라이어)' : roleName(me.outfit)}</div>
       </div>
     </div>
     <div class="grid grid-cols-2 gap-2 mt-3">
       <div class="rounded-xl bg-black/25 p-2"><div class="text-[10px] text-slate-500">카테고리</div><div class="font-bold text-amber-100 truncate">${s.catInfo.icon} ${esc(s.catInfo.name)}</div></div>
-      <div class="rounded-xl bg-black/25 p-2"><div class="text-[10px] text-slate-500">단서 진행</div><div class="font-bold text-slate-200">${s.hints.length} / ${s.turnOrder.length}</div></div>
+      <div class="rounded-xl bg-black/25 p-2"><div class="text-[10px] text-slate-500">단서 진행 · 여우</div><div class="font-bold text-slate-200">${s.hints.length} / ${s.turnOrder.length} · <span class="text-rose-200">🦊×${s.foxCount || 1}</span></div></div>
     </div>
+    ${fox && s.you.mates && s.you.mates.length ? `<div class="mt-2 rounded-xl bg-rose-500/15 border border-rose-400/30 p-2 text-xs text-rose-100">🦊 동료 여우: <b>${s.you.mates.map(id => esc(nameOf(id))).join(', ')}</b> <span class="text-rose-200/70">(서로 감싸주세요)</span></div>` : ''}
     <div class="mt-3 text-[10px] tracking-[.3em] text-slate-500">SECRET WORD</div>
     <div class="secret-word">${fox ? '<span class="text-rose-200">???</span> <span class="text-sm font-medium text-rose-300/80">(당신은 여우입니다)</span>' : esc(s.you.word)}</div>
     <div class="text-xs mt-2 ${fox ? 'text-rose-200/70' : 'text-sky-200/60'}">${fox
@@ -2646,7 +3068,7 @@ function renderAction(s){
     const humans = s.players.filter(p => !p.isBot && !p.isHost);
     const err = startError(s.players);
     h = `<div class="panel-title mb-3">LOBBY · 대기실</div>
-      <button class="btn btn-neon w-full py-2.5 mb-4" onclick="openWardrobe()">👗 옷장 열기 · 내 강아지 꾸미기</button>
+      <button class="btn btn-neon w-full py-2.5 mb-4" onclick="openWardrobe()">👗 옷장 열기 · 내 캐릭터 꾸미기</button>
       <div class="label">카테고리 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
       <div class="grid grid-cols-3 gap-2">${cats}</div>
       ${s.category === 'custom' ? `<div class="text-xs text-amber-200/80 mt-2">✏️ 커스텀 제시어 ${s.catInfo.count}개 ${isHost ? '· <button class="underline" onclick="openCustom()">수정</button>' : ''}</div>` : ''}
@@ -2655,13 +3077,19 @@ function renderAction(s){
         <button class="cat-btn !items-start !text-left !px-3 ${s.settings.mode !== 'fool' ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_MODE',mode:'classic'})"` : 'disabled'}><span class="text-sm">🦊 기본 모드</span><span class="text-[10px] font-medium text-slate-400 leading-snug">여우는 제시어 없이 카테고리만 알아요</span></button>
         <button class="cat-btn !items-start !text-left !px-3 ${s.settings.mode === 'fool' ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_MODE',mode:'fool'})"` : 'disabled'}><span class="text-sm">🤪 바보 모드</span><span class="text-[10px] font-medium text-slate-400 leading-snug">여우도 비슷한 가짜 제시어를 받아 자기가 여우인 줄 몰라요</span></button>
       </div>
+      <div class="label mt-4">🦊 여우 수 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
+      <div class="grid grid-cols-3 gap-2">${[1,2,3].map(n => `<button class="cat-btn !py-2 ${(s.settings.foxes || 1) === n ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_FOXES',n:${n}})"` : 'disabled'}><span class="text-sm">🦊 ${n}마리</span><span class="text-[10px] font-medium text-slate-400">${n === 1 ? '3명 이상' : (n * 2 + 1) + '명 이상'}</span></button>`).join('')}</div>
+      ${(s.settings.foxes || 1) > maxFoxesFor(s.players.length) ? `<div class="text-[11px] text-amber-200/80 mt-1.5">지금 ${s.players.length}명이라 시작하면 여우 ${maxFoxesFor(s.players.length)}마리로 진행돼요</div>` : ''}
+      <div class="label mt-4">🏆 라운드 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
+      <div class="grid grid-cols-3 gap-2">${[[1,'단판'],[3,'3라운드'],[5,'5라운드']].map(([n, l]) => `<button class="cat-btn !py-2 ${(s.settings.rounds || 1) === n ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_ROUNDS',n:${n}})"` : 'disabled'}><span class="text-sm">${l}</span></button>`).join('')}</div>
+      <div class="text-[11px] text-slate-400 mt-1.5">${s.series && !s.series.done && s.series.round > 0 ? `<b class="text-amber-200">${s.series.round + 1}/${s.series.total}판</b> 준비 중 · ` : ''}마지막 판이 끝나면 MVP와 분야별 하이라이트를 발표해요</div>
       <div class="label mt-4">⏱️ 시간 설정 ${isHost ? '' : '<span class="text-slate-500">(방장이 선택)</span>'}</div>
       <div class="grid grid-cols-[52px_1fr] gap-x-2 gap-y-1.5 items-center text-xs">
         <span class="text-slate-400">단서</span><div class="grid grid-cols-3 gap-1">${[15,30,45].map(v => `<button class="cat-btn !py-1.5 ${s.settings.hint === v ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_TIME',hint:${v}})"` : 'disabled'}>${v}초</button>`).join('')}</div>
         <span class="text-slate-400">토론</span><div class="grid grid-cols-3 gap-1">${[60,90,120].map(v => `<button class="cat-btn !py-1.5 ${s.settings.discuss === v ? 'cat-on' : ''}" ${isHost ? `onclick="act({type:'SET_TIME',discuss:${v}})"` : 'disabled'}>${v === 60 ? '1분' : v === 90 ? '1분 30초' : '2분'}</button>`).join('')}</div>
       </div>
       <div class="flex justify-between text-sm mt-5 mb-2"><span class="text-slate-300">참여자 <b class="text-white">${s.players.length}</b>/${MAX_PLAYERS}</span>
-        <span class="text-slate-300">준비 <b class="text-emerald-300">${humans.filter(p => p.ready).length}</b>/${humans.length}</span></div>
+        <span class="text-slate-300">관전 <b class="text-white">${(s.specs || []).length}</b>/${MAX_SPECS}</span><span class="text-slate-300">준비 <b class="text-emerald-300">${humans.filter(p => p.ready).length}</b>/${humans.length}</span></div>
       ${isHost ? `<button class="btn btn-ghost w-full py-2.5" onclick="act({type:'ADD_BOT'})" ${s.players.length >= MAX_PLAYERS ? 'disabled' : ''}>🤖 + AI 봇 추가 (혼자 테스트용)</button>` : ''}
       <div class="text-xs text-center mt-3 font-semibold ${isHost ? (err ? 'text-rose-300' : 'text-emerald-300') : (me.ready ? 'text-emerald-300' : 'text-amber-200')}">${isHost ? (err || '모든 준비 완료! 아래 [게임 시작]을 누르세요') : (me.ready ? '✓ 준비 완료 — 방장이 시작하길 기다리는 중' : '아래 [준비하기]를 눌러주세요')}</div>
       <div class="mt-5 rounded-2xl bg-black/25 border border-white/5 p-3 text-xs text-slate-400 space-y-1.5">
@@ -2671,7 +3099,8 @@ function renderAction(s){
         <div>2. 순서대로 제시어를 한 줄로 설명 (각 ${s.settings.hint}초)</div>
         <div>3. ${s.settings.discuss}초 자유 토론 (🎯 의심 화살표, 리액션 사용 가능)</div>
         <div>※ 강아지가 제시어를 그대로 말하면 전송되지 않아요</div>
-        <div>4. 투표 동률이면 결선 투표, 여우가 지목되면 15초 역전 찬스!</div>
+        <div>4. 최다 득표자는 10초 최후 변론 → 찬반 투표로 처형 결정 (반대면 다시 투표)</div>
+        <div>5. ${(s.settings.foxes || 1) > 1 ? '여우끼리는 서로 알아요. 여우를 모두 처형해야 강아지 승리!' : '여우를 처형해도 여우가 제시어를 맞히면 역전승!'}</div>
       </div>
       <div class="mt-3 text-xs text-slate-500 text-center">방 코드 <b class="font-mono text-amber-200 tracking-widest">${esc(s.roomCode)}</b>를 친구에게 공유하세요</div>
       <div class="mt-1 text-[11px] text-center ${ICE ? 'text-emerald-300/80' : 'text-slate-600'}">${ICE ? '🛰️ 중계 서버(TURN) 활성 — 막힌 네트워크에서도 접속 가능' : '🛰️ 직접 연결 모드'}</div>`;
@@ -2718,11 +3147,11 @@ function renderAction(s){
       }
       case 'foxreveal':
         h += `<div class="rounded-2xl p-4 border border-rose-400/50 bg-rose-500/10 text-center"><div class="font-display text-2xl crimson-text">여우의 정체</div>
-          <div class="text-sm text-slate-300 mt-1">무고한 강아지가 처형됐어요. 진짜 여우는 <b class="text-rose-200">${esc(s.foxReveal ? s.foxReveal.name : '')}</b>님! 정답까지 맞히면 완벽한 승리예요.</div></div>`;
+          <div class="text-sm text-slate-300 mt-1">무고한 강아지가 처형됐어요. 진짜 여우는 <b class="text-rose-200">${esc((s.foxReveal || []).map(f => f.name).join(', '))}</b>님! 정답까지 맞히면 완벽한 승리예요.</div></div>`;
         break;
       case 'execution': h += `<div class="text-center text-rose-200 py-4 font-bold">🔦 가면을 벗기는 중...</div>` + tallyHTML(s); break;
       case 'foxguess':
-        h += s.you.role === 'fox'
+        h += s.you.canGuess
           ? `<div class="rounded-2xl p-4 border border-rose-400/60 bg-rose-500/10 text-center"><div class="text-rose-200 font-black">🦊 최후의 발악!</div>
               <div class="text-sm text-slate-300 mt-1">제시어를 맞히면 역전승입니다.</div>
               <button class="btn btn-gold w-full py-2.5 mt-3" onclick="openFoxModal(S)">답변 입력창 열기</button></div>`
@@ -2756,7 +3185,7 @@ function tallyHTML(s){
   return `<div class="mt-3 rounded-2xl bg-black/25 p-3 space-y-1.5"><div class="text-[10px] tracking-[.3em] text-slate-500 mb-1">VOTE RESULT</div>${rows}</div>`;
 }
 function kickPlayer(id){
-  const p = S && S.players.find(x => x.id === id); if(!p) return;
+  const p = S && (S.players.find(x => x.id === id) || (S.specs || []).find(x => x.id === id)); if(!p) return;
   if(confirm(`${p.name}님을 강퇴할까요?\n강퇴된 사람은 이 방에 다시 들어올 수 없어요.`)) act({ type:'KICK', id });
 }
 function castVote(id){
@@ -2792,7 +3221,7 @@ function showReveal(s){
               ${fox ? `<div class="layer fox-layer">${foxSVG()}</div>` : ''}
               <div class="layer dog-layer">${dogSVG(me.color, 'normal', me.outfit)}</div>
             </div>
-            <div id="rv-role" class="mt-3 text-xl font-black text-sky-300">🐶 강아지 (시민)</div>
+            <div id="rv-role" class="mt-3 text-xl font-black text-sky-300">${roleName(me.outfit)}</div>
             <div class="mt-3 text-xs text-slate-400">카테고리 · <span class="text-amber-100 font-bold">${s.catInfo.icon} ${esc(s.catInfo.name)}</span></div>
             <div id="rv-word" class="mt-1 text-3xl font-black text-white text-center leading-tight">${fox ? '???' : esc(s.you.word)}</div>
           </div>
@@ -2810,7 +3239,7 @@ function showReveal(s){
       $('#rv-role').innerHTML = '<span class="text-rose-300">🦊 당신은 여우입니다</span>';
       $('#rv-word').innerHTML = '<span class="text-rose-200">???</span><div class="text-sm font-medium text-rose-300/80 mt-1">(당신은 여우입니다)</div>';
       $('#rv-top').innerHTML = '<span class="text-rose-300">THE MASK FALLS</span>';
-      $('#rv-msg').innerHTML = '<span class="text-rose-200">강아지들의 단서로 제시어를 추리하고, 끝까지 들키지 마세요.</span>';
+      $('#rv-msg').innerHTML = (s.you.mates && s.you.mates.length) ? `<span class="text-rose-200">동료 여우: <b>${s.you.mates.map(id => esc(nameOf(id))).join(', ')}</b> — 함께 끝까지 들키지 마세요.</span>` : '<span class="text-rose-200">강아지들의 단서로 제시어를 추리하고, 끝까지 들키지 마세요.</span>';
     }, 1000 + 1100 + 1500));
   }
   revealTimers.push(setTimeout(closeReveal, Math.max(1500, (s.timerRemaining || T.REVEAL) - 300)));
@@ -2868,10 +3297,10 @@ function maybeRevealExec(){
     ov.querySelector('.exec-stage').classList.add('shake');
     sparks(36);
     const fool = S && S.settings && S.settings.mode === 'fool';
-    v.innerHTML = '<span class="text-rose-400" style="text-shadow:0 0 30px rgba(239,68,68,.8)">🦊 여우였다!</span><div class="text-base text-rose-200 font-sans font-bold mt-1">' + (fool ? '본인도 몰랐던 바보 여우 발각!' : '정체가 발각되었습니다') + '</div>';
+    v.innerHTML = '<span class="text-rose-400" style="text-shadow:0 0 30px rgba(239,68,68,.8)">🦊 여우였다!</span><div class="text-base text-rose-200 font-sans font-bold mt-1">' + (fool ? '본인도 몰랐던 바보 여우 발각!' : (S && S.foxCount > 1 ? '여우 한 마리 발각! 남은 여우가 있는지 확인하세요' : '정체가 발각되었습니다')) + '</div>';
   } else {
     ov.classList.add('innocent'); Snd.sigh(); rain(60);
-    v.innerHTML = '<span class="text-sky-200">무고한 강아지였습니다...</span><div class="text-base text-slate-400 font-sans font-bold mt-1">“멍... 억울해요” 여우는 아직 라운지에 있습니다</div>';
+    v.innerHTML = (ex.outfit && ex.outfit.species === 'cat' ? '<span class="text-sky-200">무고한 고양이였습니다...</span><div class="text-base text-slate-400 font-sans font-bold mt-1">“냥... 억울해요” 여우는 아직 라운지에 있습니다</div>' : '<span class="text-sky-200">무고한 강아지였습니다...</span><div class="text-base text-slate-400 font-sans font-bold mt-1">“멍... 억울해요” 여우는 아직 라운지에 있습니다</div>');
   }
   setTimeout(() => v.classList.add('show'), 350);
 }
@@ -2901,13 +3330,13 @@ function closeJudge(){ $('#judge-overlay').classList.add('hidden'); }
 function castJudge(v){ if(!S || S.phase !== 'judge') return; act({ type:'JUDGE', agree:v }); Snd.click(); v ? Snd.heart() : Snd.tone(880, .25, { type:'triangle', v:.08 }); toast(v ? '💀 처형 찬성' : '🕊️ 처형 반대', v ? 'danger' : 'info'); }
 function renderJudge(s){
   if(s.phase !== 'judge' || !s.accused || $('#judge-overlay').classList.contains('hidden')) return;
-  const a = s.accused, j = s.judge || { done:0, eligible:0, mine:null }, isMe = a.id === myId;
+  const a = s.accused, j = s.judge || { done:0, eligible:0, mine:null }, iOut = !!(s.players.find(p => p.id === myId) || {}).out || !!s.you.spec, isMe = a.id === myId || iOut;
   const h = `<div class="text-[11px] tracking-[.45em] text-rose-300 font-bold">THE VERDICT · 재판 ${s.trials}/${s.maxTrials}</div>
     <div class="font-display text-5xl crimson-text mt-2">찬반 투표</div>
     <div class="judge-accused mx-auto mt-5">${dogC(a.color, 'normal', a.outfit, 'jd' + a.id)}</div>
     <div class="font-display text-3xl text-white mt-3">${esc(a.name)}</div>
     <div class="text-sm text-slate-300 mt-1">${a.votes}표로 지목됨 · ${isMe ? '당신의 운명이 결정되는 중...' : '이 사람을 처형할까요?'}</div>
-    ${isMe ? `<div class="mt-6 text-lg text-rose-100 font-bold">🙏 다른 사람들이 투표하고 있어요</div>` : `
+    ${isMe ? `<div class="mt-6 text-lg text-rose-100 font-bold">${iOut && a.id !== myId ? (s.you.spec ? `👀 관전 중 — ${(s.you.allFoxes || []).includes(a.id) ? '진짜 여우가 지목됐어요!' : '무고한 강아지가 지목됐어요...'}` : '👻 관전 중 — 다른 사람들이 투표하고 있어요') : '🙏 다른 사람들이 투표하고 있어요'}</div>` : `
     <div class="grid grid-cols-2 gap-4 mt-6">
       <button class="judge-btn judge-yes ${j.mine === true ? 'on' : ''}" onclick="castJudge(true)"><span class="text-5xl">💀</span><span class="font-display text-3xl">찬성</span><span class="text-xs font-bold opacity-80">처형한다</span></button>
       <button class="judge-btn judge-no ${j.mine === false ? 'on' : ''}" onclick="castJudge(false)"><span class="text-5xl">🕊️</span><span class="font-display text-3xl">반대</span><span class="text-xs font-bold opacity-80">살려주고 다시 투표</span></button>
@@ -2919,26 +3348,26 @@ function renderJudge(s){
 }
 /* ---------- 무고한 강아지 처형 후: 진짜 여우 정체 공개 ---------- */
 function showFoxReveal(s){
-  const f = s.foxReveal; if(!f) return;
-  const ov = $('#foxreveal-overlay');
+  const fs = s.foxReveal; if(!fs || !fs.length) return;
+  const ov = $('#foxreveal-overlay'), sz = fs.length > 1 ? 'w-40 h-40' : 'w-56 h-56';
   ov.innerHTML = `<div class="exec-dark" style="opacity:.94"></div><div class="spot" style="opacity:1"></div>
     <div class="relative z-[3] text-center px-5">
       <div class="text-[11px] tracking-[.5em] text-rose-300 font-bold">THE TRUE FOX</div>
       <div class="font-display text-5xl crimson-text mt-2">진짜 여우는...</div>
-      <div id="fr-mask" class="mask-stack w-56 h-56 mx-auto mt-6"><div class="layer fox-layer">${foxSVG()}</div><div class="layer dog-layer">${dogSVG(f.color, 'normal', f.outfit)}</div></div>
-      <div id="fr-name" class="font-display text-4xl text-white mt-4" style="opacity:0;transition:opacity .7s">${esc(f.name)}${f.id === myId ? ' (나)' : ''}</div>
-      <div class="text-sm text-slate-300 mt-2">${s.you.role === 'fox' ? '이미 승리! 정답까지 맞히면 완벽한 승리예요' : '여우가 비밀 제시어까지 맞히면 완벽한 승리...'}</div>
+      <div class="flex justify-center gap-8 mt-6">${fs.map(f => `<div><div class="fr-mask mask-stack ${sz} mx-auto"><div class="layer fox-layer">${foxSVG()}</div><div class="layer dog-layer">${dogSVG(f.color, 'normal', f.outfit)}</div></div>
+        <div class="fr-name font-display ${fs.length > 1 ? 'text-3xl' : 'text-4xl'} text-white mt-4" style="opacity:0;transition:opacity .7s">${esc(f.name)}${f.id === myId ? ' (나)' : ''}</div></div>`).join('')}</div>
+      <div class="text-sm text-slate-300 mt-2">${s.you.role === 'fox' ? '이미 승리! 정답까지 맞히면 완벽한 승리예요' : (fs.length > 1 ? '여우 중 한 명이라도' : '여우가') + ' 비밀 제시어까지 맞히면 완벽한 승리...'}</div>
       <div class="timer-bar urgent mt-4 max-w-xs mx-auto"><div id="fr-bar" style="width:100%"></div></div>
     </div>`;
   ov.classList.remove('hidden'); Snd.heart();
-  setTimeout(() => { const m = $('#fr-mask'); if(m){ m.classList.add('unmask'); Snd.foxReveal(); } const n = $('#fr-name'); if(n) n.style.opacity = 1; }, 1100);
+  setTimeout(() => { ov.querySelectorAll('.fr-mask').forEach(m => m.classList.add('unmask')); Snd.foxReveal(); ov.querySelectorAll('.fr-name').forEach(n => n.style.opacity = 1); }, 1100);
 }
 function closeFoxReveal(){ const ov = $('#foxreveal-overlay'); if(!ov.classList.contains('hidden')){ ov.classList.add('hidden'); ov.innerHTML = ''; } }
 
 /* ---------- FOX LAST CHANCE ---------- */
 let foxSubmitted = false;
 function openFoxModal(s){
-  if(!s || (s.phase !== 'foxguess' && s.phase !== 'foxreveal') || s.you.role !== 'fox' || foxSubmitted) return;
+  if(!s || (s.phase !== 'foxguess' && s.phase !== 'foxreveal') || !s.you.canGuess || foxSubmitted) return;
   const m = $('#fox-modal');
   if(m.classList.contains('hidden')){
     const bonus = s.phase === 'foxreveal';
@@ -2969,9 +3398,11 @@ function closeFoxModal(){ $('#fox-modal').classList.add('hidden'); }
 function showResult(s){
   if(!s || s.phase !== 'result' || !s.result) return;
   const r = s.result, foxWin = r.winner === 'fox', iAmFox = s.you.role === 'fox';
-  const iWon = (foxWin && iAmFox) || (!foxWin && !iAmFox);
+  const iSpec = !!s.you.spec;
+  const iWon = !iSpec && ((foxWin && iAmFox) || (!foxWin && !iAmFox));
   const title = foxWin ? (r.reason === 'guess_correct' ? '여우의 대역전승!' : r.reason === 'innocent_perfect' ? '여우의 완벽한 승리' : '여우의 라운지 장악') : '강아지 팀 승리!';
-  const dogs = s.players.filter(p => p.id !== r.foxId);
+  const dogs = s.players.filter(p => !(r.foxIds || []).includes(p.id));
+  const sr = r.series || { round:1, total:1, final:true };
   const ov = $('#result-overlay');
   ov.className = 'overlay';
   let scene;
@@ -2992,29 +3423,66 @@ function showResult(s){
     <div class="overlay-dim" onclick="$('#result-overlay').classList.add('hidden')"></div>
     <div id="rs-fx" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
     <div class="modal glass-solid text-center" style="border-radius:var(--r-xl);border-color:${foxWin ? 'rgba(251,113,133,.55)' : 'rgba(96,165,250,.55)'};box-shadow:var(--inner-glow),0 0 70px ${foxWin ? 'rgba(225,29,72,.35)' : 'rgba(59,130,246,.3)'}">
-      <div class="text-[11px] tracking-[.5em] font-bold ${iWon ? 'text-amber-200' : 'text-slate-400'}">${iWon ? 'VICTORY' : 'DEFEAT'}</div>
+      <div class="text-[11px] tracking-[.5em] font-bold ${iWon ? 'text-amber-200' : 'text-slate-400'}">${sr.total > 1 ? `GAME ${sr.round}/${sr.total} · ` : ''}${iSpec ? 'GAME OVER · 관전' : iWon ? 'VICTORY' : 'DEFEAT'}</div>
       <h2 class="font-display text-[40px] leading-tight mt-1 ${foxWin ? 'crimson-text' : 'gold-text'}">${title}</h2>
-      <p class="text-sm text-slate-300 mt-2">${REASON[r.reason] || ''}</p>
+      <p class="text-sm text-slate-300 mt-2">${(REASON[r.reason] || '').replace('무고한 강아지', '무고한 ' + (r.executedSpecies === 'cat' ? '고양이' : '강아지'))}</p>
       <div class="mt-4">${scene}</div>
       <div class="grid grid-cols-3 gap-2 mt-5 text-left">
-        <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">FOX</div><div class="font-black text-rose-200 truncate">${esc(r.foxName)}</div></div>
+        <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">FOX${(r.foxIds || []).length > 1 ? ' ×' + r.foxIds.length : ''}</div><div class="font-black text-rose-200 truncate" title="${esc(r.foxName)}">${esc(r.foxName)}</div></div>
         <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">WORD</div><div class="font-black text-amber-100 truncate">${esc(r.word)}</div>${r.decoy ? `<div class="text-[11px] text-rose-200/90 truncate mt-0.5">🤪 여우: ${esc(r.decoy)}</div>` : ''}</div>
         <div class="rounded-xl bg-black/30 p-2.5"><div class="text-[10px] tracking-[.25em] text-slate-500">FOX'S GUESS</div><div class="font-bold truncate ${r.reason === 'guess_correct' ? 'text-rose-300' : 'text-slate-400'}">${r.guess !== null && r.guess !== undefined ? esc(r.guess || '(공백)') : '-'}</div></div>
       </div>
       <div class="flex gap-2 mt-5">
         <button class="btn btn-ghost flex-1 py-3" onclick="$('#result-overlay').classList.add('hidden')">닫기</button>
-        ${isHost ? `<button class="btn btn-gold flex-1 py-3" onclick="act({type:'RESTART'})">🥂 대기실로</button>` : ''}
+        ${r.awards ? `<button class="btn btn-gold flex-1 py-3" onclick="showAwards(S)">🏆 MVP · 하이라이트 보기</button>`
+          : isHost ? `<button class="btn btn-gold flex-1 py-3" onclick="act({type:'RESTART'})">${sr.total > 1 ? `▶ 다음 판 (${sr.round + 1}/${sr.total})` : '🥂 대기실로'}</button>` : ''}
       </div>
     </div>`;
   if(foxWin){
     Snd.foxThrone();
     dogs.forEach((p, i) => setTimeout(() => { const el = ov.querySelector(`[data-taint="${i}"]`); if(el){ el.classList.add('tainted'); Snd.tone(300 - i * 12, .3, { type:'sawtooth', v:.04, to:120 }); } }, (1.6 + i * .3) * 1000));
     if(iWon) setTimeout(() => confetti(50, ['#EF4444','#F97316','#D4AF37']), 1400);
-  } else { if(iWon){ Snd.win(); confetti(70); } else Snd.lose(); }
-  if(foxWin && !iWon) setTimeout(() => Snd.lose(), 2400);
+  } else { if(iWon){ Snd.win(); confetti(70); } else if(!iSpec) Snd.lose(); }
+  if(foxWin && !iWon && !iSpec) setTimeout(() => Snd.lose(), 2400);
+  if(r.awards && !showResult._aw){ showResult._aw = s.phaseId; setTimeout(() => { if(S && S.phase === 'result' && S.phaseId === showResult._aw) showAwards(S); }, 5200); }
 }
-function confetti(n, colors){
-  const fx = $('#rs-fx'); if(!fx) return;
+/* ---------- 🏆 MVP + 분야별 하이라이트 ---------- */
+function awWho(list, big){
+  const shown = list.slice(0, 3), more = list.length - shown.length;
+  return `<div class="aw-who">${shown.map(p => `<div style="--pc:${p.color}"><div class="aw-av">${dogC(p.color, 'normal', p.outfit, 'aw' + (big ? 'm' : '') + p.id)}</div>
+    <div class="font-black ${big ? 'text-2xl gold-text font-display mt-2' : 'text-sm text-white mt-1.5'} truncate max-w-[150px]">${esc(p.name)}${p.id === myId ? ' (나)' : ''}</div></div>`).join('')}
+    ${more > 0 ? `<div class="self-center text-xs text-slate-400 font-bold" title="${esc(list.slice(3).map(p => p.name).join(', '))}">외 ${more}명</div>` : ''}</div>`;
+}
+function showAwards(s){
+  const a = s && s.result && s.result.awards; if(!a) return;
+  $('#result-overlay').classList.add('hidden');
+  const ov = $('#awards-overlay');
+  ov.innerHTML = `<div class="overlay-dim" onclick="closeAwards()"></div><div id="aw-fx" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+    <div class="aw-wrap glass-solid" style="border:1px solid rgba(212,175,55,.45)">
+      <div class="text-[11px] tracking-[.5em] text-amber-200/80 font-bold">${a.rounds > 1 ? `${a.rounds} GAMES · ` : ''}AWARDS NIGHT</div>
+      <div class="font-display text-[44px] gold-text leading-tight mt-1">오늘의 시상식</div>
+      <div class="aw-mvp">
+        <div class="text-[11px] tracking-[.45em] text-amber-200 font-bold">👑 MVP${a.mvp.who.length > 1 ? ' · 공동 수상' : ''}</div>
+        ${awWho(a.mvp.who, true)}
+        ${a.mvp.line ? `<div class="text-xs text-amber-100/80 mt-2">${esc(a.mvp.line)}</div>` : ''}
+      </div>
+      <div class="aw-grid">${a.highlights.map((h, i) => `<div class="aw-card" style="animation-delay:${.9 + i * .35}s">
+        <div class="ic">${h.icon}</div><div class="font-display text-xl text-white mt-1">${esc(h.title)}</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">${esc(h.desc)}</div>
+        ${awWho(h.who, false)}
+        <div class="text-xs text-amber-200 font-bold mt-1.5 tnum">${h.value}${esc(h.unit)}</div></div>`).join('')}</div>
+      <div class="flex gap-2 mt-6 max-w-md mx-auto">
+        <button class="btn btn-ghost flex-1 py-3" onclick="closeAwards()">닫기</button>
+        ${isHost ? `<button class="btn btn-gold flex-1 py-3" onclick="closeAwards();act({type:'RESTART'})">🥂 새 게임 · 대기실로</button>` : ''}
+      </div>
+    </div>`;
+  ov.classList.remove('hidden');
+  Snd.win(); setTimeout(() => { const fx = $('#aw-fx'); if(fx) confetti(80, null, fx); }, 300);
+  a.highlights.forEach((h, i) => setTimeout(() => Snd.tone(520 + i * 70, .18, { type:'triangle', v:.06 }), (900 + i * 350)));
+}
+function closeAwards(){ const ov = $('#awards-overlay'); ov.classList.add('hidden'); ov.innerHTML = ''; }
+function confetti(n, colors, box){
+  const fx = box || $('#rs-fx'); if(!fx) return;
   for(let i = 0; i < n; i++){
     const c = document.createElement('div'); c.className = 'confetti';
     c.style.left = Math.random() * 100 + '%';
@@ -3026,7 +3494,7 @@ function confetti(n, colors){
 }
 
 /* ---------- WARDROBE ---------- */
-let wdDraft = null, wdTab = 'hat';
+let wdDraft = null, wdTab = 'species';
 function openWardrobe(){
   if(S && S.phase !== 'lobby' && S.phase !== 'result'){ toast('옷장은 대기실/결과 화면에서만 열 수 있어요', 'danger'); return; }
   const me = S && S.players.find(p => p.id === myId);
