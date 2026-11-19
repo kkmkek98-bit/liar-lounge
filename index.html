@@ -722,7 +722,7 @@ body{ margin:0; font-family:var(--font-body); color:#E6EAF2; background:#05070B;
    CONSTANTS & DATA
    ========================================================= */
 const MAX_PLAYERS = 12, MIN_PLAYERS = 3;
-const VER = 'v20';
+const VER = 'v21';
 const MAX_SPECS = 6;   // 관전석   // 방장과 참가자의 버전이 다르면 입장 차단
 const T = { REVEAL:6500, HINT:30000, DISCUSS:90000, VOTE:30000, RUNOFF:25000, DEFENSE:10000, JUDGE:10000, EXEC:9500, EXEC_REVEAL:5200, GUESS:15000, FOXREVEAL:15000 };
 const MAX_TRIALS = 3;   // 재판(최후 변론→찬반) 최대 횟수. 모두 반대면 여우 승리
@@ -1003,6 +1003,8 @@ function dogSVG(color, mood='normal', outfit, fixedId){
   <path d="M153 84 L150 26 Q147 21 142 25 L106 52Z" fill="url(#f${id})"/>
   <path d="M56 70 L58 36 L83 54Z" fill="#F9A8B8" opacity=".85"/><path d="M144 70 L142 36 L117 54Z" fill="#F9A8B8" opacity=".85"/>
   <path d="M60 46 l4 9 M140 46 l-4 9" stroke="#fff" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
+  <path d="M48 118 L33 130 L46 134 L36 147 L53 146 L50 158 L70 150 Z" fill="url(#f${id})"/>
+  <path d="M152 118 L167 130 L154 134 L164 147 L147 146 L150 158 L130 150 Z" fill="url(#f${id})"/>
   <ellipse cx="100" cy="104" rx="61" ry="56" fill="url(#f${id})"/>
   <path d="M100 50 L100 63 M90 52 L92 62 M110 52 L108 62" stroke="${F.patch}" stroke-width="4.2" opacity=".55" stroke-linecap="round"/>
   <path d="M40 104 l11 2 M41 113 l10 0 M160 104 l-11 2 M159 113 l-10 0" stroke="${F.patch}" stroke-width="3.4" opacity=".45" stroke-linecap="round"/>
@@ -1044,10 +1046,14 @@ function dogSVG(color, mood='normal', outfit, fixedId){
     <linearGradient id="hs${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${lt}"/><stop offset="1" stop-color="${color}"/></linearGradient>
     <linearGradient id="cl${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lt}"/><stop offset="1" stop-color="${dk}"/></linearGradient>
     <linearGradient id="gd${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1B8"/><stop offset=".5" stop-color="#D4AF37"/><stop offset="1" stop-color="#8A6512"/></linearGradient>
+    <radialGradient id="sh${id}"><stop offset="0" stop-color="#1A0F0A" stop-opacity=".32"/><stop offset="1" stop-color="#1A0F0A" stop-opacity="0"/></radialGradient>
     <radialGradient id="pl${id}" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#D9D4CC"/></radialGradient>
   </defs>
   <path d="M44 178 Q100 156 156 178 L168 200 L32 200Z" fill="url(#f${id})"/>
+  <path d="M36 190 Q52 166 74 150 Q100 136 126 150 Q148 166 164 190 L168 200 L32 200Z" fill="url(#f${id})"/>
+  <path d="M84 166 Q92 158 100 162 Q108 158 116 166 Q108 180 100 184 Q92 180 84 166Z" fill="${F.muzzle}" opacity=".75"/>
   ${outfits[o.outfit] || ''}
+  <ellipse cx="100" cy="158" rx="40" ry="11" fill="url(#sh${id})"/>
   ${head}
   ${extrasBelow[o.extra] || ''}
   ${cat ? catMouth + catNose + whiskers : `${mouth}
